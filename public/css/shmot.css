@@ -1,0 +1,168 @@
+/* Шмот и оружие — сравнение после боя (в духе hools) */
+html:has(body.shmot-body) {
+    background: #38393e;
+}
+
+.shmot-body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background: #38393e;
+    color: #222;
+}
+
+.shmot-wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    background: #c5d4a8;
+    min-height: 100vh;
+    box-shadow: none;
+    border: none;
+    padding: 0 0 24px;
+}
+
+.shmot-title {
+    text-align: center;
+    margin: 0;
+    padding: 12px 10px;
+    font-size: 1.15rem;
+    color: #ca4d29;
+    background: linear-gradient(180deg, #d4e4c4, #ccdbbc);
+    border-bottom: 2px solid #a8b89a;
+}
+
+.shmot-card {
+    margin: 12px 10px;
+    background: #c5d4a8;
+    border-radius: 8px;
+    border: 1px solid #a8b89a;
+    overflow: hidden;
+}
+
+.shmot-card-head {
+    background: linear-gradient(90deg, #eb8a17, #f5a623);
+    color: #fff;
+    padding: 8px 12px;
+    font-weight: 800;
+    font-size: 15px;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.shmot-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+    justify-content: center;
+}
+
+.shmot-slot-ava .shmot-ava-img {
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border-radius: 6px;
+}
+
+.shmot-slot-ava .player-avatar-frame--sm {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    border-radius: 6px;
+    border: 2px solid #8a9a82;
+    overflow: hidden;
+    line-height: 0;
+    background: transparent;
+    isolation: isolate;
+}
+
+.shmot-slot-ava .player-avatar-frame--sm .player-avatar-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+}
+
+.shmot-slot-ava .player-avatar-frame--sm .player-avatar-img {
+    position: relative;
+    z-index: 2;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    object-position: center center;
+    border-radius: 0;
+    mix-blend-mode: normal;
+    filter: none;
+}
+
+.shmot-slot-ava.shmot-slot-ava {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    width: auto;
+    height: auto;
+    min-width: 48px;
+    min-height: 48px;
+}
+
+.shmot-slot {
+    width: 56px;
+    height: 56px;
+    background: #b0c49a;
+    border: 2px solid #c4d4b4;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    line-height: 1;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.shmot-slot.empty {
+    color: #bbb;
+    font-size: 20px;
+}
+
+.shmot-stars {
+    font-size: 9px;
+    letter-spacing: 1px;
+    color: #e6a800;
+    margin-top: 2px;
+}
+
+.shmot-totals {
+    padding: 10px 14px 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-top: 1px solid #c4d4b4;
+    background: #f4f8ec;
+}
+
+.shmot-totals strong {
+    color: #1a4a1a;
+}
+
+.shmot-back {
+    display: block;
+    margin: 16px 10px 0;
+    text-decoration: none;
+}
+
+.shmot-back button {
+    width: 100%;
+    text-align: left;
+    padding: 12px 14px;
+    font-size: 16px;
+    font-weight: 700;
+    border: 1px solid #294c24;
+    border-radius: 0;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 97%);
+    color: #fff;
+    cursor: pointer;
+}
+
+.shmot-msg {
+    padding: 20px;
+    text-align: center;
+}

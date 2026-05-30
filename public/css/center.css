@@ -1,0 +1,486 @@
+/* Центр и подстраницы — в духе hools (светлые зелёные ряды) */
+.center-scope {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.center-meat {
+    background: #c5d4a8;
+    padding: 10px 0 16px;
+    min-height: 40vh;
+    flex: 1;
+}
+
+.center-h1 {
+    margin: 0;
+    padding: 8px 14px 4px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ca4d29;
+    text-align: center;
+}
+
+.center-desc {
+    margin: 0 14px 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #333;
+}
+
+.center-list {
+    background: #ccdbbc;
+    border-top: 1px solid #a8b89a;
+}
+
+a.center-row,
+button.center-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    text-align: left;
+    padding: 0 14px;
+    height: 45px;
+    border: none;
+    border-bottom: 1px solid #9aaa8c;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 46%, #58944f 97%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+
+a.center-row:hover,
+button.center-row:hover {
+    filter: brightness(1.05);
+}
+
+.center-row .ico {
+    font-size: 1.25rem;
+    width: 28px;
+    text-align: center;
+}
+
+.center-ico {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.15);
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 18px 18px;
+}
+
+.center-ico {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M4 20V9l8-5 8 5v11'/%3E%3C/svg%3E");
+}
+
+.center-ico--mag {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M12 3v18M8 8l8-2M8 12l8-2M8 16l8-2'/%3E%3C/svg%3E");
+}
+
+.center-ico--needle {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M12 2l2 6-2 14-2-14 2-6z'/%3E%3C/svg%3E");
+}
+
+.center-ico--ball {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Ccircle cx='12' cy='12' r='8'/%3E%3Cpath d='M4 12h16M12 4c2 4 2 12 0 16'/%3E%3C/svg%3E");
+}
+
+.center-ico--ticket {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M4 8h16v8H4zM8 8V6M16 8V6M8 16v2M16 16v2'/%3E%3C/svg%3E");
+}
+
+.center-ico--hint {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M4 6h16v8H9L7 20l-3-6V6z'/%3E%3C/svg%3E");
+}
+
+.center-ico--amul {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Ccircle cx='12' cy='12' r='7'/%3E%3Cpath d='M12 8v8M8 12h8'/%3E%3C/svg%3E");
+}
+
+.center-ico--talis {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M12 2l2 6h6l-5 4 2 6-5-4-5 4 2-6-5-4h6l2-6z'/%3E%3C/svg%3E");
+}
+
+.center-ico--blade {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M4 20L16 8M14 6l4-2 2 4-2 4-4-2-2-4z'/%3E%3C/svg%3E");
+}
+
+.center-ico--shirt {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M8 4h8l3 4v14H5V8l3-4zM10 4v4h4V4'/%3E%3C/svg%3E");
+}
+
+.center-ico--crown {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M4 10l4-4 4 3 4-3 4 4-1 10H5L4 10z'/%3E%3C/svg%3E");
+}
+
+.center-ico--crate {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M5 8h14v12H5zM5 12h14M12 8v12'/%3E%3C/svg%3E");
+}
+
+.center-ico--pack {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='1.4'%3E%3Cpath d='M6 10h12v10H6zM9 10V7h6v3M4 10l2-3h12l2 3'/%3E%3C/svg%3E");
+}
+
+.center-back {
+    margin-top: 10px;
+}
+
+.center-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 8px 12px;
+    background: #56864c;
+    color: #fff;
+    font-size: 14px;
+    border: 1px solid #294c24;
+}
+
+.center-cooldown {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    background: #b8dce0;
+    border: 1px solid #6aa8b0;
+    font-size: 13px;
+    color: #1a3a40;
+}
+
+.center-footer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    margin-top: 12px;
+    border: 1px solid #27533a;
+}
+
+.center-footer-grid a {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: #467259;
+    color: #fff;
+    text-decoration: none;
+    font-size: 14px;
+    border-bottom: 1px solid #27533a;
+    border-right: 1px solid #27533a;
+}
+
+.center-footer-grid a:nth-child(even) {
+    border-right: none;
+}
+
+/* Тату-салон (центр) */
+.salon-intro {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    align-items: stretch;
+}
+
+.salon-face {
+    width: 88px;
+    min-height: 100px;
+    background: linear-gradient(180deg, #f5a623, #eb8a17);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 52px;
+    flex-shrink: 0;
+    border: 2px solid #c97810;
+}
+
+.salon-quote {
+    flex: 1;
+    background: linear-gradient(180deg, #f5d76e 0%, #e8c84a 100%);
+    border: 3px solid #a88410;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #333;
+}
+
+.salon-card {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #9bb08f;
+    background: #c5d4a8;
+    align-items: center;
+}
+
+.salon-card-ico {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
+    background: #b0c49a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    border: 1px solid #8a9a7a;
+}
+
+.salon-card-info {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.salon-card-info strong {
+    color: #ca4d29;
+}
+
+.salon-buy {
+    padding: 8px 12px;
+    background: #e02020;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* Кикер */
+.kicker-row {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    border-bottom: 1px solid #9bb08f;
+    background: #c5d4a8;
+    align-items: center;
+}
+
+.kicker-ava {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+    background: #c62828;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+    flex-shrink: 0;
+}
+
+.kicker-meta {
+    flex: 1;
+    font-size: 13px;
+}
+
+.kicker-name {
+    color: #eb8a17;
+    font-weight: 800;
+    font-size: 15px;
+}
+
+.kicker-play {
+    padding: 8px 10px;
+    background: #56864c;
+    color: #fff;
+    border: 1px solid #294c24;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 12px;
+}
+
+.kicker-play:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+/* Лотерея */
+.lottery-face-row {
+    display: flex;
+    gap: 12px;
+    padding: 12px 14px;
+    align-items: center;
+}
+
+.lottery-dealer {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(180deg, #eb8a17, #c97810);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    border: 2px solid #a0600c;
+}
+
+.lottery-price {
+    padding: 10px 14px;
+    font-size: 14px;
+    text-align: center;
+    background: #b0c49a;
+    color: #222;
+}
+
+.lottery-play-big {
+    display: block;
+    width: calc(100% - 28px);
+    margin: 12px auto;
+    padding: 14px;
+    background: #e02020;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 17px;
+    font-weight: 800;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.lottery-log {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    background: #b0c49a;
+    border-top: 1px solid #8faa82;
+}
+
+.lottery-log li {
+    padding: 10px 14px;
+    border-bottom: 1px solid #9bb08f;
+    font-size: 12px;
+    line-height: 1.45;
+    color: #333;
+}
+
+.lottery-log .who {
+    color: #ca4d29;
+    font-weight: 700;
+}
+
+/* Барыга — карточка товара (как hools) */
+.baryga-list {
+    padding: 4px 0 8px;
+}
+
+.baryga-card {
+    margin: 10px 14px 0;
+    background: #c5d4a8;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: none;
+}
+
+.baryga-card-head {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 12px;
+    background: #b0c49a;
+    border-bottom: 1px solid #9bb08f;
+}
+
+.baryga-card-emoji {
+    font-size: 36px;
+    line-height: 1;
+    width: 44px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.baryga-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #2a4028;
+}
+
+.baryga-card-body {
+    padding: 8px 12px 12px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.45;
+}
+
+.baryga-stat {
+    color: #3d6b38;
+    font-weight: 700;
+}
+
+.baryga-price {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 4px;
+    font-weight: 700;
+}
+
+.baryga-price img {
+    width: 14px;
+    height: 14px;
+    vertical-align: middle;
+}
+
+.baryga-level {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #666;
+}
+
+.baryga-lock {
+    margin-top: 6px;
+    color: #b04020;
+    font-weight: 600;
+    font-size: 12px;
+}
+
+.baryga-card-actions {
+    margin-top: 10px;
+}
+
+.baryga-card-actions button {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 97%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+
+.baryga-card-actions button:hover:not(:disabled) {
+    filter: brightness(1.05);
+}
+
+.baryga-card-actions button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: #8a9a82;
+}
+
+.baryga-owned {
+    margin-top: 6px;
+    font-size: 12px;
+    color: #3d6b38;
+    font-weight: 600;
+}
+
+.baryga-garderob-link {
+    display: block;
+    margin: 12px 14px 0;
+    text-align: center;
+    font-size: 13px;
+    color: #3d6b38;
+    font-weight: 600;
+}

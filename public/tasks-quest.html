@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задание</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/tasks.css">
+</head>
+<body class="hools game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="page-title" id="pageTitle">Задание</div>
+    <div id="msg" class="msg"></div>
+    <div id="detailRoot"></div>
+    <div class="list">
+        <a class="item back" href="/tasks.html">← Назад</a>
+    </div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/tasks-ui.js"></script>
+<script>
+async function renderDetail() {
+    const questId = new URLSearchParams(window.location.search).get("id") || "";
+    const root = document.getElementById("detailRoot");
+    const titleEl = document.getElementById("pageTitle");
+
+    const email = getEmail();
+    if (!email) return;
+
+    const res = await fetch("/daily-quests?email=" + encodeURIComponent(email));
+    const data = await res.json();
+    if (!data.success) {
+        showMsg(data.error || "Не удалось загрузить задание", true);
+        root.innerHTML = '<p class="district-hint">Ошибка загрузки.</p>';
+        return;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+
+    const q = (data.quests || []).find((x) => x.id === questId);
+    if (!q) {
+        titleEl.textContent = "Задание";
+        root.innerHTML =
+            '<p class="district-hint" style="padding:12px">Задание не найдено. <a href="/tasks.html">Вернуться к списку</a></p>';
+        return;
+    }
+
+    document.title = q.title + " — Задания";
+    titleEl.textContent = q.title;
+
+    const progressHuman = formatQuestProgressHuman(q);
+    const doneLine = q.done ? '<p class="tasks-done-badge">Задание выполнено</p>' : "";
+
+    root.innerHTML =
+        '<div class="tasks-detail-sheet">' +
+        `<h2 class="tasks-detail-title">${escapeTasksHtml(q.title)}</h2>` +
+        '<section class="tasks-detail-block">' +
+        '<h3 class="tasks-detail-heading">Описание задания</h3>' +
+        `<p class="tasks-detail-text">${escapeTasksHtml(questFlavorText(q))}</p>` +
+        "</section>" +
+        '<section class="tasks-detail-block">' +
+        '<p class="tasks-detail-task-label">Твоя задача:</p>' +
+        `<p class="tasks-detail-text">${escapeTasksHtml(q.description || "")}</p>` +
+        "</section>" +
+        '<section class="tasks-detail-block">' +
+        '<p class="tasks-detail-progress-label">Выполнено:</p>' +
+        `<p class="tasks-detail-progress-val">${escapeTasksHtml(progressHuman)}</p>` +
+        renderProgressBarHtml(q, "tasks-progress-bar--detail") +
+        doneLine +
+        '<div class="tasks-reward-row" style="margin-top:14px;margin-bottom:0">' +
+        '<span class="tasks-reward-label">Награда:</span> ' +
+        formatQuestRewardHtml(q) +
+        "</div></div>";
+}
+
+(async () => {
+    await renderDetail();
+})();
+</script>
+</body>
+</html>

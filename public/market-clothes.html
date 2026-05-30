@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Одежда — Барыга</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/center.css">
+</head>
+<body class="hools center-scope game-shell" data-baryga-section="clothes">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="center-meat">
+        <h1 class="center-h1">Одежда</h1>
+        <p class="center-desc">Кожанки, боты — всё для района.</p>
+        <div class="baryga-list" id="barygaItems"></div>
+        <a class="baryga-garderob-link" href="/garderob.html">Гардероб — надеть одежду</a>
+        <a class="item back" href="/market.html">← К Барыге</a>
+    </div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<div id="msg" class="msg"></div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/shop.js"></script>
+<script>
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    const catalog = await loadShopCatalog();
+    renderBarygaSection("clothes", user, catalog);
+})();
+</script>
+</body>
+</html>

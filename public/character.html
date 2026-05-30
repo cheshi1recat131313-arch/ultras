@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Выбор персонажа</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: Arial; color: white; background: #0b0b0b; }
+.overlay {
+    width: 100%; min-height: 100vh;
+    background: rgba(0,0,0,0.65);
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 20px 0 40px;
+}
+.wrap { width: 100%; max-width: 500px; padding: 20px; margin: 0 auto; }
+h1 { margin-bottom: 20px; text-align: center; }
+.card {
+    display: flex; align-items: center;
+    background: rgba(20,20,20,0.9);
+    border-radius: 12px; padding: 12px; margin-bottom: 15px;
+    border: 1px solid #2b2b2b;
+}
+.card img {
+    width: 70px; height: 70px; border-radius: 10px; margin-right: 12px; flex-shrink: 0;
+    background: #e8c84a;
+    box-shadow: none;
+    object-fit: cover;
+}
+/* Прозрачные PNG (Шустрый) — фон карточки, без жёлтой подложки */
+.card img.img-ava-clear {
+    background: transparent;
+}
+.info { width: 100%; }
+.info h2 { font-size: 16px; margin-bottom: 5px; }
+.info p { font-size: 13px; color: #bbb; margin-bottom: 8px; }
+.btn {
+    width: 100%; padding: 10px;
+    background: linear-gradient(90deg, #ff3b3b, #b80000);
+    border: none; color: white; border-radius: 6px; cursor: pointer;
+}
+.status { text-align: center; margin-bottom: 14px; color: #ff8d8d; min-height: 20px; }
+</style>
+</head>
+<body>
+<div class="overlay">
+<div class="wrap">
+<h1>Выбери персонажа</h1>
+<div class="status" id="status"></div>
+    <div class="card">
+    <img src="/images/tank-dossier.png" alt="">
+    <div class="info">
+        <h2>Здоровяк</h2>
+        <p>Жёсткий и выносливый. Давит силой и не падает.</p>
+        <button class="btn" type="button" data-id="tank">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/images/fast-dossier.png" alt="" class="img-ava-clear">
+    <div class="info">
+        <h2>Шустрый</h2>
+        <p>Быстрый и дерзкий. Уходит от ударов и бьёт внезапно.</p>
+        <button class="btn" type="button" data-id="fast">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/static/personage/balanced.png" alt="">
+    <div class="info">
+        <h2>Ровный</h2>
+        <p>Баланс силы и скорости. Универсальный боец.</p>
+        <button class="btn" type="button" data-id="balanced">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/static/personage/valk.png" alt="">
+    <div class="info">
+        <h2>Валькирия</h2>
+        <p>Идёт до конца. Не знает страха.</p>
+        <button class="btn" type="button" data-id="valk">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/static/personage/shadow.png" alt="">
+    <div class="info">
+        <h2>Тень</h2>
+        <p>Невидимая и опасная. Атака из ниоткуда.</p>
+        <button class="btn" type="button" data-id="shadow">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/static/personage/spark.png" alt="">
+    <div class="info">
+        <h2>Искра</h2>
+        <p>Хаос и скорость. Меняет ход боя.</p>
+        <button class="btn" type="button" data-id="spark">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/static/personage/tough.png" alt="">
+    <div class="info">
+        <h2>Крепыш</h2>
+        <p>Стойкость — главное. Тело неповальное.</p>
+        <button class="btn" type="button" data-id="tough">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/static/personage/redhead.png" alt="">
+    <div class="info">
+        <h2>Рыжая бестия</h2>
+        <p>Рыжая шевелюра и быстрые удары.</p>
+        <button class="btn" type="button" data-id="redhead">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/static/personage/fighter.png" alt="">
+    <div class="info">
+        <h2>Бой-баба</h2>
+        <p>Бывшая тяжелоатлетка. Такую лучше не злить!</p>
+        <button class="btn" type="button" data-id="fighter">Выбрать</button>
+    </div>
+    </div>
+    <div class="card">
+    <img src="/static/personage/chick.png" alt="">
+    <div class="info">
+        <h2>Четкая чувиха</h2>
+        <p>Отошьёт кого угодно, а если надо — слиняет.</p>
+        <button class="btn" type="button" data-id="chick">Выбрать</button>
+    </div>
+    </div>
+</div>
+</div>
+
+<script src="js/session.js"></script>
+<script>
+const statusEl = document.getElementById("status");
+
+async function init() {
+    const email = getStoredEmail();
+    if (!email) {
+        window.location.href = "/index.html";
+        return;
+    }
+    const user = await fetchUserByEmail(email);
+    if (!user) {
+        clearSession();
+        window.location.href = "/index.html";
+        return;
+    }
+    if (!user.name) {
+        window.location.replace("/name.html");
+        return;
+    }
+    if (user.character) {
+        window.location.replace(onboardingUrl(user));
+        return;
+    }
+    document.querySelectorAll("[data-id]").forEach((btn) => {
+        btn.addEventListener("click", () => selectCharacter(btn.dataset.id));
+    });
+}
+
+async function selectCharacter(type) {
+    const email = getStoredEmail();
+    const response = await fetch("/character", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, character: type })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        statusEl.textContent = data.error || "Не удалось сохранить персонажа";
+        return;
+    }
+    if (data.user) syncSessionFromUser(data.user);
+    window.location.href = "/club.html";
+}
+
+init();
+</script>
+</body>
+</html>

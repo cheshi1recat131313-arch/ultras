@@ -1,0 +1,252 @@
+/* Счастливый час — в стиле game-shell / Hools */
+
+.hh-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    background: rgba(9, 11, 10, 0.88);
+    padding: 0;
+}
+
+.hh-overlay.hh-hidden {
+    display: none;
+}
+
+.hh-sheet {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 480px;
+    min-height: 100%;
+    margin: 0 auto;
+    padding: 0 0 24px;
+    background: #c5d4a8;
+    color: #1a1a1a;
+    box-shadow: 0 0 28px rgba(0, 0, 0, 0.5);
+}
+
+.hh-banner {
+    margin: 0;
+    padding: 14px 16px;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.25;
+    text-align: center;
+    color: #111;
+    background: #f5c76a;
+    border-bottom: 2px solid #eb8a17;
+}
+
+.hh-lead {
+    margin: 0;
+    padding: 14px 16px 10px;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    text-align: center;
+    color: #222;
+}
+
+.hh-boxes {
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 8px 12px 16px;
+    min-height: 200px;
+}
+
+.hh-box {
+    flex: 1 1 0;
+    max-width: 120px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.hh-box:disabled {
+    cursor: default;
+}
+
+.hh-crate {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding-top: 100%;
+}
+
+.hh-crate-body {
+    position: absolute;
+    left: 8%;
+    right: 8%;
+    bottom: 0;
+    height: 62%;
+    border: 2px solid #8a3c0c;
+    border-radius: 0 0 4px 4px;
+    background: linear-gradient(180deg, #c86a18 0%, #a84e14 100%);
+    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.15);
+}
+
+.hh-crate-lid {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    top: 18%;
+    height: 28%;
+    border: 2px solid #8a3c0c;
+    border-radius: 3px 3px 0 0;
+    background: linear-gradient(180deg, #e89430 0%, #c86a18 100%);
+    transform-origin: center bottom;
+    transition: transform 0.45s ease;
+    z-index: 2;
+}
+
+.hh-crate-prize {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 18%;
+    z-index: 1;
+    font-size: 15px;
+    font-weight: 800;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.35s ease 0.2s, transform 0.35s ease 0.2s;
+}
+
+.hh-crate-prize .fight-reward-ico {
+    width: 20px;
+    height: 20px;
+    vertical-align: -4px;
+}
+
+.hh-box:not(:disabled):hover .hh-crate-lid {
+    transform: translateY(-2px);
+}
+
+.hh-box.hh-box--muted .hh-crate {
+    opacity: 0.45;
+    filter: grayscale(0.2);
+}
+
+.hh-box.hh-box--open .hh-crate-lid {
+    transform: translateY(-120%) rotate(-12deg);
+}
+
+.hh-box.hh-box--open .hh-crate-prize {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hh-reward {
+    margin: 0 14px 12px;
+    padding: 12px 14px;
+    text-align: center;
+    background: #b0c49a;
+    border: 1px solid #8fa87a;
+}
+
+.hh-reward.hh-hidden {
+    display: none;
+}
+
+.hh-reward.hh-jackpot {
+    border-color: #eb8a17;
+    background: #ffe89a;
+}
+
+.hh-reward-label {
+    margin: 0 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #333;
+}
+
+.hh-reward-amount {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #111;
+}
+
+.hh-reward-amount .fight-reward-ico {
+    width: 24px;
+    height: 24px;
+    vertical-align: -5px;
+}
+
+.hh-continue {
+    display: block;
+    box-sizing: border-box;
+    width: calc(100% - 28px);
+    max-width: 280px;
+    margin: 0 auto;
+    padding: 11px 20px;
+    border: 1px solid #c96a18;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #ffb347 0%, #f08a24 48%, #e07010 100%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    cursor: pointer;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+
+.hh-continue.hh-hidden {
+    display: none;
+}
+
+.hh-sheet.hh-busy .hh-boxes {
+    pointer-events: none;
+    opacity: 0.85;
+}
+
+/* Десктоп: лист по центру, не на весь экран */
+@media (min-width: 520px) {
+    .hh-overlay {
+        align-items: center;
+        padding: 24px 16px;
+    }
+
+    .hh-sheet {
+        min-height: 0;
+        max-height: calc(100vh - 48px);
+        overflow: auto;
+        border: 1px solid #8fa87a;
+    }
+
+    .hh-boxes {
+        min-height: 220px;
+        gap: 16px;
+        padding: 12px 20px 20px;
+    }
+
+    .hh-box {
+        max-width: 130px;
+    }
+
+    .hh-banner {
+        font-size: 18px;
+    }
+}
+
+@media (min-width: 768px) {
+    .hh-boxes {
+        min-height: 240px;
+        gap: 20px;
+    }
+
+    .hh-box {
+        max-width: 140px;
+    }
+}

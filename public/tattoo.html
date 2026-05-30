@@ -1,0 +1,68 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тату-салон</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+</head>
+<body class="hools game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="page-title">Тату-салон</div>
+    <div id="msg" class="msg">Временная тату: +2 к стату на 12 часов · 45 ₽</div>
+    <div class="list">
+        <button type="button" class="item" data-stat="power">Тату на Силу (+2)</button>
+        <button type="button" class="item" data-stat="speed">Тату на Ловкость (+2)</button>
+        <button type="button" class="item" data-stat="intel">Тату на Интуицию (+2)</button>
+        <button type="button" class="item" data-stat="stamina">Тату на Стойкость (+2)</button>
+        <a class="item back" href="/district">← В район</a>
+    </div>
+    <div class="pers-block" id="activeTattoos"></div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script>
+function showTattoos(user) {
+    const t = user.tattoos || {};
+    const el = document.getElementById("activeTattoos");
+    const parts = [];
+    if (t.power) parts.push(`Сила +${t.power}`);
+    if (t.speed) parts.push(`Ловкость +${t.speed}`);
+    if (t.intel) parts.push(`Интуиция +${t.intel}`);
+    if (t.stamina) parts.push(`Стойкость +${t.stamina}`);
+    if (t.expiresAt) {
+        const left = Math.max(0, Math.round((t.expiresAt - Date.now()) / 3600000));
+        parts.push(`осталось ~${left} ч`);
+    }
+    el.innerHTML = parts.length
+        ? `<p style="font-size:13px">Активно: ${parts.join(", ")}</p>`
+        : `<p style="font-size:13px;color:#888">Нет активных тату</p>`;
+}
+
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    showTattoos(user);
+
+    document.querySelectorAll("[data-stat]").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const { ok, data } = await postJson("/district/tattoo", {
+                email: getEmail(),
+                stat: btn.dataset.stat
+            });
+            showMsg(ok ? data.message : data.error, !ok);
+            if (data.user) {
+                renderHeaderBlock(data.user);
+                showTattoos(data.user);
+            }
+        });
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Имя</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0b0b0b;
+    color: white;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.wrap {
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    background: #151515;
+    border: 1px solid #2b2b2b;
+    border-radius: 14px;
+    padding: 22px;
+}
+
+.status {
+    color: #ff8d8d;
+    min-height: 20px;
+    margin-top: 12px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border-radius: 8px;
+    border: 1px solid #ff3b3b;
+    background: transparent;
+    color: white;
+}
+
+button {
+    width: 100%;
+    margin-top: 15px;
+    padding: 12px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #ff3b3b, #b80000);
+    color: white;
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="wrap">
+    <h1>Как тебя зовут?</h1>
+    <p style="margin:8px 0 0;color:#bbb;font-size:14px;">Выбери свой никнейм</p>
+
+    <input id="name" placeholder="Никнейм">
+    <button onclick="saveName()">Продолжить</button>
+    <div class="status" id="status"></div>
+</div>
+
+<script src="js/session.js"></script>
+<script>
+const statusEl = document.getElementById("status");
+
+async function init() {
+    const email = getStoredEmail();
+    if (!email) {
+        window.location.href = "/index.html";
+        return;
+    }
+    const user = await fetchUserByEmail(email);
+    if (!user) {
+        clearSession();
+        window.location.href = "/index.html";
+        return;
+    }
+    if (user.name) {
+        window.location.replace(onboardingUrl(user));
+        return;
+    }
+}
+
+async function saveName() {
+    const button = document.querySelector("button");
+    const email = getStoredEmail();
+    const playerName = document.getElementById("name").value.trim();
+
+    if (playerName.length < 2) {
+        statusEl.textContent = "Введите имя от 2 символов";
+        return;
+    }
+
+    button.disabled = true;
+
+    const response = await fetch("/name", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name: playerName })
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+        statusEl.textContent = data.error || "Не удалось сохранить имя";
+        button.disabled = false;
+        return;
+    }
+
+    if (data.user) syncSessionFromUser(data.user);
+    window.location.replace(onboardingUrl(data.user));
+}
+
+init();
+</script>
+
+</body>
+</html>

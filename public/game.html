@@ -1,0 +1,61 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Футбольные фанаты</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/happy-hour.css">
+</head>
+<body class="hools game-shell">
+
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="banner" role="presentation"></div>
+    <div class="tip">Выполняй <a href="/work.html" class="tip-link">работу</a> для того чтоб накопить больше рублей.</div>
+
+    <nav class="menu">
+        <a class="tab" href="/tasks.html"><img class="menu-ico" src="/static/location/index/target.svg" width="28" height="28" alt="">Задания</a>
+        <a class="tab" href="/events.html"><img class="menu-ico" src="/static/location/index/favorite.png" width="28" height="28" alt="">События</a>
+        <a class="tab" href="/rating.html"><img class="menu-ico" src="/static/location/index/trophy.svg" width="28" height="28" alt="">Рейтинг</a>
+    </nav>
+
+    <div class="list">
+        <a class="item" href="/district"><img class="item-ico" src="/static/location/index/brass.png" width="16" height="16" alt="">Район</a>
+        <a class="item" href="/center"><img class="item-ico" src="/static/location/index/center.png" width="16" height="16" alt="">Центр</a>
+        <a class="item" href="/industrial.html"><img class="item-ico" src="/static/location/index/promzona.png" width="16" height="16" alt="">Пром. зона</a>
+        <a class="item" href="/stadium.html"><img class="item-ico" src="/static/location/index/stadium.png" width="16" height="16" alt="">Стадион [0]</a>
+        <a class="item" href="/wasteland.html"><img class="item-ico" src="/static/location/index/firms-fight.png" width="16" height="16" alt="">Пустырь [0]</a>
+        <a class="item" href="/pub.html"><img class="item-ico" src="/static/location/index/pub.png" width="16" height="16" alt="">Битва за Паб</a>
+        <a class="item danger" href="#" id="mushroomsBtn"><img class="item-ico" src="/static/assets/img/mushroom.svg" width="16" height="16" alt="">Бесплатные грибы</a>
+    </div>
+
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+
+<div id="msg" class="msg"></div>
+
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/happy-hour.js"></script>
+<script>
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    if (typeof tryShowHappyHourOnEntry === "function") {
+        tryShowHappyHourOnEntry();
+    }
+
+    document.getElementById("mushroomsBtn").addEventListener("click", async (e) => {
+        e.preventDefault();
+        const { ok, data } = await postJson("/mushrooms", { email: getEmail() });
+        showMsg(ok ? data.message : data.error, !ok);
+        if (data.user) renderHeaderBlock(data.user);
+    });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шмот и оружие</title>
+    <link rel="stylesheet" href="/css/shmot.css">
+</head>
+<body class="shmot-body">
+<div class="shmot-wrap">
+    <h1 class="shmot-title">Шмот и оружие</h1>
+    <div id="msg" class="shmot-msg" style="display:none"></div>
+    <div id="root"></div>
+    <a class="shmot-back" href="/district.html"><button type="button">← Назад</button></a>
+</div>
+<script src="/js/session.js"></script>
+<script src="/js/api.js"></script>
+<script src="/js/clubs.js"></script>
+<script src="/js/club-theme.js"></script>
+<script>
+const characterFace = {
+    tank: "🏋️",
+    fast: "🏃",
+    balanced: "🧍",
+    valk: "🛡️",
+    shadow: "🥷",
+    spark: "⚡"
+};
+
+function itemStars(item) {
+    if (!item) return "";
+    const s = (item.power || 0) + (item.speed || 0) + (item.intel || 0) + (item.stamina || 0);
+    const n = Math.min(3, Math.max(0, Math.round(s / 4)));
+    return n ? "★".repeat(n) : "";
+}
+
+function slotIcon(item, slot) {
+    if (!item) return slot === "avatar" ? "?" : "—";
+    if (slot === "avatar") return item;
+    const l = (item.label || "").toLowerCase();
+    if (l.includes("нож")) return "🔪";
+    if (l.includes("бита")) return "🏏";
+    if (l.includes("кожан")) return "🧥";
+    if (l.includes("ботин")) return "👢";
+    return slot === "weapon" ? "🔫" : "👕";
+}
+
+function buildSlots(data, isPlayer, avatarFill) {
+    const eq = data.equipment || {};
+    const ch = data.character || "balanced";
+    let ava;
+    if (isPlayer && data.avatar) {
+        ava = playerAvatarFrameHtml(data.avatar, {
+            width: 48,
+            height: 48,
+            className: "player-avatar-frame--sm",
+            fill: avatarFill
+        });
+    } else if (isPlayer) {
+        ava = characterFace[ch] || "🧍";
+    } else {
+        ava = data.emoji || "👤";
+    }
+    const w = eq.weapon;
+    const c = eq.clothes;
+    const defs = [
+        { slot: "avatar", item: ava, isChar: true, isHtml: isPlayer && !!data.avatar },
+        { slot: "weapon", item: w },
+        { slot: "boots", item: null },
+        { slot: "hat", item: null },
+        { slot: "clothes", item: c },
+        { slot: "gloves", item: null }
+    ];
+    return defs
+        .map((d) => {
+            const icon = d.isHtml ? d.item : d.isChar ? d.item : slotIcon(d.item, d.slot);
+            const empty = !d.isChar && !d.item;
+            const stars = d.item && !d.isChar ? `<span class="shmot-stars">${itemStars(d.item)}</span>` : "";
+            return `<div class="shmot-slot ${empty ? "empty" : ""} ${d.isHtml ? "shmot-slot-ava" : ""}">${icon}${stars}</div>`;
+        })
+        .join("");
+}
+
+function card(title, data, isPlayer, avatarFill) {
+    const t = data.total ?? 0;
+    const g = data.gearSum ?? 0;
+    const c = data.charSum ?? 0;
+    const tat = data.tattooSum ?? 0;
+    const am = data.amuletSum ?? 0;
+    const extra = isPlayer
+        ? `<div class="shmot-totals"><strong>Общая сумма прокачки: ${t}</strong><br>
+            Прокачка персонажа: ${c} | Шмот: + ${g} | Тату: +${tat} | Амулеты: +${am}</div>`
+        : `<div class="shmot-totals"><strong>Общая сумма прокачки: ${t}</strong><br>
+            Сумма статов бота: ${c}${g ? ` | Шмот: +${g}` : ""}</div>`;
+    return `<div class="shmot-card">
+        <div class="shmot-card-head">${title}</div>
+        <div class="shmot-slots">${buildSlots(data, isPlayer, isPlayer ? avatarFill : null)}</div>
+        ${extra}
+    </div>`;
+}
+
+(async () => {
+    const params = new URLSearchParams(window.location.search);
+    const fightId = params.get("fightId");
+    const email = getEmail();
+    if (!email) {
+        window.location.href = "/index.html";
+        return;
+    }
+    if (!fightId) {
+        document.getElementById("msg").style.display = "block";
+        document.getElementById("msg").textContent = "Нет fightId в ссылке. Вернись со страницы боя.";
+        return;
+    }
+
+    const res = await fetch(
+        `/district/fight-gear?email=${encodeURIComponent(email)}&fightId=${encodeURIComponent(fightId)}`
+    );
+    const data = await res.json();
+    if (!data.success) {
+        document.getElementById("msg").style.display = "block";
+        document.getElementById("msg").textContent = data.error || "Не удалось загрузить";
+        return;
+    }
+
+    const user = await fetchUser();
+    const clubsCatalog = await loadClubsCatalog();
+    const avatarFill = user && user.club ? clubAvatarFill(user.club, clubsCatalog) : null;
+
+    const p = data.player;
+    const o = data.opponent;
+    document.getElementById("root").innerHTML =
+        card(`${p.name} [${p.level}]`, p, true, avatarFill) +
+        card(`${o.name} [${o.level}]`, { ...o, equipment: {} }, false, null);
+})();
+</script>
+</body>
+</html>

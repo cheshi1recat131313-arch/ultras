@@ -1,0 +1,149 @@
+/**
+ * Единая оболочка игры: серо-тёмные поля (как hools), светло-зелёная колонка 480px.
+ * Подключать после hools.css. Ларёк не подключает этот файл.
+ */
+
+html:has(body.hools.game-shell) {
+    background: #38393e;
+}
+
+body.hools.game-shell {
+    background: #38393e;
+    margin: 0;
+    padding: 0;
+}
+
+/* center-scope сужал body до 600px — по бокам просвечивал белый html */
+body.hools.game-shell.center-scope {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+}
+
+body.hools.game-shell > .app {
+    background: #c5d4a8;
+    box-shadow: none;
+    border: none;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Центр, барыга, гардероб */
+body.hools.game-shell .center-meat {
+    background: #c5d4a8;
+    padding: 10px 0 16px;
+}
+
+body.hools.game-shell .center-desc {
+    color: #222;
+}
+
+body.hools.game-shell .center-list {
+    background: #b0c49a;
+    border-top-color: #8faa82;
+}
+
+body.hools.game-shell .baryga-card {
+    margin: 10px 10px 0;
+    background: #c5d4a8;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    box-shadow: none;
+}
+
+body.hools.game-shell .baryga-card-head {
+    background: #b0c49a;
+    border-bottom: 1px solid #9bb08f;
+}
+
+body.hools.game-shell .baryga-card-body {
+    color: #222;
+}
+
+/* Досье */
+body.hools.game-shell .dossier-sheet,
+body.hools.game-shell .dossier-skills {
+    background: #c5d4a8;
+}
+
+/* Район */
+body.hools.game-shell .district-bots {
+    background: #b0c49a;
+}
+
+body.hools.game-shell .district-empty {
+    color: #222;
+}
+
+body.hools.game-shell .bot-card {
+    background: #c5d4a8;
+    border-bottom-color: #9bb08f;
+}
+
+/* Работа */
+body.hools.game-shell .work-npc-row,
+body.hools.game-shell .work-panel {
+    background: #c5d4a8;
+}
+
+body.hools.game-shell .work-job-body {
+    background: transparent;
+}
+
+/* Главное меню — список локаций */
+body.hools.game-shell .list {
+    background: #b0c49a;
+}
+
+body.hools.game-shell .item {
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 97%);
+    border-bottom-color: #9aaa8c;
+}
+
+body.hools.game-shell .item.danger {
+    background: linear-gradient(#c04756, #a13b48);
+}
+
+/* Тату-салон (center-tattoo) */
+body.hools.game-shell .salon-quote {
+    background: linear-gradient(180deg, #f5d76e 0%, #e8c84a 100%);
+    border-color: #a88410;
+    color: #1a1408;
+}
+
+body.hools.game-shell .salon-card {
+    background: #c5d4a8;
+    border-bottom-color: #9bb08f;
+}
+
+body.hools.game-shell .salon-card-ico {
+    background: #b0c49a;
+    border-color: #8a9a7a;
+}
+
+/* Кикер */
+body.hools.game-shell .kicker-row {
+    background: #c5d4a8;
+    border-bottom-color: #9bb08f;
+}
+
+body.hools.game-shell .kicker-meta {
+    color: #222;
+}
+
+/* Лотерея */
+body.hools.game-shell .lottery-panel,
+body.hools.game-shell .lottery-log-wrap {
+    background: #c5d4a8;
+}
+
+body.hools.game-shell .lottery-log {
+    background: #b0c49a;
+    color: #222;
+}
+
+/* Локации-заглушки */
+body.hools.game-shell .loc-stub {
+    background: #c5d4a8;
+    color: #222;
+}

@@ -1,0 +1,367 @@
+/* Страница боя (SSR), в духе hools.online */
+html:has(body.fight-body) {
+    background: #38393e;
+}
+
+.fight-body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    background: #38393e;
+    color: #222;
+}
+
+.fight-body .app.fight-app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: #c5d4a8;
+    box-shadow: none;
+    border: none;
+}
+
+.fight-container {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.fight-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #38393e;
+    padding: 4px 8px;
+}
+
+.fight-logo-link {
+    flex: 1;
+    text-align: center;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.02em;
+}
+
+.fight-logo-text {
+    display: inline-block;
+    padding-top: 4px;
+}
+
+.fight-refresh {
+    width: 40px;
+    height: 36px;
+    border: none;
+    background: transparent;
+    color: #6fcf6f;
+    font-size: 22px;
+    cursor: pointer;
+    border-radius: 6px;
+}
+
+.fight-grass-hr {
+    height: 4px;
+    margin: 0;
+    background: linear-gradient(0deg, rgb(56, 147, 25) 35%, rgb(62, 210, 35) 100%);
+}
+
+.fight-stat-strip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 10px;
+    padding: 8px 6px;
+    background: #3f3f3d;
+    font-size: 12px;
+    color: #eee;
+}
+
+.fight-time {
+    font-weight: 700;
+}
+
+.fight-name {
+    color: #eee;
+    text-decoration: none;
+}
+
+.fight-stat-i {
+    white-space: nowrap;
+}
+
+.fight-main-block {
+    background: #c5d4a8;
+    padding: 0 0 12px;
+}
+
+.fight-levelup {
+    margin: 0;
+    padding: 10px 12px 6px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2b5c2b;
+    background: #e8f5c8;
+    border-bottom: 1px solid #a8c89a;
+}
+
+.fight-title {
+    text-align: center;
+    margin: 0;
+    padding: 8px 10px 4px;
+    font-size: 1.1rem;
+}
+
+.fight-title-win {
+    color: #ca4d29;
+}
+
+.fight-title-lose {
+    color: #b22222;
+}
+
+.fight-reward-box {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px 10px;
+    margin: 6px 10px 10px;
+    padding: 5px 8px;
+    background: #ffe189;
+    border-radius: 5px;
+    border: 3px solid #eb8a17;
+}
+
+.fight-reward-box--loss {
+    background: #f5d4d4;
+    border-color: #c44;
+}
+
+.fight-reward-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.1;
+    white-space: nowrap;
+    color: #111;
+}
+
+.fight-reward-ico {
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    object-fit: contain;
+}
+
+.fight-reward-skull {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+}
+
+.fight-ava-img {
+    object-fit: cover;
+    padding: 0;
+    line-height: 0;
+}
+
+.fight-ava.player-avatar-frame {
+    position: relative;
+    width: 88px;
+    height: 90px;
+    border-radius: 15px;
+    border: 1px solid #294c24;
+    overflow: hidden;
+    line-height: 0;
+    background: transparent;
+    isolation: isolate;
+}
+
+.fight-ava.player-avatar-frame .player-avatar-bg {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.fight-ava.player-avatar-frame .player-avatar-img {
+    position: relative;
+    z-index: 2;
+    width: 88px;
+    height: 90px;
+    object-fit: contain;
+    object-position: center center;
+    border: none;
+    mix-blend-mode: normal;
+    filter: none;
+}
+
+.fight-vs-row {
+    text-align: center;
+    margin: 8px 0 4px;
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.fight-ava {
+    display: inline-block;
+    vertical-align: middle;
+    width: 88px;
+    height: 90px;
+    line-height: 90px;
+    border-radius: 15px;
+    background: linear-gradient(180deg, #5a7a52, #3d5a38);
+    border: 1px solid #294c24;
+    text-align: center;
+}
+
+.fight-vs {
+    display: inline-block;
+    vertical-align: middle;
+    padding: 0 10px;
+    font-weight: 800;
+    color: #ca4d29;
+    font-size: 1.2rem;
+}
+
+.fight-vs-names {
+    text-align: center;
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #111;
+}
+
+.fight-vs-names b {
+    color: #111;
+    font-weight: 800;
+}
+
+.fight-log-scroll {
+    text-align: left;
+    padding: 4px 12px 8px;
+    margin: 0 -4px;
+}
+
+.fight-log-line {
+    margin: 0 0 8px;
+    font-size: 14px;
+    line-height: 1.35;
+    color: #222;
+}
+
+.fight-log-line.fight-crit {
+    color: #b22222;
+    font-weight: bold;
+}
+
+.fight-sys {
+    color: #3d5a38;
+    font-style: italic;
+}
+
+.fight-talisman {
+    font-size: 12px;
+    color: #555;
+}
+
+.fight-heart {
+    vertical-align: text-bottom;
+    margin-left: 2px;
+}
+
+.fight-summary {
+    margin: 12px 0 8px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #111;
+}
+
+.fight-summary b {
+    color: #111;
+}
+
+.fight-coin {
+    font-weight: 700;
+}
+
+.fight-nav-btn {
+    display: block;
+    text-decoration: none;
+    padding: 0;
+}
+
+.fight-nav-green .fight-inner-btn {
+    width: 100%;
+    text-align: left;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 46%, #58944f 97%);
+    border: 1px solid #294c24;
+    border-radius: 0;
+    height: 45px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    padding-left: 12px;
+}
+
+.fight-footer-nav {
+    display: flex;
+    margin-top: 0;
+}
+
+.fight-nav-half {
+    flex: 1;
+    text-decoration: none;
+}
+
+.fight-nav-half .fight-inner-btn.dark {
+    width: 100%;
+    text-align: left;
+    background: #467259;
+    border: 1px solid #27533a;
+    border-radius: 0;
+    height: 44px;
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+    padding-left: 10px;
+}
+
+.fight-quote {
+    margin: 0 0 12px;
+    font-size: 14px;
+    color: #3d5a38;
+    font-style: italic;
+}
+
+.fight-end-msg {
+    margin: 8px 0;
+    font-size: 13px;
+    color: #1a4a1a;
+    font-weight: 600;
+}
+
+.fight-btn-row {
+    display: block;
+    padding: 12px;
+    text-decoration: none;
+}
+
+.fight-btn {
+    cursor: pointer;
+    border: 1px solid #294c24;
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 15px;
+}
+
+.fight-btn-wide {
+    width: 100%;
+    background: #56864c;
+    color: #fff;
+    font-weight: 700;
+}

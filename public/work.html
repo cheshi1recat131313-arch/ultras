@@ -1,0 +1,187 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Работа</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+</head>
+<body class="hools game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div id="workFlash" class="work-flash" hidden></div>
+    <div class="page-title work-page-title">Работа</div>
+    <p class="work-reset" id="workDayBanner">Работы дня</p>
+    <div id="msg" class="msg"></div>
+
+    <div class="work-npc-row">
+        <div class="work-npc-portrait" aria-hidden="true">
+            <span class="work-npc-label">Тамара</span>
+        </div>
+        <p class="work-npc-quote">Так-так… Нужна работа?<br>Мясокомбинат сегодня ничего не прислал, но постараюсь подобрать что-то поприличней.</p>
+    </div>
+
+    <p class="work-dayline">Работяги дня: пока без фирмы</p>
+
+    <div id="workPanel" class="work-panel">
+        <div class="work-job-title" id="workJobTitle">—</div>
+        <div class="work-job-body" id="workJobBody"></div>
+        <div id="workDesc" class="work-desc-box" hidden></div>
+        <div class="work-actions" id="workActions"></div>
+    </div>
+
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script>
+const ICO_RUB = '<img src="/static/location/base/ser.svg" class="work-rub-ico" width="16" height="16" alt="" role="presentation">';
+const ICO_EN = '<img src="/static/location/base/energy.png" class="work-en-ico" width="16" height="16" alt="" role="presentation">';
+
+function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+function updateDayBanner(w) {
+    const el = document.getElementById("workDayBanner");
+    if (!el || !w) return;
+    el.textContent = w.dayHeading || "Работы дня";
+}
+
+function showWorkFlash(rublesGain) {
+    const el = document.getElementById("workFlash");
+    if (!el) return;
+    if (!rublesGain) {
+        el.hidden = true;
+        el.innerHTML = "";
+        return;
+    }
+    el.innerHTML = `Работа выполнена! +${rublesGain} ${ICO_RUB}`;
+    el.hidden = false;
+}
+
+function renderJobInfo(w, visible) {
+    const box = document.getElementById("workDesc");
+    if (!visible) {
+        box.hidden = true;
+        box.innerHTML = "";
+        return;
+    }
+    box.hidden = false;
+    box.innerHTML = `
+        <p class="work-desc-line">Необходимо потратить: <b>${w.energyNeed}</b> ${ICO_EN}</p>
+        <p class="work-desc-line">Время выполнения: <b>${w.minutes}</b> минут</p>
+        <p class="work-desc-line">Награда: <b>${w.reward}</b> ${ICO_RUB}</p>`;
+}
+
+function renderWork(state) {
+    const w = state.work;
+    updateDayBanner(w);
+    const title = document.getElementById("workJobTitle");
+    const body = document.getElementById("workJobBody");
+    const actions = document.getElementById("workActions");
+
+    if (w.status === "period_wait") {
+        renderJobInfo(w, false);
+        title.textContent = "Работа";
+        body.innerHTML =
+            `<p class="work-done-msg">Все работы на сегодня выполнены (${w.jobsCompleted || 0} / ${w.jobsTotal || 7}).</p>`;
+        actions.innerHTML = "";
+        return;
+    }
+
+    title.textContent = w.jobName || "—";
+
+    if (w.status === "offered") {
+        body.innerHTML = "";
+        renderJobInfo(w, true);
+        actions.innerHTML = `
+            <button type="button" class="work-btn work-btn-accept" id="btnAccept">Я берусь!</button>
+            <button type="button" class="work-btn work-btn-cancel" id="btnCancel">Отмена</button>`;
+        document.getElementById("btnAccept").onclick = acceptWork;
+        document.getElementById("btnCancel").onclick = cancelWork;
+        return;
+    }
+
+    renderJobInfo(w, false);
+    body.innerHTML = `
+        <p class="work-line">Выполнено: <b>${w.energyDone}</b> из <b>${w.energyNeed}</b> ${ICO_EN}</p>`;
+    actions.innerHTML = `
+        <button type="button" class="work-btn work-btn-do" id="btnPerform">Выполнить</button>
+        <button type="button" class="work-btn work-btn-leave" id="btnLeave">Оставить</button>`;
+    document.getElementById("btnPerform").onclick = performWork;
+    document.getElementById("btnLeave").onclick = leaveWork;
+}
+
+async function loadWork() {
+    const res = await fetch(`/work/state?email=${encodeURIComponent(getEmail())}`);
+    const data = await res.json();
+    if (!data.success) {
+        showMsg(data.error || "Ошибка", true);
+        return;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+    renderWork(data);
+}
+
+async function acceptWork() {
+    showWorkFlash(null);
+    const { ok, data } = await postJson("/work/accept", { email: getEmail() });
+    if (!ok || !data.success) {
+        showMsg(data.error || "Не удалось", true);
+        return;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+    renderWork(data);
+}
+
+async function cancelWork() {
+    showWorkFlash(null);
+    const { ok, data } = await postJson("/work/leave", { email: getEmail() });
+    if (!ok || !data.success) {
+        showMsg(data.error || "Не удалось", true);
+        return;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+    renderWork(data);
+}
+
+async function performWork() {
+    const { ok, data } = await postJson("/work/perform", { email: getEmail() });
+    if (!ok || !data.success) {
+        showMsg(data.error || "Не удалось", true);
+        return;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+    if (data.completed && data.rublesGain) {
+        showWorkFlash(data.rublesGain);
+    } else {
+        showWorkFlash(null);
+    }
+    renderWork(data);
+}
+
+async function leaveWork() {
+    showWorkFlash(null);
+    const { ok, data } = await postJson("/work/leave", { email: getEmail() });
+    if (!ok || !data.success) {
+        showMsg(data.error || "Не удалось", true);
+        return;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+    renderWork(data);
+}
+
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    await loadWork();
+})();
+</script>
+</body>
+</html>

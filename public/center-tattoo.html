@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тату салон</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/center.css">
+</head>
+<body class="hools center-scope game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="center-meat">
+        <h1 class="center-h1">Тату салон</h1>
+        <div class="salon-intro">
+            <div class="salon-face" aria-hidden="true">💜</div>
+            <div class="salon-quote">
+                Временные татухи остаются на тебе определённое время, а потом исчезают, не оставляя следа. Выбирай, что тебе нравится.
+            </div>
+        </div>
+        <div class="center-hint">Подсказка.</div>
+        <div id="msg" class="msg"></div>
+        <div id="salonList">
+            <div class="salon-card">
+                <div class="salon-card-ico">☠️</div>
+                <div class="salon-card-info">
+                    <strong>Сила: +2</strong><br>
+                    Действует: 12:00:00<br>
+                    Стоимость: 45 ₽<br>
+                    <span id="have-power"></span>
+                </div>
+                <button type="button" class="salon-buy" data-stat="power">Хочу такую</button>
+            </div>
+            <div class="salon-card">
+                <div class="salon-card-ico">⚓</div>
+                <div class="salon-card-info">
+                    <strong>Стойкость: +2</strong><br>
+                    Действует: 12:00:00<br>
+                    Стоимость: 45 ₽<br>
+                    <span id="have-stamina"></span>
+                </div>
+                <button type="button" class="salon-buy" data-stat="stamina">Хочу такую</button>
+            </div>
+            <div class="salon-card">
+                <div class="salon-card-ico">🌀</div>
+                <div class="salon-card-info">
+                    <strong>Ловкость: +2</strong><br>
+                    Действует: 12:00:00<br>
+                    Стоимость: 45 ₽<br>
+                    <span id="have-speed"></span>
+                </div>
+                <button type="button" class="salon-buy" data-stat="speed">Хочу такую</button>
+            </div>
+            <div class="salon-card">
+                <div class="salon-card-ico">👁</div>
+                <div class="salon-card-info">
+                    <strong>Интуиция: +2</strong><br>
+                    Действует: 12:00:00<br>
+                    Стоимость: 45 ₽<br>
+                    <span id="have-intel"></span>
+                </div>
+                <button type="button" class="salon-buy" data-stat="intel">Хочу такую</button>
+            </div>
+        </div>
+        <a class="item back" href="/center.html">← Назад в Центр</a>
+    </div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script>
+function updateHave(user) {
+    const t = user.tattoos || {};
+    const set = (id, key) => {
+        const v = t[key];
+        document.getElementById(id).textContent = v ? `У тебя есть: активная тату (+${v})` : "У тебя есть: нет активной";
+    };
+    set("have-power", "power");
+    set("have-stamina", "stamina");
+    set("have-speed", "speed");
+    set("have-intel", "intel");
+}
+
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    updateHave(user);
+
+    document.querySelectorAll(".salon-buy").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const { ok, data } = await postJson("/district/tattoo", {
+                email: getEmail(),
+                stat: btn.dataset.stat
+            });
+            showMsg(ok ? data.message : data.error, !ok);
+            if (data.user) {
+                renderHeaderBlock(data.user);
+                updateHave(data.user);
+            }
+        });
+    });
+})();
+</script>
+</body>
+</html>

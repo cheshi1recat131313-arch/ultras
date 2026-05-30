@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рейтинг</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/rating.css">
+</head>
+<body class="hools game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="page-title" id="pageTitle">Рейтинг</div>
+    <p class="rating-view-hint" id="viewHint"></p>
+    <div id="viewRoot"></div>
+    <div class="list">
+        <a class="item back" href="/rating.html">← К разделам</a>
+        <a class="item back" href="/game.html">← В игру</a>
+    </div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/rating-mock.js"></script>
+<script>
+function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+function renderTable(section) {
+    const cols = section.columns || [];
+    let head = "<tr>";
+    cols.forEach((c, i) => {
+        const cls = i === 0 ? "col-pos" : i === cols.length - 1 ? "col-val" : "";
+        head += `<th class="${cls}">${escapeHtml(c)}</th>`;
+    });
+    head += "</tr>";
+
+    let body = "";
+    (section.rows || []).forEach((row, ri) => {
+        const me = section.meRow === ri ? " is-me" : "";
+        body += `<tr class="${me}">`;
+        row.forEach((cell, ci) => {
+            const cls =
+                ci === 0 ? "col-pos" : ci === row.length - 1 ? "col-val" : "";
+            body += `<td class="${cls}">${escapeHtml(cell)}</td>`;
+        });
+        body += "</tr>";
+    });
+
+    return (
+        '<div class="rating-table-wrap">' +
+        '<table class="rating-table"><thead>' +
+        head +
+        "</thead><tbody>" +
+        body +
+        "</tbody></table></div>"
+    );
+}
+
+function renderRecords(section) {
+    let html = '<div class="rating-records">';
+    (section.records || []).forEach((rec) => {
+        html +=
+            '<article class="rating-record">' +
+            '<p class="rating-record-label">' +
+            escapeHtml(rec.label) +
+            '<span class="rating-record-who">' +
+            escapeHtml(rec.who || "") +
+            "</span></p>" +
+            '<span class="rating-record-val">' +
+            escapeHtml(rec.value) +
+            "</span></article>";
+    });
+    html += "</div>";
+    return html;
+}
+
+async function renderClubList() {
+    const res = await fetch("/rating/clubs");
+    const data = await res.json();
+    if (!data.success || !Array.isArray(data.clubs)) {
+        return '<p class="rating-mock-tag">Не удалось загрузить список клубов.</p>';
+    }
+
+    let html = '<div class="rating-clubs-list">';
+    data.clubs.forEach((club, index) => {
+        const rating = Number.isFinite(Number(club.rating)) ? Number(club.rating) : 0;
+        const emblem = club.emblem || "";
+        html +=
+            '<article class="rating-club-row">' +
+            '<img class="rating-club-emblem" src="' +
+            escapeHtml(emblem) +
+            '" width="48" height="48" alt="" loading="lazy" decoding="async">' +
+            '<div class="rating-club-info">' +
+            '<h3 class="rating-club-name">' +
+            escapeHtml(club.name || "") +
+            "</h3>" +
+            "<p class=\"rating-club-score\">Рейтинг: " +
+            escapeHtml(String(rating)) +
+            "</p></div></article>";
+    });
+    html += "</div>";
+    return html;
+}
+
+async function renderView() {
+    const kind = new URLSearchParams(window.location.search).get("kind") || "";
+    const section = getRatingSection(kind);
+    const root = document.getElementById("viewRoot");
+    const titleEl = document.getElementById("pageTitle");
+    const hintEl = document.getElementById("viewHint");
+
+    if (!section) {
+        titleEl.textContent = "Раздел не найден";
+        hintEl.textContent = "";
+        root.innerHTML =
+            '<p class="rating-mock-tag">Выберите раздел на странице рейтинга.</p>';
+        return;
+    }
+
+    document.title = section.title + " — Рейтинг";
+    titleEl.textContent = "🏆 " + section.title;
+    hintEl.textContent = section.hint || "";
+
+    if (section.view === "clubs" || section.id === "clubs") {
+        root.innerHTML = await renderClubList();
+    } else if (section.records) {
+        root.innerHTML = renderRecords(section);
+    } else {
+        root.innerHTML = renderTable(section);
+    }
+}
+
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    await renderView();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Задания</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/tasks.css">
+</head>
+<body class="hools game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="page-title">Задания</div>
+    <p class="tasks-reset" id="resetTimer">Обновление через —:—</p>
+    <div id="msg" class="msg"></div>
+    <div id="tasksRoot" class="tasks-root"></div>
+    <div class="list">
+        <a class="item back" href="/game.html">← В игру</a>
+    </div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/tasks-ui.js"></script>
+<script>
+function formatTimer(ms) {
+    const totalMin = Math.max(0, Math.ceil(ms / 60000));
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return String(h).padStart(2, "0") + ":" + String(m).padStart(2, "0");
+}
+
+function renderQuests(data) {
+    const root = document.getElementById("tasksRoot");
+    const byTier = {};
+    (data.quests || []).forEach((q) => {
+        const t = q.tier || 1;
+        if (!byTier[t]) byTier[t] = [];
+        byTier[t].push(q);
+    });
+
+    let html = "";
+    const tiers = Object.keys(byTier)
+        .map(Number)
+        .sort((a, b) => a - b);
+    for (const tier of tiers) {
+        html += `<h2 class="tasks-tier">Уровень ${tier}</h2>`;
+        for (const q of byTier[tier]) {
+            const done = q.done ? " tasks-card--done" : "";
+            html += `<article class="tasks-card${done}">
+                <h3 class="tasks-card-title">${escapeTasksHtml(q.title)}</h3>
+                <div class="tasks-reward-row">
+                    <span class="tasks-reward-label">Награда:</span>
+                    ${formatQuestRewardHtml(q)}
+                </div>
+                ${renderProgressBarHtml(q)}
+                ${q.done ? '<span class="tasks-done-badge">Задание выполнено</span>' : ""}
+                <a class="tasks-desc-btn" href="${questDetailUrl(q.id)}">Описание</a>
+            </article>`;
+        }
+    }
+    root.innerHTML = html || '<p class="district-hint">Задания скоро появятся.</p>';
+}
+
+let resetDeadline = 0;
+
+async function loadTasks() {
+    const email = getEmail();
+    if (!email) return;
+    const res = await fetch("/daily-quests?email=" + encodeURIComponent(email));
+    const data = await res.json();
+    if (!data.success) {
+        showMsg(data.error || "Не удалось загрузить задания", true);
+        return;
+    }
+    if (data.user) {
+        renderHeaderBlock(data.user);
+        syncSessionFromUser(data.user);
+    }
+    if (data.rewardMessages && data.rewardMessages.length) {
+        showMsg(data.rewardMessages.join(" · "), false);
+    }
+    resetDeadline = Date.now() + (data.resetInMs || 0);
+    document.getElementById("resetTimer").textContent =
+        "Обновление через " + (data.resetLabel || formatTimer(data.resetInMs || 0));
+    renderQuests(data);
+}
+
+function tickTimer() {
+    const left = resetDeadline - Date.now();
+    const el = document.getElementById("resetTimer");
+    if (!el) return;
+    if (left <= 0) {
+        el.textContent = "Обновление заданий…";
+        loadTasks();
+        return;
+    }
+    el.textContent = "Обновление через " + formatTimer(left);
+}
+
+(async () => {
+    await loadTasks();
+    setInterval(tickTimer, 1000);
+})();
+</script>
+</body>
+</html>
+

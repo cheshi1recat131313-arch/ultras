@@ -1,0 +1,82 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Качалка — прокачка</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+</head>
+<body class="hools game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="page-title">Качалка</div>
+    <div id="msg" class="msg"></div>
+
+    <div class="list">
+        <p class="district-hint gym-intro" style="padding:8px 12px;margin:0">
+            <b>Прокачка</b> — распредели очки за уровень.<br>
+            <small>Сила — урон · Ловкость — первый удар · Выносливость — макс. HP</small>
+        </p>
+        <p class="district-hint gym-points-row" style="padding:8px 12px;margin:0">
+            Доступно очков: <b id="statPoints">0</b>
+        </p>
+        <p class="district-hint gym-stats-row" style="padding:4px 12px;margin:0;font-size:13px">
+            Сила: <b id="val-power">10</b> ·
+            Ловкость: <b id="val-speed">10</b> ·
+            Выносливость: <b id="val-stamina">10</b>
+        </p>
+        <button type="button" class="item gym-alloc-btn" data-stat="power">Сила +1</button>
+        <button type="button" class="item gym-alloc-btn" data-stat="speed">Ловкость +1</button>
+        <button type="button" class="item gym-alloc-btn" data-stat="stamina">Выносливость +1</button>
+        <p id="gymEmpty" class="district-hint" style="padding:8px 12px;margin:0;display:none">
+            Нет очков. Побеждай в районе и повышай уровень — очки придут автоматически.
+        </p>
+        <a class="item back" href="/district.html">← В район</a>
+    </div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script>
+function renderGym(user) {
+    const pts = user.statPoints ?? 0;
+    document.getElementById("statPoints").textContent = pts;
+    document.getElementById("val-power").textContent = user.power ?? 10;
+    document.getElementById("val-speed").textContent = user.speed ?? 10;
+    document.getElementById("val-stamina").textContent = user.stamina ?? 10;
+
+    const hasPoints = pts > 0;
+    document.getElementById("gymEmpty").style.display = hasPoints ? "none" : "block";
+    document.querySelectorAll(".gym-alloc-btn").forEach((btn) => {
+        btn.disabled = !hasPoints;
+        btn.style.opacity = hasPoints ? "1" : "0.45";
+    });
+}
+
+async function allocate(stat) {
+    const { ok, data } = await postJson("/district/gym", { email: getEmail(), stat, allocate: true });
+    showMsg(ok ? data.message : data.error, !ok);
+    if (data.user) {
+        renderHeaderBlock(data.user);
+        renderGym(data.user);
+    }
+}
+
+(async () => {
+    const params = new URLSearchParams(window.location.search);
+    const notice = params.get("notice");
+    if (notice) showMsg(decodeURIComponent(notice), false);
+
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    renderGym(user);
+    document.querySelectorAll(".gym-alloc-btn").forEach((btn) => {
+        btn.addEventListener("click", () => allocate(btn.dataset.stat));
+    });
+})();
+</script>
+</body>
+</html>

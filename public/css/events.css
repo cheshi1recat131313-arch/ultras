@@ -1,0 +1,131 @@
+.events-root {
+    padding: 0 0 12px;
+    background: #c5d4a8;
+}
+
+.events-item {
+    box-sizing: border-box;
+    min-height: 108px;
+    padding: 14px;
+    border-bottom: 1px solid #a8b892;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.events-item:last-child {
+    border-bottom: none;
+}
+
+.events-time {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #777;
+    line-height: 1.2;
+}
+
+.events-summary {
+    margin: 0 0 14px;
+    flex: 1 1 auto;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #1a1a1a;
+}
+
+.events-summary .fight-reward-ico,
+.events-detail-summary .fight-reward-ico {
+    width: 14px;
+    height: 14px;
+    vertical-align: -2px;
+}
+
+.events-more-wrap {
+    text-align: center;
+    margin-top: auto;
+}
+
+.events-more-btn {
+    display: inline-block;
+    box-sizing: border-box;
+    min-width: 140px;
+    padding: 9px 22px;
+    border: 1px solid #c96a18;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #ffb347 0%, #f08a24 48%, #e07010 100%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset;
+}
+
+.events-more-btn:active {
+    background: linear-gradient(180deg, #e89430 0%, #d07018 100%);
+}
+
+.events-empty {
+    padding: 20px 14px;
+    text-align: center;
+    font-size: 14px;
+    color: #444;
+}
+
+.events-detail-sheet {
+    margin: 0 10px 12px;
+    padding: 0;
+    background: transparent;
+    border: none;
+}
+
+.events-detail-meta {
+    margin: 0 10px 10px;
+    padding: 12px 14px;
+    background: #c5d4a8;
+    border: 1px solid #8fa87a;
+}
+
+.events-detail-time {
+    margin: 0 0 10px;
+    font-size: 12px;
+    color: #777;
+}
+
+.events-detail-summary {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.35;
+}
+
+.events-detail-summary .fight-reward-ico {
+    width: 14px;
+    height: 14px;
+    vertical-align: -2px;
+}
+
+.events-detail-fight {
+    margin: 0 0 8px;
+}
+
+.events-detail-fight .fight-main-block--embedded {
+    margin: 0;
+}
+
+.events-detail-text {
+    margin: 0 10px 12px;
+    padding: 12px 14px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #222;
+    background: #c5d4a8;
+    border: 1px solid #8fa87a;
+}
+
+.events-detail-nav .fight-nav-btn {
+    margin-left: 10px;
+    margin-right: 10px;
+}

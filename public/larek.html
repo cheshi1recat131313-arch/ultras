@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ларёк</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/larek.css">
+</head>
+<body class="hools larek-page game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+
+    <div class="larek-meat">
+        <h1 class="larek-title">Ларёк</h1>
+
+        <div class="larek-npc">
+            <div class="larek-npc-ava" style="background-image:url('/static/personage/x_b7c1209c.jpg')" role="img" aria-label="Геннадий"></div>
+            <div class="larek-npc-bubble">
+                Тут у меня всякое разное, от фастфуда до магических настоек. Ну а что делать? Приходится приспосабливаться.
+            </div>
+        </div>
+
+        <div class="larek-hint">
+            <span class="larek-hint-ico">?</span>
+            <span>Подсказка.</span>
+        </div>
+
+        <div class="larek-cards" id="larekItems">
+            <article class="larek-card" data-item-id="americano">
+                <img class="larek-card-icon" src="/static/larek/americano.png" alt="Стаканчик Американо" width="88" height="88">
+                <div class="larek-card-body">
+                    <div class="larek-card-name">Стаканчик Американо</div>
+                    <div class="larek-card-desc">Помогает быстрее закончить работу.</div>
+                    <div class="larek-card-meta">Использование: не чаще <b>1 раза</b> в <b>5 часов</b>.</div>
+                    <div class="larek-card-meta">Энергия: <b>+100</b></div>
+                    <div class="larek-card-owned">У тебя есть: <b id="cnt-americano">0</b> шт.</div>
+                    <div class="larek-card-price">Цена: <b>7</b> <img class="larek-price-ico" src="/static/location/base/ser.svg" alt="монеты"></div>
+                    <div class="larek-card-actions">
+                        <button type="button" class="larek-buy" data-item="americano">Купить</button>
+                        <button type="button" class="larek-buy10" disabled>Купить 10 шт.</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="larek-card" data-item-id="hamburger">
+                <img class="larek-card-icon" src="/static/larek/hamburger.png" alt="Гамбургер" width="88" height="88">
+                <div class="larek-card-body">
+                    <div class="larek-card-name">Гамбургер</div>
+                    <div class="larek-card-desc">Восстанавливает здоровье.</div>
+                    <div class="larek-card-meta">Использование: не чаще <b>1 раза</b> в <b>60 минут</b>.</div>
+                    <div class="larek-card-meta">Здоровье: <b>+100</b></div>
+                    <div class="larek-card-owned">У тебя есть: <b id="cnt-hamburger">0</b> шт.</div>
+                    <div class="larek-card-price">Цена: <b>5</b> <img class="larek-price-ico" src="/static/location/base/ser.svg" alt="монеты"></div>
+                    <div class="larek-card-actions">
+                        <button type="button" class="larek-buy" data-item="hamburger">Купить</button>
+                        <button type="button" class="larek-buy10" disabled>Купить 10 шт.</button>
+                    </div>
+                </div>
+            </article>
+
+            <article class="larek-card" data-item-id="hotdog">
+                <div class="larek-card-icon larek-card-icon--emoji" aria-hidden="true">🌭</div>
+                <div class="larek-card-body">
+                    <div class="larek-card-name">Хот-дог</div>
+                    <div class="larek-card-desc">Восстанавливает здоровье.</div>
+                    <div class="larek-card-meta">Использование: не чаще <b>1 раза</b> в <b>5 минут</b>.</div>
+                    <div class="larek-card-meta">Здоровье: <b>+100</b></div>
+                    <div class="larek-card-owned">У тебя есть: <b id="cnt-hotdog">0</b> шт.</div>
+                    <div class="larek-card-price">Цена: <b>5</b> <img class="larek-price-ico" src="/static/location/base/mushrooms.png" alt="грибы"></div>
+                    <div class="larek-card-actions">
+                        <button type="button" class="larek-buy" data-item="hotdog">Купить</button>
+                        <button type="button" class="larek-buy10" disabled>Купить 10 шт.</button>
+                    </div>
+                </div>
+            </article>
+        </div>
+
+        <a class="larek-back" href="/mag.html">← К магу Геннадию</a>
+        <a class="larek-back" href="/garderob.html">Гардероб — твои покупки</a>
+    </div>
+
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+
+<div id="msg" class="msg"></div>
+
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/larek.js"></script>
+<script>
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    initLarekPage(user);
+})();
+</script>
+</body>
+</html>

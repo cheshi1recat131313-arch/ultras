@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Выбор клуба</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: Arial; background: #0b0b0b; color: white;
+    min-height: 100vh; display: flex; justify-content: center; align-items: flex-start;
+    padding: 20px 0 40px;
+}
+.container { width: 100%; max-width: 500px; padding: 20px; margin: 0 auto; }
+h1 { text-align: center; margin-bottom: 25px; }
+.card {
+    display: flex; align-items: center;
+    background: #1a1a1a; padding: 15px; border-radius: 14px;
+    margin-bottom: 15px; border: 1px solid #2b2b2b; transition: 0.2s;
+}
+.card:hover { background: #222; }
+.card img { width: 70px; height: 70px; border-radius: 10px; margin-right: 15px; flex-shrink: 0; object-fit: contain; }
+.info { flex: 1; }
+.info h2 { font-size: 18px; }
+.btn {
+    margin-top: 8px; padding: 10px 15px;
+    background: linear-gradient(90deg, #ff3c00, #ff0000);
+    border: none; color: white; border-radius: 6px; cursor: pointer;
+}
+.status { text-align: center; margin-bottom: 16px; color: #ff8d8d; min-height: 20px; }
+</style>
+</head>
+<body>
+<div class="container">
+<h1>Выбери клуб</h1>
+<div class="status" id="status"></div>
+<!--CARDS-->
+</div>
+
+<script src="js/session.js"></script>
+<script>
+const statusEl = document.getElementById("status");
+
+async function init() {
+    const email = getStoredEmail();
+    if (!email) {
+        window.location.href = "/index.html";
+        return;
+    }
+    const user = await fetchUserByEmail(email);
+    if (!user) {
+        clearSession();
+        window.location.href = "/index.html";
+        return;
+    }
+    if (!user.character) {
+        window.location.href = "/character.html";
+        return;
+    }
+    if (user.club) {
+        window.location.replace(onboardingUrl(user));
+        return;
+    }
+    document.querySelectorAll("[data-club]").forEach((btn) => {
+        btn.addEventListener("click", () => selectClub(btn.dataset.club));
+    });
+}
+
+async function selectClub(club) {
+    const email = getStoredEmail();
+    const response = await fetch("/club", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, club })
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        statusEl.textContent = data.error || "Не удалось сохранить клуб";
+        return;
+    }
+    if (data.user) syncSessionFromUser(data.user);
+    window.location.href = "/name.html";
+}
+
+init();
+</script>
+</body>
+</html>

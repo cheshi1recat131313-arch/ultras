@@ -1,0 +1,33 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Стадион</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+</head>
+<body class="hools game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <img class="loc-banner" src="/images/locations/stadium.png" alt="">
+
+    <div class="page-title">Стадион [0]</div>
+    <div class="list">
+        <p class="district-empty" style="text-align:left;padding:16px 14px;line-height:1.45;">Стадионные бои и фан-сектор — скоро.</p>
+        <a class="item back" href="/game.html">← На главную</a>
+    </div>
+
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script>
+(async () => {
+    const user = await fetchUser();
+    if (user) renderHeaderBlock(user);
+})();
+</script>
+</body>
+</html>

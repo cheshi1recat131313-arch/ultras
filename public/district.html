@@ -1,0 +1,181 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Район</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+</head>
+<body class="hools game-shell">
+<div class="app">
+    <header class="header" id="header"></header>
+    <img class="loc-banner" src="/images/locations/district-banner.png" alt="">
+    <div class="page-title">Район</div>
+    <div id="districtNotice" class="district-hp-alert" hidden></div>
+    <div id="msg" class="msg"></div>
+    <div class="district-toolbar">
+        <a class="district-tool" href="/gym.html">Качалка</a>
+        <a class="district-tool" href="/tattoo.html">Тату</a>
+    </div>
+    <div id="districtBots" class="district-bots"></div>
+    <button type="button" class="district-search-btn" id="searchMore">
+        <img src="/static/location/index/brass.png" width="16" height="16" alt=""> Искать ещё
+    </button>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script>
+function renderBots(bots) {
+    const root = document.getElementById("districtBots");
+    root.innerHTML = "";
+    const list = (bots || []).filter((b) => b && b.name && b.leftKick && b.rightKick);
+    if (!list.length) {
+        root.innerHTML = "<p class=\"district-empty\">Подбираем противников…</p>";
+        return;
+    }
+
+    list.forEach((b) => {
+        const avaHtml = b.avatar
+            ? '<img class="bot-ava-img" src="' + escapeHtml(b.avatar) + '" alt="">'
+            : escapeHtml(b.emoji || "👤");
+        const card = document.createElement("div");
+        card.className = "bot-card";
+        card.innerHTML = `
+            <div class="bot-ava">${avaHtml}</div>
+            <div class="bot-info">
+                <div class="bot-name">${escapeHtml(b.name)}</div>
+                <p class="bot-phrase">${escapeHtml(b.phrase || "")}</p>
+                <div class="kick-row">
+                    <button type="button" class="kick-btn kick-left" data-kick="${escapeHtml(b.leftKick)}" title="Левый">
+                        <span class="kick-label" aria-hidden="true">🤛</span>
+                    </button>
+                    <button type="button" class="kick-btn kick-right" data-kick="${escapeHtml(b.rightKick)}" title="Правый">
+                        <span class="kick-label" aria-hidden="true">🤜</span>
+                    </button>
+                </div>
+            </div>`;
+        root.appendChild(card);
+    });
+
+    root.querySelectorAll(".kick-btn[data-kick]").forEach((btn) => {
+        btn.addEventListener("click", () => tryDistrictAttack(btn.getAttribute("data-kick")));
+    });
+}
+
+function showDistrictNotice(html) {
+    const el = document.getElementById("districtNotice");
+    if (!el) return;
+    el.hidden = false;
+    el.innerHTML = html;
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function showDistrictHpAlert(hp, minHp) {
+    const need = minHp ?? 35;
+    const cur = Math.max(0, Math.round(Number(hp) || 0));
+    showDistrictNotice(
+        '<p class="district-hp-alert-title">⚠️ Недостаточно здоровья для нападения.</p>' +
+        `<p class="district-hp-alert-text">Нужно минимум <b>${need}</b> HP, сейчас <b>${cur}</b> HP.</p>` +
+        "<p class=\"district-hp-alert-text\">Восстановить здоровье можно у Мага Геннадия.</p>" +
+        '<a class="district-hp-alert-btn" href="/mag.html">Маг Геннадий</a>' +
+        '<a class="district-hp-alert-link" href="/mag.html">🧙 Перейти к Магу Геннадию</a>'
+    );
+}
+
+function showDistrictRublesAlert() {
+    showDistrictNotice(
+        '<p class="district-hp-alert-title">⚠️ Йоу, у тебя даже в кармане ничего нет.</p>' +
+        "<p class=\"district-hp-alert-text\">Негоже по району ходить с пустыми карманами.</p>" +
+        "<p class=\"district-hp-alert-text\">Не позорь свой клуб.</p>" +
+        "<p class=\"district-hp-alert-text\">Заработай немного серебра и возвращайся.</p>" +
+        '<a class="district-hp-alert-btn" href="/work.html">Работа</a>' +
+        '<a class="district-hp-alert-link" href="/work.html">Пойти на работу</a>'
+    );
+}
+
+async function tryDistrictAttack(kick) {
+    if (!kick) return;
+    const { ok, data } = await postJson("/district/attack-check", { email: getEmail() });
+    if (data && data.code === "low_hp") {
+        showDistrictHpAlert(data.hp, data.minHp);
+        return;
+    }
+    if (data && data.code === "no_rubles") {
+        showDistrictRublesAlert();
+        if (data.user) renderHeaderBlock(data.user);
+        return;
+    }
+    if (!ok || !data.success) {
+        showMsg((data && data.error) || "Не удалось напасть", true);
+        return;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+    window.location.href = "/fight?kick=" + encodeURIComponent(kick);
+}
+
+function checkDistrictAlertsFromUrl() {
+    const p = new URLSearchParams(window.location.search);
+    const u = new URL(window.location.href);
+    if (p.get("lowHp") === "1") {
+        showDistrictHpAlert(p.get("hp"), 35);
+        u.searchParams.delete("lowHp");
+        u.searchParams.delete("hp");
+    }
+    if (p.get("noRubles") === "1") {
+        showDistrictRublesAlert();
+        u.searchParams.delete("noRubles");
+    }
+    window.history.replaceState({}, "", u.pathname + u.search);
+}
+
+function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s;
+    return d.innerHTML;
+}
+
+async function refreshDistrict() {
+    const { ok, data } = await postJson("/district/refresh", { email: getEmail() });
+    if (!ok) {
+        showMsg(data.error || "Не удалось найти противников", true);
+        return null;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+    return (data.spawn && data.spawn.bots) || [];
+}
+
+async function loadSpawn() {
+    const res = await fetch(`/district/spawn?email=${encodeURIComponent(getEmail())}`);
+    const data = await res.json();
+    if (!data.success) {
+        showMsg(data.error || "Ошибка", true);
+        return;
+    }
+    if (data.user) renderHeaderBlock(data.user);
+    let bots = (data.spawn && data.spawn.bots) || [];
+    const active = bots.filter((b) => b && b.name && b.leftKick && b.rightKick);
+    if (active.length < 3) {
+        const refreshed = await refreshDistrict();
+        if (refreshed) bots = refreshed;
+    }
+    renderBots(bots);
+}
+
+document.getElementById("searchMore").addEventListener("click", async () => {
+    const bots = await refreshDistrict();
+    if (bots) renderBots(bots);
+});
+
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    checkDistrictAlertsFromUrl();
+    await loadSpawn();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Бой…</title>
+    <script>
+        (function () {
+            var q = window.location.search;
+            if (q && q.indexOf("kick=") !== -1) {
+                window.location.replace("/fight" + q);
+            } else {
+                window.location.replace("/district.html");
+            }
+        })();
+    </script>
+</head>
+<body>
+    <p>Перенаправление на страницу боя… <a href="/district.html">В район</a></p>
+</body>
+</html>

@@ -4,6 +4,8 @@ const fightSsr = require("./fight-ssr");
 const xpLevels = require("./xp-levels");
 const workLogic = require("./work-logic");
 const clubsData = require("./clubs-data");
+const playerOnline = require("./player-online");
+const { rankTitleFromTotalSkulls } = require("./club-elite");
 const dailyQuests = require("./daily-quests");
 const playerEvents = require("./player-events");
 const silverLoss = require("./silver-loss");
@@ -651,6 +653,7 @@ async function initDatabase() {
     if (!existing.has("name")) alterStatements.push("ALTER TABLE users ADD COLUMN name TEXT");
     if (!existing.has("character")) alterStatements.push("ALTER TABLE users ADD COLUMN character TEXT");
     if (!existing.has("club")) alterStatements.push("ALTER TABLE users ADD COLUMN club TEXT");
+    if (!existing.has("last_active_at")) alterStatements.push("ALTER TABLE users ADD COLUMN last_active_at INTEGER DEFAULT 0");
     if (!existing.has("energy")) alterStatements.push("ALTER TABLE users ADD COLUMN energy INTEGER DEFAULT 100");
     if (!existing.has("money")) alterStatements.push("ALTER TABLE users ADD COLUMN money INTEGER DEFAULT 69");
     if (!existing.has("rubles")) alterStatements.push("ALTER TABLE users ADD COLUMN rubles INTEGER DEFAULT 69");
@@ -3291,6 +3294,73 @@ app.get("/getUser", async (req, res) => {
         res.status(500).json({ success: false, error: "Ошибка сервера при получении пользователя" });
     }
 });
+
+
+/** Список игроков — только SELECT, без изменений БД. */
+app.get("/api/players", async (req, res) => {
+    try {
+        const page = Math.max(1, Math.floor(Number(req.query.page) || 1));
+        const perPage = Math.min(50, Math.max(1, Math.floor(Number(req.query.perPage) || 20)));
+        const offset = (page - 1) * perPage;
+        const now = Date.now();
+        const onlineSince = playerOnline.onlineSinceTimestamp(now);
+
+        const totalRow = await getQuery(
+            `SELECT COUNT(*) AS c FROM users WHERE name IS NOT NULL AND TRIM(name) != ''`
+        );
+        const total = Math.max(0, Math.floor(Number(totalRow?.c) || 0));
+        const onlineRow = await getQuery(
+            `SELECT COUNT(*) AS c FROM users
+             WHERE name IS NOT NULL AND TRIM(name) != ''
+               AND COALESCE(last_active_at, 0) >= ?`,
+            [onlineSince]
+        );
+        const onlineCount = Math.max(0, Math.floor(Number(onlineRow?.c) || 0));
+
+        const rows = await allQuery(
+            `SELECT u.email, u.name, u.xp, u.reputation, u.skulls, u.character, u.club, u.last_active_at
+             FROM users u
+             WHERE u.name IS NOT NULL AND TRIM(u.name) != ''
+             ORDER BY LOWER(TRIM(u.name)) ASC, u.id ASC
+             LIMIT ? OFFSET ?`,
+            [perPage, offset]
+        );
+
+        const players = rows.map((row) => {
+            const xp = normalizeXp(row.xp);
+            const level = levelFromXp(xp);
+            const reputation = Math.max(0, Math.floor(Number(row.reputation) || 0));
+            const skulls = row.skulls ?? Math.floor(reputation / SKULL_EVERY_REP);
+            const rank = rankTitleFromTotalSkulls(skulls) || "Новичок";
+            return {
+                email: row.email,
+                name: row.name || "Игрок",
+                level,
+                reputation,
+                rank,
+                avatar: avatarPath(row.character),
+                club: row.club || null,
+                online: playerOnline.isPlayerOnline(row.last_active_at, now)
+            };
+        });
+
+        const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
+
+        res.json({
+            success: true,
+            players,
+            page,
+            perPage,
+            total,
+            totalPages,
+            onlineCount
+        });
+    } catch (error) {
+        console.error("players list error:", error);
+        res.status(500).json({ success: false, error: "Ошибка загрузки списка игроков" });
+    }
+});
+
 
 initDatabase()
     .then(() => {

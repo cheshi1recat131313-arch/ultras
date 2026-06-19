@@ -1,4 +1,38 @@
+# Зависимости
 node_modules/
-users.db
+
+# Локальные базы и журналы SQLite (данные игроков — не в Git)
+*.db
+*.db-shm
+*.db-wal
+*.db-journal
+
+# Ручные копии баз
+*.backup
+*.localbackup
+users.db*
+
+# Бэкапы фронтенда
+public/backup/
+
+# Python-кэш
+__pycache__/
+*.pyc
+
+# Временные картинки при сборке портретов
+scripts/_hark-gradient-tests/
+scripts/*-preview.png
+scripts/*-debug.png
+scripts/*-crop.png
+
+# Устаревшие ассеты
+public/images/_deprecated/
+public/static/personage/*.bak
+
+# Исходники-мастера (тяжёлые PNG для одноразовой сборки)
+assets/*-source.png
+assets/*-original-backup.png
+
+# Прочее
 scripts/hools-dump/
 photo_2026-*.jpg

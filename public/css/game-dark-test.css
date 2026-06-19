@@ -1,0 +1,124 @@
+/**
+ * ТЕСТ: тёмная тема главной страницы (game.html).
+ *
+ * Откат:
+ *   1. Убрать class "game-dark-test" с <body>
+ *   2. Удалить или закомментировать <link href="css/game-dark-test.css">
+ *
+ * Не трогает: логотип ULTRAS, панель ресурсов, баннер с трибунами.
+ */
+
+html:has(body.game-dark-test) {
+    background: #1a1a1a;
+}
+
+body.hools.game-shell.game-dark-test {
+    background: #1a1a1a;
+}
+
+body.hools.game-shell.game-dark-test > .app {
+    background: #141414;
+    box-shadow: 0 0 0 1px #2a2a2a, 0 0 28px rgba(0, 0, 0, 0.55);
+}
+
+body.game-dark-test .header {
+    border-bottom-color: #000;
+}
+
+/* .banner — без изменений */
+
+body.game-dark-test .tip {
+    background: #222;
+    color: #ececec;
+    border-bottom: 1px solid #111;
+}
+
+body.game-dark-test .tip-link {
+    color: #9ec5ff;
+}
+
+body.game-dark-test .menu {
+    border-bottom: 2px solid #111;
+}
+
+body.game-dark-test .menu button,
+body.game-dark-test .menu a.tab {
+    background: linear-gradient(180deg, #2c2c2c 0%, #1c1c1c 100%);
+    border-color: #333;
+    color: #f0f0f0;
+}
+
+body.game-dark-test .menu button:first-child,
+body.game-dark-test .menu a.tab:first-child {
+    border-left-color: #333;
+}
+
+body.game-dark-test .menu button:hover,
+body.game-dark-test .menu a.tab:hover {
+    background: linear-gradient(180deg, #383838 0%, #262626 100%);
+}
+
+body.hools.game-shell.game-dark-test .list {
+    background: #101010;
+}
+
+body.hools.game-shell.game-dark-test .item {
+    background: linear-gradient(180deg, #2e2e2e 0%, #1f1f1f 100%);
+    border-bottom-color: #0a0a0a;
+    color: #f2f2f2;
+}
+
+body.game-dark-test .item:hover {
+    background: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%);
+}
+
+body.hools.game-shell.game-dark-test .item.danger {
+    background: linear-gradient(180deg, #5a2830 0%, #421e25 100%);
+    border-bottom-color: #2a1014;
+}
+
+body.game-dark-test .item.danger:hover {
+    background: linear-gradient(180deg, #683038 0%, #4e242b 100%);
+}
+
+body.game-dark-test .site-footer {
+    border-top-color: #111;
+    background: #161616;
+}
+
+body.game-dark-test .footer-nav-cell {
+    background: linear-gradient(180deg, #2a2a2a 0%, #1c1c1c 100%);
+    border-color: #333;
+    color: #f0f0f0;
+}
+
+body.game-dark-test .footer-nav-cell:nth-child(odd) {
+    border-left-color: #333;
+}
+
+/* Виджет основного задания на главной */
+body.game-dark-test .mq-widget {
+    background: linear-gradient(180deg, #2a2a2a 0%, #1c1c1c 100%);
+    border-color: #3a3a3a;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+body.game-dark-test .mq-widget-label {
+    color: #a8a8a8;
+}
+
+body.game-dark-test .mq-widget-title {
+    color: #f0f0f0;
+}
+
+body.game-dark-test .mq-widget-desc {
+    color: #c8c8c8;
+}
+
+body.game-dark-test .mq-widget-cta {
+    color: #b8d4a0;
+}
+
+body.game-dark-test .mq-widget-locked {
+    color: #888;
+}

@@ -3,6 +3,7 @@
  */
 
 const battleLog = require("./public/js/battle-log.js");
+const { formatGameEventTimestamp } = require("./game-time");
 
 const MAX_PLAYER_EVENTS = 100;
 
@@ -23,9 +24,7 @@ function escapeHtml(s) {
 }
 
 function formatEventTimestamp(ms) {
-    const d = new Date(ms);
-    const pad = (n) => String(n).padStart(2, "0");
-    return `${pad(d.getDate())}.${pad(d.getMonth() + 1)}.${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return formatGameEventTimestamp(ms);
 }
 
 function buildFightWinSummary(opponentName, rubles) {

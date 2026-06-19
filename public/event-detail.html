@@ -8,82 +8,105 @@
     <link rel="stylesheet" href="css/game-shell.css">
     <link rel="stylesheet" href="css/fight-page.css">
     <link rel="stylesheet" href="css/events.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
 </head>
-<body class="hools game-shell fight-body">
-<div class="app fight-app">
-    <header class="header" id="header"></header>
-    <div class="page-title">Событие</div>
-    <div id="msg" class="msg"></div>
-    <div id="detailRoot"></div>
-    <div class="list">
-        <a class="item back" href="/events.html">← К событиям</a>
-        <a class="item back" href="/game.html">← В игру</a>
+<body class="hools game-shell fight-body ultras-dark event-detail-page">
+    <div class="app fight-app">
+        <header class="header" id="header"></header>
+        <div class="page-title">Событие</div>
+        <div id="msg" class="msg"></div>
+        <div id="detailRoot"></div>
+        <footer class="site-footer" id="site-footer"></footer>
     </div>
-    <footer class="site-footer" id="site-footer"></footer>
-</div>
-<script src="js/session.js"></script>
-<script src="js/api.js"></script>
-<script src="js/header.js"></script>
-<script src="js/battle-log.js"></script>
-<script>
-function escapeHtml(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-}
+    <script src="js/session.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/header.js"></script>
+    <script src="js/battle-log.js"></script>
+    <script>
+        function escapeHtml(s) {
+            const d = document.createElement("div");
+            d.textContent = s;
+            return d.innerHTML;
+        }
 
-function isFightKind(kind) {
-    return kind === "fight_win" || kind === "fight_loss" || kind === "fight_pvp_loss";
-}
+        function isFightKind(kind) {
+            return kind === "fight_win" || kind === "fight_loss" || kind === "fight_pvp_loss";
+        }
 
-async function loadDetail() {
-    const id = new URLSearchParams(window.location.search).get("id") || "";
-    const email = getEmail();
-    if (!email || !id) {
-        document.getElementById("detailRoot").innerHTML =
-            '<p class="events-empty">Событие не найдено.</p>';
-        return;
-    }
-    const res = await fetch(
-        "/api/events/detail?email=" + encodeURIComponent(email) + "&id=" + encodeURIComponent(id)
-    );
-    const data = await res.json();
-    if (!data.success || !data.event) {
-        showMsg(data.error || "Событие не найдено", true);
-        return;
-    }
-    const ev = data.event;
-    let html =
-        '<div class="events-detail-meta">' +
-        `<p class="events-detail-time">${escapeHtml(ev.timeLabel || "")}</p>` +
-        `<p class="events-detail-summary">${ev.summaryHtml || escapeHtml(ev.summary || "")}</p>` +
-        "</div>";
+        function buildDetailActions(innerHtml) {
+            return `<div class="events-detail-actions">${innerHtml}</div>`;
+        }
 
-    if (isFightKind(ev.kind) && ev.battleView && ev.battleView.logLines && ev.battleView.logLines.length) {
-        html +=
-            '<div class="events-detail-sheet events-detail-fight">' +
-            BattleLog.buildBattleLogBlock(ev.battleView, { embedded: true }) +
-            "</div>";
-        html +=
-            '<div class="events-detail-nav">' +
-            BattleLog.buildBattleLogNav(ev.battleView, {
-                backHref: "/events.html",
-                showDistrictNav: false
-            }) +
-            "</div>";
-    } else if (ev.detailText) {
-        html += `<p class="events-detail-text">${escapeHtml(ev.detailText)}</p>`;
-    }
+        function buildBackLinks(extraBefore) {
+            const parts = extraBefore ? [extraBefore] : [];
+            parts.push(
+                `<a href="/events.html" class="fight-nav-btn fight-nav-green"><button type="button" class="fight-inner-btn">← К событиям</button></a>`,
+                `<a href="/game.html" class="fight-nav-btn fight-nav-green"><button type="button" class="fight-inner-btn">← В игру</button></a>`
+            );
+            return buildDetailActions(parts.join(""));
+        }
 
-    document.getElementById("detailRoot").innerHTML = html;
-}
+        async function loadDetail() {
+            const id = new URLSearchParams(window.location.search).get("id") || "";
+            const email = getEmail();
+            if (!email || !id) {
+                document.getElementById("detailRoot").innerHTML =
+                    '<div class="events-detail-sheet"><p class="events-empty">Событие не найдено.</p>' +
+                    buildBackLinks("") +
+                    "</div>";
+                return;
+            }
 
-(async () => {
-    const user = await fetchUser();
-    if (!user) return;
-    renderHeaderBlock(user);
-    await loadDetail();
-})();
-</script>
+            const res = await fetch(
+                "/api/events/detail?email=" + encodeURIComponent(email) + "&id=" + encodeURIComponent(id)
+            );
+            const data = await res.json();
+            if (!data.success || !data.event) {
+                showMsg(data.error || "Событие не найдено", true);
+                return;
+            }
+
+            const ev = data.event;
+            const metaHtml =
+                `<div class="events-detail-meta">` +
+                `<p class="events-detail-time">${escapeHtml(ev.timeLabel || "")}</p>` +
+                `<p class="events-detail-summary">${ev.summaryHtml || escapeHtml(ev.summary || "")}</p>` +
+                `</div>`;
+
+            let html = "";
+
+            if (isFightKind(ev.kind) && ev.battleView && ev.battleView.logLines && ev.battleView.logLines.length) {
+                const navInner = BattleLog.buildBattleLogNav(ev.battleView, { showDistrictNav: false });
+                const actionsHtml = buildDetailActions(
+                    navInner +
+                        `<a href="/events.html" class="fight-nav-btn fight-nav-green"><button type="button" class="fight-inner-btn">← К событиям</button></a>` +
+                        `<a href="/game.html" class="fight-nav-btn fight-nav-green"><button type="button" class="fight-inner-btn">← В игру</button></a>`
+                );
+                html =
+                    `<div class="events-detail-sheet">` +
+                    metaHtml +
+                    `<div class="events-detail-fight">` +
+                    BattleLog.buildBattleLogBlock(ev.battleView, { embedded: true }) +
+                    `</div>` +
+                    actionsHtml +
+                    `</div>`;
+            } else {
+                html = `<div class="events-detail-sheet">` + metaHtml;
+                if (ev.detailText) {
+                    html += `<p class="events-detail-text">${escapeHtml(ev.detailText)}</p>`;
+                }
+                html += buildBackLinks("") + `</div>`;
+            }
+
+            document.getElementById("detailRoot").innerHTML = html;
+        }
+
+        (async () => {
+            const user = await fetchUser();
+            if (!user) return;
+            renderHeaderBlock(user);
+            await loadDetail();
+        })();
+    </script>
 </body>
 </html>

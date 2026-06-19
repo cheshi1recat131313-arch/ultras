@@ -1,0 +1,527 @@
+/* Гардероб — в духе Hools */
+
+.garderob-meat {
+    background: #c5d4a8;
+    padding: 0 0 16px;
+    flex: 1;
+}
+
+.garderob-h1 {
+    margin: 0;
+    padding: 10px 14px 4px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ca4d29;
+    text-align: center;
+}
+
+.garderob-sub {
+    margin: 0 14px 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #333;
+    text-align: center;
+}
+
+.garderob-build {
+    margin: 0 auto 12px;
+    padding: 0 10px;
+    max-width: 320px;
+}
+
+.garderob-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.garderob-trophies {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+}
+
+.garderob-cell {
+    position: relative;
+    aspect-ratio: 1;
+    border: 2px solid #8a9a82;
+    border-radius: 4px;
+    box-sizing: border-box;
+    overflow: hidden;
+    background: #555 radial-gradient(circle at 50% 45%, #777 0%, #555 35%, #3a3a3a 100%);
+    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.35);
+}
+
+.garderob-cell--empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 3px 2px 4px;
+    border-color: #6d7a66;
+}
+
+.garderob-cell--empty.garderob-cell--slot-head {
+    background: #4a5268 radial-gradient(circle at 50% 38%, #6a7490 0%, #4a5268 42%, #323848 100%);
+}
+
+.garderob-cell--empty.garderob-cell--slot-clothes {
+    background: #3d5a6e radial-gradient(circle at 50% 38%, #5a8aa8 0%, #3d5a6e 42%, #2a4050 100%);
+}
+
+.garderob-cell--empty.garderob-cell--slot-weapon {
+    background: #6a4a28 radial-gradient(circle at 50% 38%, #a87840 0%, #6a4a28 42%, #4a3018 100%);
+}
+
+.garderob-cell--empty.garderob-cell--slot-boots {
+    background: #4a5048 radial-gradient(circle at 50% 38%, #6a7268 0%, #4a5048 42%, #323830 100%);
+}
+
+.garderob-cell--empty.garderob-cell--slot-trophy {
+    background: #5a5020 radial-gradient(circle at 50% 38%, #9a8838 0%, #5a5020 42%, #3a3010 100%);
+}
+
+.garderob-cell--empty.garderob-cell--slot-amulet {
+    background: #3a4868 radial-gradient(circle at 50% 38%, #5a78a8 0%, #3a4868 42%, #283850 100%);
+}
+
+.garderob-cell--void {
+    visibility: hidden;
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+}
+
+.garderob-cell--avatar {
+    border-color: #eb8a17;
+    background: #c5d4a8;
+    box-shadow: none;
+    padding: 0;
+}
+
+.garderob-cell--avatar .player-avatar-frame,
+.garderob-cell--avatar .player-avatar-frame--garderob,
+.garderob-cell--avatar .player-avatar-frame--bot {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.garderob-cell--avatar .player-avatar-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+}
+
+.garderob-cell--gear.garderob-cell--clothes,
+.garderob-cell--gear.garderob-cell--head,
+.garderob-cell--gear.garderob-cell--boots,
+.garderob-cell--gear.garderob-cell--trophy {
+    background: #6a9ec4 radial-gradient(circle at 50% 40%, #fff 0%, #a8d4f0 18%, #5a8eb8 55%, #3d6a8a 100%);
+}
+
+.garderob-cell--gear.garderob-cell--weapon {
+    background: #e89430 radial-gradient(circle at 50% 40%, #fff 0%, #ffd080 18%, #f0a040 55%, #c87818 100%);
+}
+
+.garderob-cell--gear.garderob-cell--amulet {
+    background: #6a9ec4 radial-gradient(circle at 50% 40%, #fff 0%, #a8d4f0 18%, #5a8eb8 55%, #3d6a8a 100%);
+}
+
+.garderob-cell--filled {
+    cursor: pointer;
+}
+
+.garderob-cell--filled:hover,
+.garderob-cell--filled:focus-visible {
+    filter: brightness(1.08);
+    outline: 2px solid rgba(255, 255, 255, 0.45);
+    outline-offset: -2px;
+}
+
+.garderob-cell--upgrading {
+    filter: grayscale(0.35);
+    opacity: 0.85;
+}
+
+.garderob-cell--gear.garderob-cell--filled {
+    padding: 0;
+}
+
+.garderob-cell-inner {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(42px, 68%, 58px);
+    line-height: 1;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+
+.garderob-cell-inner img.garderob-item-img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+/* PNG/WebP — фон иконки на весь слот, как у оружия */
+.garderob-cell--gear.garderob-cell--filled:has(.garderob-item-img) {
+    background: #1a1a1a;
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+
+.garderob-cell--gear.garderob-cell--filled:has(.garderob-item-img) .garderob-cell-inner {
+    font-size: 0;
+}
+
+.garderob-slot-ph {
+    width: 58%;
+    height: 48%;
+    flex-shrink: 0;
+    opacity: 0.92;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.45));
+    background: center / contain no-repeat;
+}
+
+.garderob-slot-label {
+    font-size: 7px;
+    font-weight: 700;
+    color: #dce8d0;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    text-align: center;
+    line-height: 1.15;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.85);
+    pointer-events: none;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Кепка */
+.garderob-slot-ph--head {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23e8f0dc' d='M6 18h20v3H6zm2-5h16l2 5H6zm1-7h14l4 7H5z'/%3E%3Cpath fill='%23b8c8a8' d='M4 21h24v2H4z'/%3E%3C/svg%3E");
+}
+
+/* Футболка */
+.garderob-slot-ph--clothes {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23e8f0dc' d='M10 6l6-3 6 3 5 4v3l-4 2v12H9V15L5 13v-3z'/%3E%3Cpath fill='%23c8d8b8' d='M13 9h6v4h-6z'/%3E%3C/svg%3E");
+}
+
+/* Скрещённые биты */
+.garderob-slot-ph--weapon {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23f0e0c0' d='M4 26 L11 6 L14 7 L7 27 Z'/%3E%3Cpath fill='%23d8c8a0' d='M5 25 L10 8 L12 9 L7 26 Z'/%3E%3Cpath fill='%23f0e0c0' d='M28 26 L21 6 L18 7 L25 27 Z'/%3E%3Cpath fill='%23d8c8a0' d='M27 25 L22 8 L20 9 L25 26 Z'/%3E%3Ccircle fill='%23a08050' cx='16' cy='16' r='2.5'/%3E%3C/svg%3E");
+}
+
+/* Кроссовок */
+.garderob-slot-ph--boots {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23e8f0dc' d='M6 14h14c3 0 5 2 5 5v3H6v-8zm2 8h16v3H8z'/%3E%3Cpath fill='%23c0d0b0' d='M8 12h10v4H8z'/%3E%3Cpath fill='%23a8b898' d='M22 17c2 1 3 3 3 5H8c0-4 3-7 7-7h7z'/%3E%3C/svg%3E");
+}
+
+/* Кубок */
+.garderob-slot-ph--trophy {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%23f5e8a8' d='M8 6h16v3h2v4c0 3-2 5.5-5 6.2L18 22H14l-1-2.8C10 18.5 8 16 8 13V9h2V6z'/%3E%3Cpath fill='%23d4b848' d='M10 8h12v2H10zm0 14h12v3H10z'/%3E%3Cpath fill='%23c8a838' d='M12 25h8v2h-8z'/%3E%3Cpath fill='%23e8d070' d='M6 9h2v3c0 2 1.5 3.5 3 4V9H6zm18 0v7c1.5-.5 3-2 3-4V9h-2z'/%3E%3C/svg%3E");
+}
+
+/* Амулет на цепочке */
+.garderob-slot-ph--amulet {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='none' stroke='%23d8e8c8' stroke-width='1.8' d='M11 5c0 3 2 5 5 5s5-2 5-5'/%3E%3Cpath fill='%23e8f0dc' d='M16 11c-4 0-7 3-7 7 0 4 3 7 7 7s7-3 7-7c0-4-3-7-7-7zm0 3c2.2 0 4 1.8 4 4s-1.8 4-4 4-4-1.8-4-4 1.8-4 4-4z'/%3E%3Ccircle fill='%23c8d8b0' cx='16' cy='18' r='2'/%3E%3C/svg%3E");
+}
+
+.garderob-stars {
+    position: absolute;
+    left: 56%;
+    bottom: 4px;
+    z-index: 2;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 0 2px;
+    text-align: center;
+    font-size: 8px;
+    letter-spacing: 0.5px;
+    color: #ffd700;
+    text-shadow: 0 0 2px #000, 0 1px 1px #000;
+    line-height: 1;
+    pointer-events: none;
+}
+
+.garderob-shelves-bar {
+    margin: 14px 0 0;
+    padding: 6px 12px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 800;
+    color: #111;
+    background: #f5a623;
+    border-top: 2px solid #eb8a17;
+    border-bottom: 2px solid #eb8a17;
+}
+
+.garderob-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    background: #b0c49a;
+    border-bottom: 1px solid #8fa87a;
+}
+
+.garderob-tab {
+    flex: 1 1 25%;
+    min-width: 0;
+    padding: 10px 4px;
+    border: none;
+    border-right: 1px solid #8fa87a;
+    background: transparent;
+    color: #2a5a8a;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+
+.garderob-tab:last-child {
+    border-right: none;
+}
+
+.garderob-tab--active {
+    background: #dce8c8;
+    color: #111;
+    box-shadow: inset 0 -2px 0 #689452;
+}
+
+.garderob-panel {
+    min-height: 120px;
+    padding: 12px 10px 8px;
+    background: #c5d4a8;
+}
+
+.garderob-shelf-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.garderob-shelf-item {
+    position: relative;
+    aspect-ratio: 1;
+    border: 2px solid #8a9a82;
+    border-radius: 4px;
+    background: #f0d060 radial-gradient(circle at 50% 40%, #fff 0%, #ffe080 30%, #e8b830 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.garderob-shelf-emoji,
+.garderob-shelf-ico {
+    font-size: 26px;
+    line-height: 1;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+}
+
+.garderob-shelf-ico .garderob-item-img {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.garderob-shelf-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+.garderob-shelf-qty {
+    position: absolute;
+    right: 3px;
+    bottom: 2px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #111;
+    text-shadow: 0 0 2px #fff;
+}
+
+.garderob-shelf-card {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 0 0 8px;
+    padding: 8px 10px;
+    background: #b0c49a;
+    border: 1px solid #8fa87a;
+    border-radius: 4px;
+}
+
+.garderob-shelf-card--focus {
+    box-shadow: inset 0 0 0 2px #8a2810, 0 0 0 2px rgba(138, 40, 16, 0.2);
+    background: #c5d4a8;
+}
+
+.garderob-shelf-card-icon {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    border-radius: 2px;
+    object-fit: cover;
+    border: 1px solid #8a9a7a;
+    background: #fff;
+}
+
+.garderob-shelf-card-icon--emoji {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44px;
+    line-height: 1;
+    background: rgba(0, 0, 0, 0.06);
+}
+
+.garderob-shelf-card-icon--gear {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0d060 radial-gradient(circle at 50% 40%, #fff 0%, #ffe080 30%, #e8b830 100%);
+    font-size: 36px;
+    line-height: 1;
+}
+
+.garderob-shelf-card-icon--gear .garderob-item-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 1px;
+}
+
+.garderob-shelf-card-body {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.garderob-shelf-card-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.garderob-shelf-card-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ca4d29;
+}
+
+.garderob-shelf-cooldown {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
+}
+
+.garderob-shelf-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: #4a7a3a;
+    text-transform: lowercase;
+}
+
+.garderob-shelf-card-owned {
+    margin-bottom: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2a4028;
+}
+
+.garderob-shelf-card-meta {
+    font-size: 12px;
+    color: #444;
+    line-height: 1.35;
+    margin-bottom: 6px;
+}
+
+.garderob-shelf-btn {
+    display: inline-block;
+    padding: 7px 14px;
+    border: 1px solid #4a7a3a;
+    border-radius: 6px;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 97%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+
+.garderob-shelf-btn--use {
+    border: none;
+    background: linear-gradient(-180deg, #e85a4a 0%, #c93d2e 100%);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.garderob-shelf-btn--use:hover:not(:disabled) {
+    filter: brightness(1.06);
+}
+
+.garderob-shelf-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.garderob-shelf-btn--unequip {
+    border-color: #8a4a2a;
+    background: linear-gradient(-180deg, #d07848 0%, #b85a30 97%);
+}
+
+.garderob-empty-msg {
+    margin: 0;
+    padding: 8px 4px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #444;
+    text-align: center;
+}
+
+.garderob-empty-msg a {
+    color: #ca4d29;
+    font-weight: 700;
+}
+
+@media (min-width: 400px) {
+    .garderob-tab {
+        font-size: 11px;
+    }
+}
+
+@media (min-width: 520px) {
+    .garderob-build {
+        max-width: 360px;
+    }
+}

@@ -3,6 +3,7 @@
  */
 
 const xpLevels = require("./xp-levels");
+const { formatGameClock } = require("./game-time");
 
 function escapeHeaderHtml(s) {
     return String(s ?? "")
@@ -12,8 +13,8 @@ function escapeHeaderHtml(s) {
         .replace(/"/g, "&quot;");
 }
 
-function formatHeaderClock(d = new Date()) {
-    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+function formatHeaderClock(ms = Date.now()) {
+    return formatGameClock(ms);
 }
 
 function xpPercentLabel(user) {
@@ -44,7 +45,9 @@ function buildHeaderHtml(user) {
 
     return `
         <div class="hools-topbar">
-            <a class="hools-logo" href="/game.html">Фанаты</a>
+            <a class="hools-topbar-home" href="/game.html" aria-label="На главную">
+                <img class="hools-logo-img" src="/images/ultras-header-banner.png?v=2" width="256" height="34" alt="ULTRAS">
+            </a>
             <button type="button" class="hools-refresh" onclick="location.reload()" title="Обновить" aria-label="Обновить">
                 <img src="/static/assets/img/recycle.svg" width="22" height="22" alt="">
             </button>

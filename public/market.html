@@ -3,23 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Барыга</title>
+    <title>Дилер</title>
     <link rel="stylesheet" href="css/hools.css">
     <link rel="stylesheet" href="css/game-shell.css">
     <link rel="stylesheet" href="css/center.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
 </head>
-<body class="hools center-scope game-shell">
+<body class="hools center-scope game-shell ultras-dark dealer-page">
 <div class="app">
     <header class="header" id="header"></header>
     <div class="center-meat">
-        <h1 class="center-h1">Барыга</h1>
-        <p class="center-desc">В центре всегда кипит жизнь. Тут продают, покупают, развлекаются.</p>
+        <h1 class="center-h1">Дилер</h1>
+        <div class="dealer-intro">
+            <img class="dealer-ava" src="/images/dealer.png" alt="Дилер">
+            <p class="dealer-quote" id="dealerQuote"></p>
+        </div>
         <nav class="center-list">
             <a class="center-row" href="/market-weapons.html"><span class="center-ico center-ico--blade" aria-hidden="true"></span>Оружие</a>
             <a class="center-row" href="/market-clothes.html"><span class="center-ico center-ico--shirt" aria-hidden="true"></span>Одежда</a>
             <a class="center-row" href="#"><span class="center-ico center-ico--crown" aria-hidden="true"></span>Эксклюзивные вещи</a>
             <a class="center-row" href="#"><span class="center-ico center-ico--crate" aria-hidden="true"></span>Штукенции</a>
-            <a class="center-row" href="#"><span class="center-ico center-ico--pack" aria-hidden="true"></span>Пакеты</a>
+            <a class="center-row" href="/market-packages.html"><span class="center-ico center-ico--pack" aria-hidden="true"></span>Пакеты</a>
         </nav>
         <a class="baryga-garderob-link" href="/garderob.html">Гардероб — надеть купленные вещи</a>
         <a class="item back" href="/center.html">← Назад в Центр</a>
@@ -35,6 +39,13 @@
     const user = await fetchUser();
     if (!user) return;
     renderHeaderBlock(user);
+
+    const quotes = [
+        "Не спрашивай, откуда товар. Если вещь существует — я её достану.",
+        "Не задавай лишних вопросов. У меня есть всё, что нужно настоящему ультрасу."
+    ];
+    document.getElementById("dealerQuote").textContent =
+        quotes[Math.floor(Math.random() * quotes.length)];
 
     document.querySelectorAll('a.center-row[href="#"]').forEach((a) => {
         a.addEventListener("click", (e) => {

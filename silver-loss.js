@@ -1,7 +1,6 @@
 /**
  * Потеря наличного серебра при поражении (район, PvP и т.д.).
- * Сейф пока не реализован — в расчёт попадает только «на руках»;
- * позже safeBalance из сейфа не будет участвовать в потере.
+ * В расчёт попадает только кошелёк — safe_balance хранится отдельно.
  */
 
 function randomInt(min, max) {
@@ -11,13 +10,11 @@ function randomInt(min, max) {
     return Math.floor(Math.random() * (hi - lo + 1)) + lo;
 }
 
-/** Наличные на руках (сейф не учитывается, пока его нет). */
+/** Наличные на руках — только кошелёк (серебро в сейфе не учитывается). */
 function getCashOnHand(userOrRubles) {
     if (userOrRubles != null && typeof userOrRubles === "object") {
         const u = userOrRubles;
-        const total = Math.max(0, Math.floor(Number(u.rubles ?? u.money) || 0));
-        const inSafe = Math.max(0, Math.floor(Number(u.safe_rubles ?? u.safeRubles) || 0));
-        return Math.max(0, total - inSafe);
+        return Math.max(0, Math.floor(Number(u.rubles ?? u.money) || 0));
     }
     return Math.max(0, Math.floor(Number(userOrRubles) || 0));
 }
@@ -48,14 +45,9 @@ function calcSilverLossOnDefeat(cashOnHand, options = {}) {
     let onHand;
     if (cashOnHand != null && typeof cashOnHand === "object") {
         onHand = getCashOnHand(cashOnHand);
-        if (options.safeBalance == null) {
-            options = { ...options, safeBalance: Math.max(0, Math.floor(Number(cashOnHand.safe_rubles ?? cashOnHand.safeRubles) || 0)) };
-        }
     } else {
         onHand = Math.max(0, Math.floor(Number(cashOnHand) || 0));
     }
-
-    void options.safeBalance;
 
     if (onHand <= 0) return 0;
 

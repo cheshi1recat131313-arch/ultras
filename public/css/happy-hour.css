@@ -1,69 +1,58 @@
-/* Счастливый час — в стиле game-shell / Hools */
+/* Счастливый час — блок на главной (как в Hools) */
 
-.hh-overlay {
-    position: fixed;
-    inset: 0;
-    z-index: 9000;
-    display: flex;
-    justify-content: center;
-    align-items: stretch;
-    background: rgba(9, 11, 10, 0.88);
-    padding: 0;
-}
-
-.hh-overlay.hh-hidden {
+.hh-root {
     display: none;
 }
 
-.hh-sheet {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    max-width: 480px;
-    min-height: 100%;
-    margin: 0 auto;
-    padding: 0 0 24px;
-    background: #c5d4a8;
-    color: #1a1a1a;
-    box-shadow: 0 0 28px rgba(0, 0, 0, 0.5);
+.hh-root.hh-root--visible {
+    display: block;
 }
 
-.hh-banner {
+.hh-block {
     margin: 0;
-    padding: 14px 16px;
-    font-size: 17px;
+    border: 2px solid #e09020;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #f5d98a;
+    box-shadow: 0 2px 0 rgba(80, 40, 0, 0.28);
+}
+
+.hh-panel {
+    padding: 12px 14px 14px;
+    background: #f4de9b;
+    text-align: left;
+}
+
+.hh-title {
+    margin: 0 0 6px;
+    font-size: 30px;
     font-weight: 800;
-    line-height: 1.25;
-    text-align: center;
-    color: #111;
-    background: #f5c76a;
-    border-bottom: 2px solid #eb8a17;
+    line-height: 1.1;
+    color: #ca4d29;
+    letter-spacing: 0.01em;
 }
 
-.hh-lead {
-    margin: 0;
-    padding: 14px 16px 10px;
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-    text-align: center;
+.hh-text {
+    margin: 0 0 12px;
+    font-size: 19px;
+    font-weight: 500;
+    line-height: 1.35;
     color: #222;
 }
 
 .hh-boxes {
-    flex: 1 1 auto;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 8px 12px 16px;
-    min-height: 200px;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 112px;
+    padding: 2px 0 6px;
 }
 
-.hh-box {
+.hh-gift {
     flex: 1 1 0;
-    max-width: 120px;
+    max-width: 31%;
+    width: 31%;
     padding: 0;
     border: none;
     background: transparent;
@@ -71,182 +60,208 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-.hh-box:disabled {
+.hh-gift:disabled {
     cursor: default;
 }
 
-.hh-crate {
+.hh-gift.hh-gift--gone {
+    display: none;
+}
+
+.hh-gift-inner {
     position: relative;
     display: block;
     width: 100%;
-    padding-top: 100%;
+    padding-top: 84%;
 }
 
-.hh-crate-body {
-    position: absolute;
-    left: 8%;
-    right: 8%;
-    bottom: 0;
-    height: 62%;
-    border: 2px solid #8a3c0c;
-    border-radius: 0 0 4px 4px;
-    background: linear-gradient(180deg, #c86a18 0%, #a84e14 100%);
-    box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.15);
-}
-
-.hh-crate-lid {
-    position: absolute;
-    left: 4%;
-    right: 4%;
-    top: 18%;
-    height: 28%;
-    border: 2px solid #8a3c0c;
-    border-radius: 3px 3px 0 0;
-    background: linear-gradient(180deg, #e89430 0%, #c86a18 100%);
-    transform-origin: center bottom;
-    transition: transform 0.45s ease;
-    z-index: 2;
-}
-
-.hh-crate-prize {
+.hh-gift-img {
     position: absolute;
     left: 0;
-    right: 0;
-    bottom: 18%;
-    z-index: 1;
-    font-size: 15px;
-    font-weight: 800;
-    text-align: center;
-    opacity: 0;
-    transform: translateY(8px);
-    transition: opacity 0.35s ease 0.2s, transform 0.35s ease 0.2s;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    display: block;
+    pointer-events: none;
+    transition: transform 0.35s ease, opacity 0.35s ease;
 }
 
-.hh-crate-prize .fight-reward-ico {
-    width: 20px;
-    height: 20px;
-    vertical-align: -4px;
+.hh-gift.hh-gift--open .hh-gift-img {
+    transform: scale(1.06) translateY(-5%);
 }
 
-.hh-box:not(:disabled):hover .hh-crate-lid {
-    transform: translateY(-2px);
+.hh-gift:focus-visible {
+    outline: 2px solid #ca4d29;
+    outline-offset: 2px;
+    border-radius: 4px;
 }
 
-.hh-box.hh-box--muted .hh-crate {
-    opacity: 0.45;
-    filter: grayscale(0.2);
+.hh-result {
+    margin-top: 4px;
+    padding: 12px 10px 8px;
+    animation: hh-fade-in 0.35s ease;
 }
 
-.hh-box.hh-box--open .hh-crate-lid {
-    transform: translateY(-120%) rotate(-12deg);
-}
-
-.hh-box.hh-box--open .hh-crate-prize {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.hh-reward {
-    margin: 0 14px 12px;
-    padding: 12px 14px;
-    text-align: center;
-    background: #b0c49a;
-    border: 1px solid #8fa87a;
-}
-
-.hh-reward.hh-hidden {
+.hh-result.hh-hidden {
     display: none;
 }
 
-.hh-reward.hh-jackpot {
-    border-color: #eb8a17;
-    background: #ffe89a;
+@keyframes hh-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
-.hh-reward-label {
+.hh-found {
     margin: 0 0 6px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #333;
+    font-size: 18px;
+    font-weight: 700;
+    color: #2a2a2a;
 }
 
-.hh-reward-amount {
+.hh-prize {
     margin: 0;
-    font-size: 22px;
+    font-size: 28px;
     font-weight: 800;
     line-height: 1.3;
-    color: #111;
+    color: #1a1a1a;
 }
 
-.hh-reward-amount .fight-reward-ico {
-    width: 24px;
-    height: 24px;
-    vertical-align: -5px;
+.hh-prize-value {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28em;
+    font-size: 32px;
+    font-weight: 800;
+    line-height: 1;
+    vertical-align: middle;
 }
 
-.hh-continue {
+.hh-prize-num {
+    font-size: 1em;
+    font-weight: inherit;
+    line-height: 1;
+}
+
+.hh-prize-ico {
     display: block;
-    box-sizing: border-box;
-    width: calc(100% - 28px);
-    max-width: 280px;
-    margin: 0 auto;
-    padding: 11px 20px;
-    border: 1px solid #c96a18;
-    border-radius: 3px;
-    background: linear-gradient(180deg, #ffb347 0%, #f08a24 48%, #e07010 100%);
-    color: #fff;
-    font-size: 15px;
-    font-weight: 700;
-    text-align: center;
-    cursor: pointer;
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+    width: auto;
+    height: 1em;
+    flex-shrink: 0;
+    object-fit: contain;
+    object-position: center;
+    margin: 0;
 }
 
-.hh-continue.hh-hidden {
+.hh-prize.hh-prize--jackpot {
+    color: #b22222;
+}
+
+.hh-prize.hh-prize--jackpot .hh-prize-num {
+    color: inherit;
+}
+
+.hh-panel.hh-panel--busy .hh-boxes {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.hh-panel.hh-panel--done .hh-text,
+.hh-panel.hh-panel--done .hh-boxes {
     display: none;
 }
 
-.hh-sheet.hh-busy .hh-boxes {
-    pointer-events: none;
-    opacity: 0.85;
+@media (min-width: 400px) {
+    .hh-gift {
+        max-width: 32%;
+    }
 }
 
-/* Десктоп: лист по центру, не на весь экран */
 @media (min-width: 520px) {
-    .hh-overlay {
-        align-items: center;
-        padding: 24px 16px;
-    }
-
-    .hh-sheet {
-        min-height: 0;
-        max-height: calc(100vh - 48px);
-        overflow: auto;
-        border: 1px solid #8fa87a;
-    }
-
-    .hh-boxes {
-        min-height: 220px;
-        gap: 16px;
-        padding: 12px 20px 20px;
-    }
-
-    .hh-box {
-        max-width: 130px;
-    }
-
-    .hh-banner {
-        font-size: 18px;
+    .hh-title {
+        font-size: 32px;
     }
 }
 
-@media (min-width: 768px) {
-    .hh-boxes {
-        min-height: 240px;
-        gap: 20px;
+@media (max-width: 400px) {
+    .hh-title {
+        font-size: 24px;
     }
 
-    .hh-box {
-        max-width: 140px;
+    .hh-text {
+        font-size: 16px;
     }
+
+    .hh-found {
+        font-size: 16px;
+    }
+
+    .hh-prize-value {
+        font-size: 28px;
+    }
+}
+
+/* Тёмная тема — светлый текст с высоким контрастом (главная, мобильные) */
+body.ultras-dark.hools.game-shell .hh-block,
+body.ultras-dark .hh-block {
+    border-color: #8a5a18;
+    background: #2a2010;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+body.ultras-dark.hools.game-shell .hh-panel,
+body.ultras-dark .hh-panel {
+    background: #1e1608;
+}
+
+body.ultras-dark.hools.game-shell .hh-title,
+body.ultras-dark .hh-title {
+    color: #ffb74d;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+body.ultras-dark.hools.game-shell .hh-text,
+body.ultras-dark .hh-text {
+    color: #f5f5f5;
+    -webkit-font-smoothing: antialiased;
+}
+
+body.ultras-dark.hools.game-shell .hh-found,
+body.ultras-dark .hh-found {
+    color: #ffffff;
+    font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+body.ultras-dark.hools.game-shell .hh-prize,
+body.ultras-dark.hools.game-shell .hh-prize .hh-prize-num,
+body.ultras-dark .hh-prize,
+body.ultras-dark .hh-prize .hh-prize-num {
+    color: #ffffff;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+body.ultras-dark.hools.game-shell .hh-prize.hh-prize--jackpot,
+body.ultras-dark.hools.game-shell .hh-prize.hh-prize--jackpot .hh-prize-num,
+body.ultras-dark .hh-prize.hh-prize--jackpot,
+body.ultras-dark .hh-prize.hh-prize--jackpot .hh-prize-num {
+    color: #ffd180;
+}
+
+body.ultras-dark.hools.game-shell .hh-result,
+body.ultras-dark .hh-result {
+    background: rgba(0, 0, 0, 0.32);
+    border-radius: 6px;
+}
+
+body.ultras-dark.hools.game-shell .hh-gift:focus-visible,
+body.ultras-dark .hh-gift:focus-visible {
+    outline-color: #ffb74d;
 }

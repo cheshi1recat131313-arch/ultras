@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 130" role="img" aria-label="">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8ab4d4"/>
+      <stop offset="100%" stop-color="#c5d4a8"/>
+    </linearGradient>
+  </defs>
+  <rect width="480" height="130" fill="url(#sky)"/>
+  <ellipse cx="240" cy="118" rx="200" ry="18" fill="#9bb08f" opacity="0.6"/>
+  <rect x="0" y="95" width="480" height="35" fill="#7a9a6e"/>
+  <!-- dust cloud -->
+  <ellipse cx="240" cy="72" rx="95" ry="38" fill="#e8e0c8" opacity="0.85"/>
+  <ellipse cx="200" cy="78" rx="55" ry="28" fill="#ddd5c0" opacity="0.7"/>
+  <!-- central fighter -->
+  <rect x="218" y="42" width="44" height="52" rx="4" fill="#f0f0f0" stroke="#333" stroke-width="2"/>
+  <circle cx="240" cy="32" r="14" fill="#f5d0a8" stroke="#333" stroke-width="2"/>
+  <rect x="228" y="18" width="24" height="10" rx="2" fill="#c4a574" stroke="#333" stroke-width="1.5"/>
+  <rect x="250" y="55" width="28" height="6" rx="2" fill="#888" stroke="#333" stroke-width="1"/>
+  <!-- side figures -->
+  <ellipse cx="130" cy="88" rx="22" ry="28" fill="#4a6a9a" stroke="#222" stroke-width="2"/>
+  <ellipse cx="350" cy="90" rx="20" ry="26" fill="#c44a2a" stroke="#222" stroke-width="2"/>
+  <circle cx="95" cy="70" r="10" fill="#f5d0a8" stroke="#222" stroke-width="1.5"/>
+  <circle cx="375" cy="72" r="9" fill="#f5d0a8" stroke="#222" stroke-width="1.5"/>
+  <!-- gift hint -->
+  <rect x="355" y="28" width="22" height="18" rx="2" fill="#c86a18" stroke="#5a3010" stroke-width="1.5"/>
+  <rect x="360" y="24" width="12" height="6" fill="#e8c080" stroke="#5a3010" stroke-width="1"/>
+</svg>

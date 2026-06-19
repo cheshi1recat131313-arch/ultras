@@ -13,6 +13,9 @@ OUT = ROOT / "public/images/tank-dossier.png"
 
 SOURCES = [
     Path(
+        r"C:\Users\vadim\.cursor\projects\c-Anomaly\assets\c__Users_vadim_AppData_Roaming_Cursor_User_workspaceStorage_dc33976521015eca047b7dafcf5cf736_images_f9e79980-b42d-4b42-930a-410a00faf4d3-233edb94-bac6-4e3a-837c-2c40b488aa00.png"
+    ),
+    Path(
         r"C:\Users\vadim\.cursor\projects\c-Anomaly\assets\c__Users_vadim_AppData_Roaming_Cursor_User_workspaceStorage_empty-window_images_ChatGPT_Image_25_____2026__.__14_00_40-b42b6cbe-824c-447f-b965-6e092e3f8d10.png"
     ),
     ROOT / "public/images/p1.jpg",

@@ -12,7 +12,8 @@ ROOT = Path(__file__).resolve().parent.parent
 # исходник (относительно ROOT) → выходной PNG (относительно ROOT)
 JOBS = [
     # Здоровяк: public/images/tank-dossier.png (rembg), не из p1.jpg
-    # Шустрый: public/images/fast-dossier.png (rembg), не из p2.jpg
+    # Шустрый: public/images/fast-dossier.png (rembg)
+    # Крепыш: public/images/tough-dossier.png (rembg)
     ("public/static/personage/x_b7c1209c.jpg", "public/static/personage/balanced.png"),
     ("public/static/personage/x_20f9ea90.jpg", "public/static/personage/valk.png"),
     ("public/static/personage/x_3c69aea4.jpg", "public/static/personage/shadow.png"),
@@ -142,6 +143,51 @@ def remove_background(im: Image.Image) -> tuple[Image.Image, int, tuple[int, int
     return im, removed, bg
 
 
+def solidify_character_alpha(im: Image.Image) -> Image.Image:
+    """Маска силуэта: фон с краёв → прозрачный, фигура внутри → непрозрачная."""
+    from collections import deque
+
+    im = im.convert("RGBA")
+    w, h = im.size
+    px = im.load()
+    is_bg = [[False] * w for _ in range(h)]
+    q: deque[tuple[int, int]] = deque()
+
+    def push_if_bg(x: int, y: int) -> None:
+        if x < 0 or y < 0 or x >= w or y >= h or is_bg[y][x]:
+            return
+        if px[x, y][3] < 140:
+            is_bg[y][x] = True
+            q.append((x, y))
+
+    for x in range(w):
+        push_if_bg(x, 0)
+        push_if_bg(x, h - 1)
+    for y in range(h):
+        push_if_bg(0, y)
+        push_if_bg(w - 1, y)
+
+    while q:
+        x, y = q.popleft()
+        push_if_bg(x + 1, y)
+        push_if_bg(x - 1, y)
+        push_if_bg(x, y + 1)
+        push_if_bg(x, y - 1)
+
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if is_bg[y][x]:
+                px[x, y] = (0, 0, 0, 0)
+                continue
+            if 0 < a < 255:
+                nr = min(255, int(r * 255 / a))
+                ng = min(255, int(g * 255 / a))
+                nb = min(255, int(b * 255 / a))
+                px[x, y] = (nr, ng, nb, 255)
+    return im
+
+
 def process(src_rel: str, out_rel: str) -> None:
     src = ROOT / src_rel
     out = ROOT / out_rel
@@ -153,6 +199,7 @@ def process(src_rel: str, out_rel: str) -> None:
         pass
     im = Image.open(src)
     out_im, removed, bg = remove_background(im)
+    out_im = solidify_character_alpha(out_im)
     out.parent.mkdir(parents=True, exist_ok=True)
     out_im.save(out, format="PNG", optimize=True)
     pct = round(100 * removed / (im.width * im.height), 1)

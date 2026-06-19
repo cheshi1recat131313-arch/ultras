@@ -1,0 +1,97 @@
+.club-profile-page {
+    padding: 0 0 12px;
+    background: #c5d4a8;
+}
+
+.club-profile-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 14px 14px;
+    text-align: center;
+}
+
+.club-profile-emblem {
+    width: 96px;
+    height: 96px;
+    object-fit: contain;
+}
+
+.club-profile-name {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #ca4d29;
+}
+
+.club-profile-stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 16px;
+    margin: 0;
+    padding: 0 14px 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #2a4028;
+}
+
+.club-profile-stat {
+    margin: 0;
+}
+
+.club-profile-stats--grid {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    max-width: 320px;
+    margin: 0 auto;
+    padding-bottom: 14px;
+}
+
+.club-profile-stats--grid .club-profile-stat b {
+    color: #1a3018;
+}
+
+.club-profile-desc {
+    margin: 0 14px 12px;
+    padding: 12px 14px;
+    background: #b0c49a;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #223322;
+}
+
+.club-profile-section {
+    margin: 0 10px 10px;
+    background: #ccdbbc;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.club-profile-section-title {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-weight: 800;
+    color: #2a4028;
+    background: #b0c49a;
+    border-bottom: 1px solid #9bb08f;
+}
+
+.club-profile-section-body {
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #333;
+}
+
+.club-profile-stub {
+    margin: 0;
+    color: #666;
+    font-style: italic;
+}

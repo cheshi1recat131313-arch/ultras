@@ -6,8 +6,9 @@
     <title>Досье</title>
     <link rel="stylesheet" href="css/hools.css">
     <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
 </head>
-<body class="hools game-shell">
+<body class="hools game-shell ultras-dark">
 <div class="app">
     <header class="header" id="header"></header>
     <div id="dossierRoot"></div>
@@ -40,85 +41,214 @@ function row(label, value, opts) {
 }
 
 function skillRow(iconSrc, label, base, eff) {
-    const ico = '<img class="dossier-skill-ico" src="' + esc(iconSrc) + '" width="16" height="16" alt=""> ';
-    const bonus = base !== eff ? ' <span class="dossier-bonus">→ ' + esc(String(eff)) + "</span>" : "";
+    const ico =
+        '<img class="dossier-skill-ico" src="' +
+        esc(iconSrc) +
+        '" width="16" height="16" alt=""> ';
+    const bonus =
+        base !== eff ? ' <span class="dossier-bonus">→ ' + esc(String(eff)) + "</span>" : "";
     return (
         '<div class="dossier-row dossier-row-skill">' +
-        ico + esc(label) + ": <strong>" + esc(String(base)) + "</strong>" + bonus +
+        ico +
+        esc(label) +
+        ": <strong>" +
+        esc(String(base)) +
+        "</strong>" +
+        bonus +
         "</div>"
     );
 }
 
-(async function () {
-    const user = await fetchUser();
-    if (!user) return;
-    renderHeaderBlock(user);
-    const clubsCatalog = await loadClubsCatalog();
-    const avatarClubFill = user.club ? clubAvatarFill(user.club, clubsCatalog) : null;
+function playerStatusText(user) {
+    if (user.playerStatus) return esc(user.playerStatus);
+    return user.inGame ? "💡 В игре" : "⚫ Не в игре";
+}
 
-    const eff = user.effective || user;
-    const xp = user.xpProgress || { cur: 0, need: 100 };
+function statusRow(user) {
+    return row("Статус", "<strong>" + playerStatusText(user) + "</strong>", { html: true });
+}
+
+function nationalTeamRow(user) {
+    if (!user.nationalTeam) {
+        return row("Сборная", "—");
+    }
+    const teamName = user.nationalTeamName || user.nationalTeam;
+    const teamFlag = user.nationalTeamFlag || null;
+    const teamFlagHtml = teamFlag
+        ? '<img class="dossier-club-emblem" src="' +
+          esc(teamFlag) +
+          '" width="22" height="15" alt="" loading="lazy">'
+        : "";
+    const teamVal =
+        '<span class="dossier-club-val">' +
+        '<strong class="dossier-red">' +
+        esc(teamName) +
+        "</strong>" +
+        teamFlagHtml +
+        "</span>";
+    return row("Сборная", teamVal, { html: true });
+}
+
+function clubRow(user, clubsCatalog) {
+    if (!user.club) {
+        return row("Клуб", "—");
+    }
     const clubName =
-        user.clubName || clubDisplayName(user.club, clubsCatalog) || clubLabels[user.club] || user.club || "—";
-    let emblemSrc = clubEmblemUrl(user, clubsCatalog) || clubEmblemUrl(user.club, clubsCatalog);
+        user.clubName || clubDisplayName(user.club, clubsCatalog) || clubLabels[user.club] || user.club;
+    const emblemSrc = clubEmblemUrl(user, clubsCatalog) || clubEmblemUrl(user.club, clubsCatalog);
     const clubEmblemHtml = emblemSrc
         ? '<img class="dossier-club-emblem" src="' +
           esc(emblemSrc) +
           '" width="22" height="22" alt="" loading="lazy">'
         : "";
+    const clubNameHtml = user.club
+        ? '<a class="dossier-club-link dossier-red" href="/club-profile.html?club=' +
+          encodeURIComponent(user.club) +
+          '">' +
+          esc(clubName) +
+          "</a>"
+        : '<strong class="dossier-red">' + esc(clubName) + "</strong>";
     const clubVal =
-        '<span class="dossier-club-val">' +
-        '<strong class="dossier-red">' + esc(clubName) + "</strong>" +
-        clubEmblemHtml +
-        "</span>";
-    const charName = characterLabels[user.character] || user.character || "—";
-    const silverIco = '<img src="/static/location/base/ser.svg" class="dossier-coin" alt="">';
-    const repIco = '<img src="/static/icons/rep.png" class="dossier-stat-ico" alt="">';
-    const xpIco = '<img src="/static/icons/xp.png" class="dossier-stat-ico" alt="">';
+        '<span class="dossier-club-val">' + clubNameHtml + clubEmblemHtml + "</span>";
+    return row("Клуб", clubVal, { html: true });
+}
 
-    var html = "";
-    html += '<div class="dossier-sheet">';
-    html += "<h2 class=\"dossier-title\">Досье на " + esc(user.name || "Игрок") + "</h2>";
-    html +=
-        '<div class="dossier-avatar-wrap">' +
-        playerAvatarFrameHtml(user.avatar, {
-            className: "dossier-avatar-frame",
-            fill: avatarClubFill,
-            alt: charName
-        }) +
-        "</div>";
-    html += '<p class="dossier-sub">' + esc(charName) + "</p>";
-    html += row("Имя", user.name || "Не указано");
-    html += row("Статус", "💡 В игре", { html: true });
-    html += row("Страна", user.country || "Не указано");
-    html += row("Клуб", clubVal, { html: true });
-    html += row("Фирма", user.firm || "Не указано", { red: true });
-    html += row("Уровень", String(user.level || 1));
-    html += row("Ранг", user.rank || "—");
-    html += row("Репутация", String(user.reputation || 0) + " " + repIco, { html: true });
-    html += row("Опыт", xp.cur + "/" + xp.need + " " + xpIco, { html: true });
-    const skullIco = '<img src="/static/icons/skull.png" class="dossier-stat-ico" alt="">';
-    html += row("Черепки", String(user.skulls || 0) + " " + skullIco, { html: true });
-    html += row("HP", Math.round(user.hp || 0) + " / " + (user.maxHp || 100));
-    html += row("Энергия", String(user.energy || 100));
-    html += row("Ярость", String(user.rage != null ? user.rage : 100));
-    html += row("Серебро", String(user.rubles || 0));
-    html += row("Грибы", String(user.mushrooms || 0));
-    html += row("Вытряс", (user.silverWon || 0) + " " + silverIco, { html: true });
+function firmRow(user) {
+    const firmName = String(user.firmName || "").trim();
+    const firmId = String(user.firmId || user.firm || "").trim();
+    let valHtml;
+    if (firmName && firmId) {
+        valHtml =
+            '<a class="dossier-club-link dossier-red" href="/firm-view.html?firmId=' +
+            esc(firmId) +
+            '">' +
+            esc(firmName) +
+            "</a>";
+    } else if (firmName) {
+        valHtml = '<strong class="dossier-red">' + esc(firmName) + "</strong>";
+    } else {
+        valHtml = "<strong>—</strong>";
+    }
+    return row("Фирма", valHtml, { html: true });
+}
+
+function profileMainRows(user, clubsCatalog) {
+    let html = "";
+    html += row("Имя", user.name ? String(user.name).trim() : "—", { red: true });
+    html += clubRow(user, clubsCatalog);
+    html += nationalTeamRow(user);
+    html += firmRow(user);
+    html += statusRow(user);
+    return html;
+}
+
+function commonStatsRows(user, repIco, silverIco) {
+    let html = "";
+    html += row("Уровень", user.level != null ? String(user.level) : "—");
+    html += row("Ранг", user.rank ? String(user.rank) : "—");
+    html += row("Репутация", String(user.reputation ?? 0) + " " + repIco, { html: true });
+    html += row("Стаж", user.tenureLabel || "1 день");
+    html += row("Выиграл", (user.silverWon || 0) + " " + silverIco, { html: true });
     html += row("Потерял", (user.silverLost || 0) + " " + silverIco, { html: true });
     html += row("Побед подряд", String(user.districtStreak || 0));
     html += row("Макс. побед подряд", String(user.districtStreakMax || 0));
-    html += '<div class="dossier-skills-head">Навыки (с эффективностью прокачки)</div>';
-    html += '<div class="dossier-skills">';
-    html += skillRow("/static/fight/muscle.png", "Сила", user.power, eff.power);
-    html += skillRow("/static/fight/abs.png", "Стойкость", user.stamina, eff.stamina);
-    html += skillRow("/static/fight/running.png", "Ловкость", user.speed, eff.speed);
-    html += skillRow("/static/fight/brain.png", "Хитрость", user.intel, eff.intel);
-    html += "</div>";
-    html += '<a href="/pers.html" class="dossier-back">← Назад</a>';
-    html += "</div>";
+    return html;
+}
 
-    document.getElementById("dossierRoot").innerHTML = html;
+function foreignActionButtons(targetEmail) {
+    const q = encodeURIComponent(targetEmail || "");
+    const stub = (label) =>
+        `href="#" onclick="alert('${esc(label)} — скоро'); return false;"`;
+    return (
+        '<div class="dossier-actions list">' +
+        `<a class="item dossier-action-item" ${stub("Награды")}>` +
+        '<span class="dossier-action-ico">🏅</span> Награды</a>' +
+        `<a class="item dossier-action-item" ${stub("Достижения")}>` +
+        '<span class="dossier-action-ico">🏅</span> Достижения</a>' +
+        `<a class="item dossier-action-item" ${stub("Талисманы")}>` +
+        '<span class="dossier-action-ico">🍀</span> Талисманы</a>' +
+        `<a class="item dossier-action-item" href="/mail.html?to=${q}">` +
+        '<span class="dossier-action-ico">✉️</span> Написать сообщение</a>' +
+        `<a class="item dossier-action-item" ${stub("Записать в блокнот")}>` +
+        '<span class="dossier-action-ico">📝</span> Записать в блокнот</a>' +
+        `<a class="item dossier-action-item danger" ${stub("Напасть")}>` +
+        '<span class="dossier-action-ico">👊</span> Напасть</a>' +
+        "</div>"
+    );
+}
+
+(async function () {
+    try {
+        const dossierParams = new URLSearchParams(window.location.search);
+        const dossierEmail = (dossierParams.get("email") || "").trim().toLowerCase();
+        const viewer = await fetchUser();
+        if (!viewer) return;
+
+        const targetEmail = (dossierEmail || String(viewer.email || "")).trim().toLowerCase();
+        const isForeign = !!(targetEmail && targetEmail !== String(viewer.email || "").toLowerCase());
+        const user = await fetchUserByEmail(targetEmail, { viewer: viewer.email });
+
+        if (!user) {
+            document.getElementById("dossierRoot").innerHTML =
+                '<p class="dossier-row" style="padding:16px;">Игрок не найден.</p>';
+            return;
+        }
+
+        renderHeaderBlock(viewer);
+
+        const clubsCatalog = await loadClubsCatalog();
+        const avatarClubFill = user.club ? clubAvatarFill(user.club, clubsCatalog) : null;
+        const eff = user.effective || user;
+        const xp = user.xpProgress || { cur: 0, need: 100 };
+        const charName = user.name || characterLabels[user.character] || user.character || "";
+        const silverIco = '<img src="/static/location/base/ser.svg" class="dossier-coin" alt="">';
+        const repIco = '<img src="/static/icons/rep.png" class="dossier-stat-ico" alt="">';
+        const xpIco = '<img src="/static/icons/xp.png" class="dossier-stat-ico" alt="">';
+
+        let html = "";
+        html += '<div class="dossier-sheet">';
+        html += "<h2 class=\"dossier-title\">Досье на " + esc(user.name ? String(user.name).trim() : "—") + "</h2>";
+        html +=
+            '<div class="dossier-avatar-wrap">' +
+            playerAvatarFrameHtml(user.avatar, {
+                className: "dossier-avatar-frame",
+                fill: avatarClubFill,
+                alt: charName
+            }) +
+            "</div>";
+
+        html += profileMainRows(user, clubsCatalog);
+        html += commonStatsRows(user, repIco, silverIco);
+
+        if (!isForeign) {
+            html += row("Опыт", xp.cur + "/" + xp.need + " " + xpIco, { html: true });
+            const skullIco = '<img src="/static/icons/skull.png" class="dossier-stat-ico" alt="">';
+            const skullCount = user.skulls != null ? user.skulls : 0;
+            html += row("Черепки", String(skullCount) + " " + skullIco, { html: true });
+            html += row("Серебро", String(user.rubles || 0));
+        }
+
+        if (!isForeign) {
+            html += '<div class="dossier-skills-head">Навыки (с эффективностью прокачки)</div>';
+            html += '<div class="dossier-skills">';
+            html += skillRow("/static/fight/muscle.png", "Сила", user.power, eff.power);
+            html += skillRow("/static/fight/abs.png", "Стойкость", user.stamina, eff.stamina);
+            html += skillRow("/static/fight/running.png", "Ловкость", user.speed, eff.speed);
+            html += skillRow("/static/fight/brain.png", "Хитрость", user.intel, eff.intel);
+            html += "</div>";
+            html += '<a href="/pers.html" class="dossier-back">← Назад</a>';
+        } else {
+            html += foreignActionButtons(user.email);
+            html += '<a href="/game.html" class="dossier-back">← Назад</a>';
+        }
+
+        html += "</div>";
+        document.getElementById("dossierRoot").innerHTML = html;
+    } catch (err) {
+        console.error("dossier render error:", err);
+        document.getElementById("dossierRoot").innerHTML =
+            '<p class="dossier-row" style="padding:16px;color:#b22222;">Не удалось загрузить досье. Обновите страницу.</p>';
+    }
 })();
 </script>
 </body>

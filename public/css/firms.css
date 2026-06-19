@@ -1,0 +1,420 @@
+/* Фирмы — ULTRAS dark */
+
+html:has(body.firms-scope) {
+    background: #121212;
+}
+
+body.hools.game-shell.firms-scope {
+    max-width: none;
+    width: 100%;
+    margin: 0;
+    background: #121212;
+    color: #eee;
+}
+
+body.hools.game-shell.firms-scope > .app {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 420px;
+    min-height: 100vh;
+    background: #121212;
+}
+
+.firms-page {
+    padding: 0 0 20px;
+    min-height: 50vh;
+}
+
+.firms-page-title {
+    margin: 0;
+    padding: 14px 14px 6px;
+    text-align: center;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #ff8a65;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.firms-page-desc {
+    margin: 0 14px 12px;
+    text-align: center;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #aaa;
+}
+
+.firms-search-wrap {
+    margin: 0 12px 12px;
+}
+
+.firms-search {
+    margin: 0;
+}
+
+.firms-page-back {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    justify-content: center;
+    padding: 12px 14px 0;
+}
+
+.firms-back-link {
+    color: #ff8a65;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.firms-back-link:hover {
+    text-decoration: underline;
+}
+
+/* Каталог */
+
+.firms-catalog-list {
+    display: grid;
+    gap: 8px;
+    padding: 0 10px;
+}
+
+.firms-catalog-card {
+    display: block;
+    padding: 12px 14px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    text-decoration: none;
+    color: inherit;
+    transition: border-color 0.15s, background 0.15s;
+}
+
+.firms-catalog-card:hover {
+    border-color: #ff8a65;
+    background: #222;
+}
+
+.firms-catalog-name {
+    margin: 0 0 6px;
+    font-size: 16px;
+    color: #ff8a65;
+}
+
+.firms-catalog-meta {
+    margin: 0 0 4px;
+    font-size: 13px;
+    color: #ccc;
+}
+
+/* Карточка фирмы (hub) */
+
+.firm-hub {
+    margin: 0 10px 12px;
+    background: #161616;
+    border: 1px solid #2f2f2f;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.firm-hub-title {
+    margin: 0;
+    padding: 16px 12px 10px;
+    text-align: center;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #ff8a65;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.firm-hub-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px 12px;
+}
+
+.firm-hub-logo-img,
+.firm-hub-logo-ph {
+    width: 168px;
+    height: 168px;
+    border-radius: 4px;
+    border: 2px solid #333;
+    background: #000;
+    object-fit: cover;
+}
+
+.firm-hub-logo-ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 64px;
+    font-weight: 800;
+    color: #666;
+}
+
+.firm-hub-stats {
+    background: #1e1e1e;
+    color: #eee;
+    padding: 10px 0 4px;
+    border-top: 1px solid #333;
+    border-bottom: 1px solid #333;
+}
+
+.firm-hub-stat {
+    padding: 6px 14px;
+    font-size: 14px;
+    line-height: 1.35;
+}
+
+.firm-hub-stat-label {
+    font-weight: 800;
+    color: #ccc;
+}
+
+.firm-hub-stat-value a {
+    color: #ff8a65;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.firm-hub-stat-value strong {
+    color: #fff;
+}
+
+.firm-hub-menu {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid #2a2a2a;
+}
+
+.firm-hub-menu-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 46px;
+    padding: 0 14px;
+    border: none;
+    border-bottom: 1px solid #2a2a2a;
+    background: linear-gradient(180deg, #2f4a34 0%, #243b2b 100%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.firm-hub-menu-row:hover {
+    filter: brightness(1.08);
+}
+
+.firm-hub-menu-row--stub {
+    opacity: 0.72;
+    cursor: default;
+}
+
+.firm-hub-menu-ico {
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+.firm-hub-soon {
+    margin-left: auto;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.55);
+    text-transform: uppercase;
+}
+
+/* Пустой экран «Фирма» */
+
+.firm-empty {
+    margin: 0 10px;
+    padding: 16px 14px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+}
+
+.firm-empty-lead {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 800;
+    color: #ff8a65;
+}
+
+.firm-empty-desc {
+    margin: 0 0 14px;
+    font-size: 13px;
+    color: #bbb;
+    line-height: 1.45;
+}
+
+.firm-empty-actions {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.firm-empty-btn {
+    display: block;
+    text-align: center;
+    padding: 12px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #ff8a65, #e06b45);
+    color: #111;
+    font-weight: 800;
+    text-decoration: none;
+}
+
+.firm-empty-btn--ghost {
+    background: #252525;
+    border: 1px solid #444;
+    color: #eee;
+}
+
+.firm-empty-note {
+    margin: 0 0 14px;
+    font-size: 12px;
+    color: #888;
+    line-height: 1.4;
+}
+
+.firm-join-box {
+    border-top: 1px solid #333;
+    padding-top: 12px;
+}
+
+.firm-join-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ccc;
+}
+
+.firm-join-row {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 8px;
+}
+
+.firm-join-hint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #ff8a65;
+}
+
+.firm-home-actions,
+.firm-view-actions {
+    padding: 0 10px 8px;
+}
+
+.firm-leave-btn {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #633;
+    border-radius: 6px;
+    background: #2a1818;
+    color: #ff9a9a;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Формы */
+
+.firms-form {
+    margin: 0 10px 12px;
+    padding: 12px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 8px;
+}
+
+.firms-input {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 8px;
+    padding: 10px 12px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #252525;
+    color: #f0f0f0;
+    font-size: 14px;
+}
+
+.firms-btn {
+    width: 100%;
+    padding: 11px 12px;
+    border: 1px solid #3a6036;
+    border-radius: 6px;
+    background: linear-gradient(180deg, #3d6b38, #2f552c);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.firms-msg {
+    margin: 8px 10px 0;
+    padding: 10px 12px;
+    font-size: 13px;
+    border-radius: 6px;
+}
+
+.firms-msg--ok {
+    background: #1e2e1e;
+    border: 1px solid #3a6b3a;
+    color: #b8e0b8;
+}
+
+.firms-msg--err {
+    background: #2e1e1e;
+    border: 1px solid #6b3a3a;
+    color: #ffb8b8;
+}
+
+.firms-msg a {
+    color: #ff8a65;
+}
+
+/* Legacy cards (если где-то остались) */
+
+.firms-card {
+    margin: 0 10px 12px;
+    padding: 12px;
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 6px;
+    color: #eee;
+}
+
+.firms-card h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+    color: #ff8a65;
+}
+
+.firms-meta {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: #ccc;
+}
+
+.firms-members {
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid #333;
+}
+
+.firms-members li {
+    padding: 8px 0;
+    border-bottom: 1px solid #333;
+    font-size: 13px;
+}
+
+.firms-members li:last-child {
+    border-bottom: none;
+}

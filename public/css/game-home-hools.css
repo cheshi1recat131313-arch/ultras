@@ -1,0 +1,221 @@
+/**
+ * Главная (game.html) — классический зелёный стиль оригинальных Hools.
+ * Панель игрока и логотип — общие переменные в hools.css (:root).
+ */
+
+html:has(body.game-home) {
+    background: #38393e;
+}
+
+body.game-home.hools.game-shell {
+    background: #38393e;
+    color: #fff;
+}
+
+body.game-home.hools.game-shell > .app {
+    background: #c5d4a8;
+    box-shadow: 0 0 0 1px #9bb08f, 0 0 28px rgba(0, 0, 0, 0.55);
+}
+
+/* Баннер — без изменений картинки, зелёный шов как в Hools */
+body.game-home .banner {
+    border-bottom: 2px solid var(--hools-banner-border);
+}
+
+/* Голубой блок подсказки — переменные hools.css (:root) */
+body.game-home .tip-link {
+    color: var(--hools-tip-link);
+}
+
+/* Квадратные кнопки Задания / События / Рейтинг */
+body.game-home .menu {
+    display: flex;
+    border-bottom: 2px solid #2d4b29;
+}
+
+body.game-home .menu a.tab {
+    flex: 1;
+    border: 1px solid #3a6036;
+    border-left: none;
+    border-radius: 0;
+    background: linear-gradient(#426a42, #355835);
+    color: #fff;
+    padding: 10px 6px 8px;
+    font-size: 11px;
+    font-weight: normal;
+    text-align: center;
+    box-shadow: none;
+}
+
+body.game-home .menu a.tab:first-child {
+    border-left: 1px solid #3a6036;
+}
+
+body.game-home .menu a.tab:hover {
+    background: linear-gradient(#4b774b, #3b613b);
+}
+
+body.game-home .menu a.tab.tab--daily-pending {
+    background: linear-gradient(180deg, #c44a3a 0%, #8a2820 100%) !important;
+    border-color: #6a2018 !important;
+    color: #fff !important;
+}
+
+body.game-home .menu a.tab.tab--daily-pending:hover {
+    background: linear-gradient(180deg, #d85a48 0%, #9a3028 100%) !important;
+}
+
+body.game-home .menu-ico {
+    display: block;
+    width: 28px;
+    height: 28px;
+    margin: 0 auto 4px;
+}
+
+/* Список локаций */
+body.game-home .list {
+    background: #2b4f2b;
+    flex: 1;
+}
+
+body.game-home .item {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    font-size: 22px;
+    padding: 14px;
+    border: none;
+    border-bottom: 1px solid #335e33;
+    border-radius: 0;
+    background: linear-gradient(#5f9150, #528446);
+    color: #fff;
+    box-shadow: none;
+    font-weight: normal;
+}
+
+body.game-home .item:hover {
+    background: linear-gradient(#69a057, #5a904c);
+}
+
+body.game-home .item.danger {
+    background: linear-gradient(#c04756, #a13b48);
+    border-bottom-color: #6d2029;
+}
+
+body.game-home .item.danger:hover {
+    background: linear-gradient(#ca4f5d, #ac4250);
+}
+
+body.game-home .item-ico {
+    width: 22px;
+    height: 22px;
+    margin-right: 8px;
+}
+
+body.game-home .game-home-loc-count {
+    font-size: inherit;
+    font-weight: normal;
+}
+
+/* Нижняя сетка навигации — зелёные кнопки */
+body.game-home .site-footer {
+    border-top: 2px solid #2d4b29;
+    background: #2b4f2b;
+}
+
+body.game-home .footer-nav-cell {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 48px;
+    padding: 0 10px;
+    border: 1px solid #335e33;
+    border-top: none;
+    border-left: none;
+    border-radius: 0;
+    background: linear-gradient(#5f9150, #528446);
+    color: #fff;
+    font-size: 13px;
+    font-weight: bold;
+    box-shadow: none;
+}
+
+body.game-home .footer-nav-cell:nth-child(odd) {
+    border-left: 1px solid #335e33;
+}
+
+body.game-home .footer-nav-cell:hover {
+    background: linear-gradient(#69a057, #5a904c);
+}
+
+body.game-home .site-links {
+    padding: 10px 8px 8px;
+    background: #111;
+    text-align: center;
+    font-size: 11px;
+    line-height: 1.65;
+}
+
+body.game-home .site-links a {
+    color: #ccc;
+}
+
+body.game-home .site-links-sep {
+    color: #555;
+}
+
+body.game-home .site-online {
+    margin: 8px 0 0;
+    padding: 0;
+    color: #bbb;
+}
+
+body.game-home .site-online-link {
+    color: #e07030;
+}
+
+body.game-home .msg {
+    background: #2b4f2b;
+    color: #ffe0a0;
+    border-bottom: 1px solid #335e33;
+}
+
+body.game-home .msg.err {
+    background: #6a3030;
+    color: #ffb0b0;
+}
+
+/* Виджет основного задания — светло-зелёный блок под баннером */
+body.game-home .mq-root {
+    margin: 0 6px 4px;
+}
+
+body.game-home .mq-widget {
+    background: linear-gradient(180deg, #dce8c8 0%, #c5d4a8 100%);
+    border: 1px solid #6a8a4a;
+    border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+body.game-home .mq-widget-title {
+    color: #1a1a1a;
+}
+
+body.game-home .mq-widget-desc {
+    color: #333;
+}
+
+@media (max-width: 600px) {
+    html:has(body.game-home),
+    body.game-home.hools.game-shell {
+        background: #c5d4a8;
+    }
+
+    body.game-home.hools.game-shell > .app {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        box-shadow: none;
+    }
+}

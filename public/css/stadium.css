@@ -1,0 +1,1124 @@
+/* Стадион — матч клубов (в духе Hools) */
+
+.stadium-alert {
+    margin: 0 10px 10px;
+    padding: 12px 14px;
+    background: #f5e6a8;
+    border: 2px solid #c9a020;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.stadium-alert-text {
+    margin: 0 0 10px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #8a2010;
+}
+
+.stadium-alert-btn {
+    display: inline-block;
+    padding: 10px 16px;
+    background: linear-gradient(#56864c, #4a7540);
+    border: 1px solid #3a6036;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.stadium-tribunes-vs {
+    margin: 0 14px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    color: #333;
+}
+
+.stadium-strike-flash {
+    margin: 0 10px 10px;
+    padding: 12px 14px;
+    background: linear-gradient(180deg, #f0a040 0%, #e07818 100%);
+    border: 2px solid #c06010;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.35;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    animation: stadium-strike-flash-in 0.25s ease-out;
+}
+
+.stadium-strike-flash[hidden] {
+    display: none !important;
+}
+
+.stadium-strike-flash--page-top {
+    margin: 0 0 8px;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+}
+
+.stadium-rosters-block[hidden] {
+    display: none !important;
+}
+
+@keyframes stadium-strike-flash-in {
+    from {
+        opacity: 0;
+        transform: translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.stadium-menu .item-ico {
+    display: inline-block;
+    width: 20px;
+    text-align: center;
+    margin-right: 6px;
+}
+
+.stadium-meat {
+    padding: 0 0 16px;
+}
+
+.stadium-ticket-hint {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #333;
+    line-height: 1.35;
+}
+
+.stadium-ticket-hint a {
+    color: #ca4d29;
+    font-weight: 700;
+}
+
+.stadium-kassa-meat {
+    padding: 10px;
+}
+
+/* Касса: низ страницы — чёрный, как футер (без зелёного/серого зазора) */
+html:has(body.stadium-kassa-page) {
+    background: #161616;
+}
+
+body.hools.game-shell.stadium-kassa-page,
+body.ultras-dark.hools.game-shell.stadium-kassa-page {
+    min-height: 100vh;
+    background: #161616;
+}
+
+body.hools.game-shell.stadium-kassa-page > .app,
+body.ultras-dark.hools.game-shell.stadium-kassa-page > .app {
+    min-height: 100vh;
+    padding-bottom: 0;
+    background: #c5d4a8;
+}
+
+body.hools.game-shell.stadium-kassa-page > .app::after {
+    content: "";
+    display: block;
+    flex: 1 1 auto;
+    min-height: 0;
+    background: #161616;
+}
+
+.stadium-kassa-card {
+    margin: 0 4px 12px;
+    padding: 16px 14px;
+    background: #b0c49a;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.stadium-kassa-ticket {
+    margin: 0 0 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #ca4d29;
+}
+
+.stadium-kassa-price {
+    margin: 12px 0 8px;
+    font-size: 14px;
+    color: #222;
+}
+
+.stadium-kassa-price-ico {
+    vertical-align: -3px;
+    margin-left: 2px;
+}
+
+.stadium-kassa-meta {
+    margin: 0 0 6px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.4;
+}
+
+.stadium-kassa-warn {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #8a3010;
+}
+
+.stadium-kassa-buy {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #3a6036;
+    border-radius: 6px;
+    background: linear-gradient(#56864c, #4a7540);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.stadium-kassa-buy:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.stadium-kassa-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 12px 0;
+    text-align: left;
+}
+
+.stadium-kassa-row {
+    padding: 12px 10px;
+    background: #c5d4a8;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+}
+
+.stadium-kassa-row-match {
+    margin-bottom: 6px;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.stadium-kassa-row-time {
+    margin: 0 0 4px;
+    font-size: 13px;
+    color: #333;
+}
+
+.stadium-kassa-row-price {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #222;
+}
+
+.stadium-kassa-owned {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: #3a6036;
+}
+
+.stadium-kassa-buy--row {
+    margin-top: 4px;
+}
+
+.stadium-kassa-link {
+    display: block;
+    margin-top: 14px;
+    text-align: center;
+    font-weight: 700;
+}
+
+.stadium-match-head {
+    margin: 0 10px 10px;
+    padding: 10px 12px;
+    background: #b0c49a;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    text-align: center;
+}
+
+.stadium-match-title {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #ca4d29;
+}
+
+.stadium-match-vs {
+    margin: 0 0 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #222;
+}
+
+.stadium-club-match {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.stadium-club-ico,
+.stadium-roster-club-ico {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    vertical-align: middle;
+}
+
+.stadium-participants {
+    margin: 0 0 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #2a5a2a;
+    text-align: center;
+}
+
+.stadium-score-bar {
+    margin: 0 0 8px;
+    padding: 8px 10px;
+    background: linear-gradient(180deg, #ffb040 0%, #f09028 100%);
+    border: 1px solid #c87818;
+    border-radius: 4px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #1a1208;
+}
+
+.stadium-countdown {
+    margin: 0 0 10px;
+    font-size: 12px;
+    line-height: 1.4;
+    color: #333;
+}
+
+.stadium-countdown strong {
+    display: block;
+    margin-top: 2px;
+    font-size: 17px;
+    letter-spacing: 0.05em;
+}
+
+.stadium-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.stadium-action-btn {
+    min-width: 120px;
+    padding: 10px 14px;
+    border: 1px solid #3a6036;
+    border-radius: 6px;
+    background: linear-gradient(#6a8a9a, #5a7a8a);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.stadium-action-btn--fight {
+    background: linear-gradient(#56864c, #4a7540);
+    border-color: #3a6036;
+}
+
+.stadium-eliminated-msg {
+    margin: 10px 0 0;
+    padding: 10px 12px;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #5a2010;
+    background: #f0d8c8;
+    border: 1px solid #c08060;
+    border-radius: 3px;
+}
+
+.stadium-action-btn:active {
+    filter: brightness(0.95);
+}
+
+.stadium-section-title {
+    margin: 10px 14px 6px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #333;
+}
+
+.stadium-feed-block {
+    margin: 0 8px 10px;
+}
+
+.stadium-feed-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.stadium-feed-refresh-btn {
+    flex: 0 0 auto;
+    padding: 3px 8px;
+    border: 1px solid #9bb08f;
+    border-radius: 3px;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 97%);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+
+.stadium-feed-title {
+    margin-bottom: 0;
+}
+
+.stadium-feed-wrap {
+    overflow-x: hidden;
+    overflow-y: auto;
+    max-height: calc(14 * 22px);
+    background: #c8d8b0;
+    border: 1px solid #9bb08f;
+    border-radius: 0;
+}
+
+.stadium-feed {
+    overflow: hidden;
+    padding: 0;
+}
+
+.stadium-feed--idle {
+    padding: 10px 8px;
+    text-align: center;
+    font-size: 12px;
+    color: #444;
+    line-height: 1.35;
+    min-height: calc(14 * 22px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stadium-feed-idle-msg {
+    margin: 0;
+    padding: 8px;
+}
+
+.stadium-feed-line {
+    margin: 0;
+    padding: 3px 6px;
+    font-size: 11px;
+    line-height: 1.28;
+    color: #1a1a1a;
+    border-bottom: 1px solid #b5c5a5;
+    min-height: 22px;
+}
+
+.stadium-feed-line--alt {
+    background: #d4e2c4;
+}
+
+.stadium-feed-line--sys {
+    color: #333;
+    font-style: italic;
+}
+
+.stadium-feed-line--dodge .stadium-feed-talisman--neo {
+    color: #2563eb;
+}
+
+.stadium-feed-line--klitschko .stadium-feed-talisman--klitschko {
+    color: #b91c1c;
+}
+
+.stadium-feed-talisman {
+    font-weight: 700;
+}
+
+.stadium-feed-talisman--neo {
+    color: #2563eb;
+}
+
+.stadium-feed-talisman--klitschko {
+    color: #b91c1c;
+}
+
+.stadium-feed-effect {
+    font-weight: 700;
+    color: #1a1a1a;
+}
+
+.stadium-feed-line .stadium-feed-club-ico {
+    width: 12px;
+    height: 12px;
+    vertical-align: -2px;
+    margin-right: 1px;
+    object-fit: contain;
+}
+
+.stadium-feed-line .stadium-feed-name {
+    color: #ca4d29;
+    font-weight: 700;
+    text-decoration: underline;
+}
+
+.stadium-feed-name-btn {
+    display: inline;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    font-weight: 700;
+    color: #1a4a8a;
+    text-decoration: underline;
+    cursor: pointer;
+    vertical-align: baseline;
+}
+
+.stadium-feed-name-btn:hover {
+    color: #0d2d5c;
+}
+
+.stadium-feed-line--series {
+    background: rgba(255, 220, 120, 0.22);
+}
+
+.stadium-feed-line--series .stadium-feed-effect {
+    color: #8a5010;
+    font-weight: 700;
+}
+
+.stadium-feed-pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    margin-top: 6px;
+    padding: 4px 2px;
+}
+
+.stadium-feed-pager--single {
+    font-size: 11px;
+    color: #444;
+}
+
+.stadium-feed-nav,
+.stadium-feed-page {
+    min-width: 26px;
+    height: 24px;
+    padding: 0 4px;
+    border: 1px solid #9bb08f;
+    background: #fff;
+    color: #222;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    line-height: 1;
+}
+
+.stadium-feed-page.is-active {
+    background: #56864c;
+    border-color: #3a6036;
+    color: #fff;
+}
+
+.stadium-feed-nav:disabled,
+.stadium-feed-page:disabled {
+    opacity: 0.45;
+    cursor: default;
+}
+
+.stadium-feed-page-label {
+    margin-left: 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #333;
+    white-space: nowrap;
+}
+
+.stadium-rosters {
+    margin: 0 10px 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.stadium-roster-col {
+    background: #b0c49a;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    padding: 6px 8px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.stadium-roster-col h4 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 0 0 6px;
+    font-size: 11px;
+    font-weight: 700;
+    color: #ca4d29;
+    text-align: center;
+}
+
+.stadium-roster-row {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: #222;
+    padding: 2px 0;
+    border-bottom: 1px dotted #9bb08f;
+}
+
+.stadium-roster-label {
+    font-weight: 700;
+    min-width: 52px;
+}
+
+.stadium-roster-name {
+    color: #333;
+}
+
+.stadium-roster-level {
+    margin-left: auto;
+    color: #555;
+}
+
+.stadium-roster-ava-wrap {
+    width: 28px;
+    height: 28px;
+}
+
+.stadium-roster-ava-wrap .player-avatar-frame--xs {
+    width: 28px;
+    height: 28px;
+    border: 1px solid #9bb08f;
+    border-radius: 3px;
+}
+
+.stadium-roster-ava-wrap .player-avatar-img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+}
+
+.stadium-roster-row:last-child {
+    border-bottom: none;
+}
+
+.stadium-player-bar {
+    margin: 0 10px 8px;
+    padding: 8px 10px;
+    background: #c5d4a8;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.stadium-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+}
+
+.stadium-bar-label {
+    width: 52px;
+    flex-shrink: 0;
+    color: #333;
+}
+
+.stadium-bar-track {
+    flex: 1;
+    height: 8px;
+    background: #555;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.stadium-bar-fill--hp {
+    height: 100%;
+    background: linear-gradient(90deg, #c03030, #e05050);
+}
+
+.stadium-bar-fill--fury {
+    height: 100%;
+    background: linear-gradient(90deg, #d87818, #f0a040);
+}
+
+.stadium-opponents {
+    background: #b0c49a;
+}
+
+.stadium-attack-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.stadium-attack-btn {
+    flex: 1;
+    min-width: 120px;
+    padding: 8px 10px;
+    border: 1px solid #3a6036;
+    border-radius: 6px;
+    background: linear-gradient(#56864c, #4a7540);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.stadium-attack-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.stadium-attack-btn--strong {
+    background: linear-gradient(#a85028, #8a4018);
+    border-color: #6a3010;
+}
+
+.stadium-meta-line {
+    font-size: 12px;
+    color: #444;
+    margin-top: 2px;
+}
+
+.stadium-schedule {
+    margin: 8px 14px 12px;
+    font-size: 12px;
+    color: #333;
+    text-align: center;
+}
+
+.stadium-week-block {
+    margin: 0 8px 10px;
+}
+
+.stadium-week-hint {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #444;
+    text-align: center;
+}
+
+.stadium-week-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.stadium-week-row {
+    display: block;
+    padding: 10px 12px;
+    background: #b0c49a;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    text-decoration: none;
+    color: inherit;
+}
+
+.stadium-week-row:active,
+.stadium-week-row:hover {
+    background: #a8bc92;
+}
+
+.stadium-week-row-top {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+    margin-bottom: 6px;
+}
+
+.stadium-week-score {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 13px;
+    color: #333;
+}
+
+.stadium-week-row-meta {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+.stadium-week-row-foot {
+    font-size: 12px;
+    color: #444;
+}
+
+.stadium-week-status {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.stadium-week-status--wait {
+    color: #5a4a20;
+}
+
+.stadium-week-status--live {
+    color: #a83010;
+}
+
+.stadium-week-status--ended {
+    color: #444;
+}
+
+.stadium-match-detail[hidden],
+.stadium-week-block[hidden] {
+    display: none !important;
+}
+
+.stadium-score-ico {
+    width: 16px;
+    height: 16px;
+    vertical-align: -3px;
+    margin: 0 4px;
+    object-fit: contain;
+}
+
+/* Страница боя (трибуны) */
+.stadium-battle-page .stadium-battle-meat {
+    padding-bottom: 8px;
+}
+
+.stadium-battle-card {
+    background: #c5d4a8;
+}
+
+.stadium-opp-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px;
+    margin-bottom: 2px;
+}
+
+.stadium-opp-name {
+    font-size: 16px;
+    font-weight: 800;
+    color: #ca4d29;
+}
+
+.stadium-opp-meta {
+    font-size: 14px;
+    font-weight: 700;
+    color: #222;
+}
+
+.stadium-opp-fury {
+    margin: 0 0 6px;
+    font-size: 12px;
+    color: #444;
+}
+
+.stadium-battle-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+.stadium-gadget-attack-row {
+    display: flex;
+    gap: 8px;
+}
+
+.stadium-gadget-bar {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 10px;
+    margin: 0 10px 8px;
+    background: #1a2e1a;
+    border-top: 1px solid #3a6036;
+}
+
+.stadium-gadget-btn,
+.stadium-gadget-hit {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border: 2px solid #c9a020;
+    border-radius: 6px;
+    background: radial-gradient(circle at 50% 35%, #fff6a8 0%, #f5d020 45%, #e8a810 100%);
+    cursor: pointer;
+    padding: 0;
+    font-family: inherit;
+}
+
+.stadium-gadget-btn:disabled,
+.stadium-gadget-hit:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.stadium-gadget-ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: 28px;
+    line-height: 1;
+}
+
+.stadium-gadget-count {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    min-width: 16px;
+    padding: 0 3px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 3px;
+    line-height: 1.2;
+}
+
+.stadium-provisions-bar {
+    flex-wrap: wrap;
+}
+
+.provision-slot {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    border: 2px solid #c9a020;
+    border-radius: 6px;
+    background: radial-gradient(circle at 50% 35%, #fff6a8 0%, #f5d020 45%, #e8a810 100%);
+}
+
+.provision-ico,
+.stadium-gadget-hit .provision-ico {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 4px;
+}
+
+.provision-count {
+    position: absolute;
+    right: 2px;
+    bottom: 2px;
+    min-width: 16px;
+    padding: 0 3px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    background: rgba(0, 0, 0, 0.65);
+    border-radius: 3px;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.stadium-gadget-hit .provision-ico {
+    pointer-events: none;
+}
+
+/* Лучшие бойцы (как в Hools — «Все игроки») */
+.stadium-best-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 20px;
+    font-weight: 800;
+    margin: 0;
+}
+
+.stadium-best-ico {
+    font-size: 22px;
+    line-height: 1;
+}
+
+.stadium-best-subtitle {
+    margin: 0 14px 8px;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    color: #555;
+}
+
+.stadium-best-meat {
+    padding-bottom: 8px;
+}
+
+.stadium-best-players {
+    margin: 0 10px 0;
+    background: #c5d4a8;
+    border: 1px solid #9bb08f;
+}
+
+.stadium-best-player {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #b5c5a5;
+}
+
+.stadium-best-player:last-child {
+    border-bottom: none;
+}
+
+.stadium-best-player--me {
+    background: #e8f0d0;
+}
+
+.stadium-best-ava-wrap {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+}
+
+.stadium-best-ava-wrap .player-avatar-frame {
+    width: 52px;
+    height: 52px;
+    border-radius: 2px;
+    border: 2px solid #ca4d29;
+}
+
+.stadium-best-ava-wrap .player-avatar-img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    object-position: center center;
+}
+
+.stadium-best-ava {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border: 2px solid #ca4d29;
+    border-radius: 2px;
+    background: transparent;
+}
+
+.stadium-best-ava--ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    line-height: 1;
+}
+
+.stadium-best-player-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.stadium-best-player-name {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #ca4d29;
+    line-height: 1.25;
+}
+
+.stadium-best-player-lvl {
+    color: #8a2010;
+}
+
+.stadium-best-stat {
+    margin: 0 0 2px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.35;
+}
+
+.stadium-best-stat b {
+    font-weight: 800;
+}
+
+.stadium-best-rep-ico {
+    vertical-align: -2px;
+    margin-left: 2px;
+}
+
+.stadium-best-pager {
+    margin: 0 10px 10px;
+    padding: 10px 8px;
+    background: #e8e8e8;
+    border: 1px solid #ccc;
+    border-top: none;
+}
+
+.stadium-best-pager-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.stadium-best-page-num {
+    min-width: 32px;
+    height: 32px;
+    padding: 0 8px;
+    border: 1px solid #bbb;
+    border-radius: 2px;
+    background: #fff;
+    color: #333;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.stadium-best-page-num.is-active {
+    background: #4a90d9;
+    border-color: #3a7bc8;
+    color: #fff;
+}
+
+.stadium-best-page-next {
+    padding: 6px 14px;
+    border: 1px solid #bbb;
+    border-radius: 2px;
+    background: #fff;
+    color: #333;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.stadium-best-page-gap {
+    padding: 0 4px;
+    color: #666;
+    font-weight: 700;
+}

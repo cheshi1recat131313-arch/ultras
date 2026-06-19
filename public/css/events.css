@@ -74,31 +74,168 @@
 }
 
 .events-detail-sheet {
-    margin: 0 10px 12px;
+    margin: 0;
     padding: 0;
     background: transparent;
     border: none;
 }
 
+/* ── Страница «Событие → Подробнее»: единый лист без чёрных зазоров ── */
+
+body.event-detail-page .app.fight-app {
+    background: #c5d4a8;
+}
+
+body.event-detail-page .page-title {
+    flex: 0 0 auto;
+    padding: 8px 12px;
+}
+
+body.event-detail-page .msg:empty {
+    display: none;
+}
+
+body.event-detail-page #detailRoot {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+}
+
+body.event-detail-page .events-detail-sheet {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    background: #c5d4a8;
+}
+
+body.event-detail-page .events-detail-meta {
+    margin: 0;
+    padding: 8px 12px 6px;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #a8b892;
+}
+
+body.event-detail-page .events-detail-fight {
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-levelup {
+    padding: 6px 10px 4px;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-title {
+    padding: 4px 10px 0;
+    margin: 0;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-reward-box {
+    margin: 4px 10px 4px;
+    padding: 4px 8px;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-vs-row {
+    margin: 4px 0 2px;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-vs-names {
+    margin: 0 0 4px;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-log-scroll {
+    padding: 2px 12px 2px;
+    max-height: min(240px, 42vh);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-log-line {
+    margin: 0 0 4px;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-quote,
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-end-msg {
+    margin: 0 0 4px;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-summary-wrap {
+    padding: 0 12px 2px;
+}
+
+body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-summary {
+    margin: 4px 0 0;
+    padding-bottom: 0;
+}
+
+body.event-detail-page .events-detail-text {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #222;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #a8b892;
+}
+
+body.event-detail-page .events-detail-actions {
+    flex: 0 0 auto;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid #a8b892;
+}
+
+body.event-detail-page .events-detail-actions .fight-nav-btn {
+    margin: 0;
+    display: block;
+}
+
+body.event-detail-page .events-detail-actions .fight-nav-btn + .fight-nav-btn .fight-inner-btn {
+    border-top: none;
+}
+
+body.event-detail-page .events-empty {
+    margin: 0;
+    padding: 16px 12px;
+    border-bottom: 1px solid #a8b892;
+}
+
+body.event-detail-page .site-footer {
+    flex: 0 0 auto;
+    margin-top: 0;
+}
+
 .events-detail-meta {
-    margin: 0 10px 10px;
-    padding: 12px 14px;
+    margin: 0 8px 4px;
+    padding: 8px 12px;
     background: #c5d4a8;
     border: 1px solid #8fa87a;
 }
 
 .events-detail-time {
-    margin: 0 0 10px;
+    margin: 0 0 4px;
     font-size: 12px;
     color: #777;
 }
 
 .events-detail-summary {
     margin: 0;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 700;
     color: #1a1a1a;
-    line-height: 1.35;
+    line-height: 1.3;
 }
 
 .events-detail-summary .fight-reward-ico {
@@ -108,24 +245,41 @@
 }
 
 .events-detail-fight {
-    margin: 0 0 8px;
+    margin: 0;
 }
 
 .events-detail-fight .fight-main-block--embedded {
     margin: 0;
+    padding: 0;
 }
 
-.events-detail-text {
-    margin: 0 10px 12px;
-    padding: 12px 14px;
-    font-size: 14px;
-    line-height: 1.45;
-    color: #222;
-    background: #c5d4a8;
-    border: 1px solid #8fa87a;
-}
+@media (max-width: 480px) {
+    body.event-detail-page .events-detail-meta {
+        padding: 7px 10px 5px;
+    }
 
-.events-detail-nav .fight-nav-btn {
-    margin-left: 10px;
-    margin-right: 10px;
+    body.event-detail-page .events-detail-summary {
+        font-size: 14px;
+    }
+
+    body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-vs-row {
+        margin: 2px 0 0;
+    }
+
+    body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-ava,
+    body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-ava.player-avatar-frame,
+    body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-ava.player-avatar-frame .player-avatar-img {
+        width: 72px;
+        height: 74px;
+        line-height: 74px;
+    }
+
+    body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-log-scroll {
+        max-height: min(200px, 38vh);
+        padding: 2px 10px 2px;
+    }
+
+    body.event-detail-page .events-detail-fight .fight-main-block--embedded .fight-summary-wrap {
+        padding: 0 10px 2px;
+    }
 }

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 88 88">
+  <defs>
+    <radialGradient id="burst" cx="50%" cy="45%" r="50%">
+      <stop offset="0%" stop-color="#fff8a8"/>
+      <stop offset="45%" stop-color="#f5d020"/>
+      <stop offset="100%" stop-color="#e8a010"/>
+    </radialGradient>
+  </defs>
+  <rect width="88" height="88" rx="8" fill="url(#burst)"/>
+  <rect x="18" y="34" width="52" height="26" rx="4" fill="#5a3018" stroke="#3a1808" stroke-width="2"/>
+  <rect x="14" y="38" width="10" height="18" rx="2" fill="#c0c0c0" stroke="#888"/>
+  <rect x="22" y="38" width="14" height="16" fill="#3a2010"/>
+  <rect x="36" y="38" width="14" height="16" fill="#2a1808"/>
+  <rect x="50" y="38" width="14" height="16" fill="#3a2010"/>
+  <circle cx="20" cy="44" r="3" fill="#e02040"/>
+</svg>

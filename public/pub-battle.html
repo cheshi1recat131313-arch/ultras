@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Битва за Паб</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/stadium.css">
+    <link rel="stylesheet" href="css/pub-battle.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
+</head>
+<body class="hools game-shell ultras-dark ultras-theme-green">
+<div class="app">
+    <header class="header" id="header"></header>
+
+    <div class="pb-page">
+        <h1 class="pb-title">Битва за Паб</h1>
+
+        <div id="pbBanner" class="pb-banner" hidden></div>
+        <div id="pbStrikeFlash" class="stadium-strike-flash pb-strike-flash" hidden></div>
+
+        <!-- Экран ожидания до старта -->
+        <section class="pb-panel pb-waiting" id="pbWaitingPanel" hidden>
+            <p class="pb-waiting-desc">
+                Только лучшие бойцы клубов могут войти в паб и побороться за звание <strong>Королей Паба</strong>.
+            </p>
+            <div class="pb-start-banner" id="pbStartBanner">Битва начнётся —</div>
+            <p class="pb-waiting-countdown" id="pbCountdownLine" hidden></p>
+            <p class="pb-waiting-regline" id="pbWaitingRegLine">Записано игроков: 0</p>
+
+            <div class="pb-waiting-actions" id="pbWaitingActions">
+                <button type="button" class="pb-register-btn" id="pbRegisterBtn">Записаться за 10 $</button>
+                <p class="pb-registered-badge" id="pbRegisteredBadge" hidden>Ты записан — жди старта</p>
+            </div>
+            <p class="pb-hint" id="pbRegisterHint"></p>
+
+            <h2 class="pb-subtitle pb-clubs-title">Запись по клубам</h2>
+            <ul class="pb-club-reg-list" id="pbClubRegList"></ul>
+
+            <button type="button" class="pb-dev-reset-btn" id="pbDevResetBtn" hidden>Сбросить битву (тест)</button>
+        </section>
+
+        <!-- Статус после старта / завершения -->
+        <section class="pb-panel" id="pbOverviewPanel" hidden>
+            <p class="pb-status" id="pbStatusText"></p>
+            <p class="pb-room" id="pbRoomLine" hidden></p>
+            <p class="pb-cooldown" id="pbCooldownLine" hidden></p>
+            <div class="pb-bm-actions" id="pbLiveActions" hidden>
+                <button type="button" class="pb-action-btn pb-fight-btn" id="pbEnterFightBtn">В бой</button>
+            </div>
+        </section>
+
+        <section class="pb-panel" id="pbRoomsPanel" hidden>
+            <h2 class="pb-subtitle">Комнаты</h2>
+            <p class="pb-hint" id="pbRoomsSubtitle"></p>
+            <div class="pb-rooms" id="pbRooms"></div>
+        </section>
+
+        <section class="pb-panel" id="pbRosterPanel" hidden>
+            <h2 class="pb-subtitle">Состав комнаты</h2>
+            <ul class="pb-roster" id="pbRoster"></ul>
+        </section>
+
+        <section class="pb-panel pb-combat-panel" id="pbCombatPanel" hidden>
+            <p class="stadium-tribunes-vs" id="pbCombatTitle"></p>
+            <div class="stadium-gadget-bar stadium-provisions-bar" id="pbProvisionsBar" hidden></div>
+
+            <div class="pb-bm-actions">
+                <button type="button" class="pb-action-btn pb-secondary-btn" id="pbBackBtn">← Обзор</button>
+                <button type="button" class="pb-action-btn pb-secondary-btn" id="pbRefreshBtn">Обновить</button>
+            </div>
+
+            <h2 class="pb-subtitle">Лента событий</h2>
+            <div class="stadium-feed-wrap">
+                <div class="stadium-feed stadium-feed--idle" id="pbFeed" aria-live="polite"></div>
+            </div>
+            <div id="pbFeedPager"></div>
+
+            <h2 class="pb-subtitle">Моя статистика</h2>
+            <div class="pb-my-stats" id="pbMyStats" hidden>
+                <p class="pb-my-stat">Нанесённый урон: <strong id="pbMyDamage">0</strong></p>
+                <p class="pb-my-stat">Нокауты: <strong id="pbMyKos">0</strong></p>
+                <p class="pb-my-stat">Удары: <strong id="pbMyHits">0</strong></p>
+            </div>
+
+            <h2 class="pb-subtitle">Лучшие бойцы</h2>
+            <div class="pb-best-wrap" id="pbBest">
+                <p class="pb-empty">Статистика появится после первых ударов.</p>
+            </div>
+
+            <h2 class="pb-subtitle">Противники</h2>
+            <div class="stadium-opponents district-bots" id="pbOpponents"></div>
+        </section>
+
+        <section class="pb-panel pb-coord" id="pbCoordPanel" hidden>
+            <h2 class="pb-subtitle">Чат координации</h2>
+            <div class="pb-coord-log" id="pbCoordLog" aria-live="polite"></div>
+            <div class="pb-coord-compose" id="pbCoordCompose" hidden>
+                <input type="text" id="pbCoordInput" class="pb-input" placeholder="Указание для клуба" autocomplete="off" maxlength="200">
+                <button type="button" id="pbCoordSend" class="pb-send-btn">Отправить</button>
+            </div>
+            <p class="pb-hint" id="pbCoordHint">Читать могут все участники. Писать — лидер и помощники клуба.</p>
+        </section>
+    </div>
+
+    <div class="list pb-back-wrap">
+        <a class="item back" href="/game.html">← На главную</a>
+        <a class="item" href="/pub.html">Паб (чат)</a>
+    </div>
+
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<div id="msg" class="msg"></div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/clubs.js"></script>
+<script src="js/club-theme.js"></script>
+<script src="js/stadium-flash.js"></script>
+<script src="js/stadium-feed.js"></script>
+<script src="js/provisions-ui.js"></script>
+<script src="js/pub-battle.js"></script>
+<script>
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    await initPubBattle(user);
+})();
+</script>
+</body>
+</html>

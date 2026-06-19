@@ -4,8 +4,12 @@
 
 const headerSsr = require("./header-ssr");
 const battleLog = require("./public/js/battle-log.js");
+const talismanEffects = require("./talisman-effects");
+const talismansCatalog = require("./talismans");
 
 const MAX_RAGE = 150;
+const RAGE_BASE = 100;
+const RAGE_ON_LOSS = 10;
 const FIGHT_DMG_CAP = 40;
 const FIGHT_MAX_ROUNDS = 10;
 const HEART_IMG = battleLog.HEART_IMG;
@@ -38,27 +42,147 @@ function combatRating(eff, level) {
     );
 }
 
-function equipmentGearMult(equipment) {
-    if (!equipment || !equipment.weapon) return 1;
-    let mult = 1.02;
-    if (equipment.clothes) mult *= 1.1;
+function equipmentGearMult(equipment, gearLevels) {
+    let mult = 1;
+    const levels = gearLevels && typeof gearLevels === "object" ? gearLevels : null;
+    const weaponLvl = Math.max(1, Math.floor(Number(levels?.weapon ?? levels?.weaponLevel) || 1));
+    const clothesLvl = Math.max(1, Math.floor(Number(levels?.clothes ?? levels?.clothesLevel) || 1));
+    const bootsLvl = Math.max(1, Math.floor(Number(levels?.boots ?? levels?.bootsLevel) || 1));
+    const headLvl = Math.max(1, Math.floor(Number(levels?.head ?? levels?.headLevel) || 1));
+    if (equipment?.weapon || levels?.weapon || levels?.weaponLevel) {
+        mult *= 1.02 + Math.max(0, weaponLvl - 1) * 0.05;
+    }
+    if (equipment?.clothes || levels?.clothes || levels?.clothesLevel) {
+        mult *= 1.04 + Math.max(0, clothesLvl - 1) * 0.04;
+    }
+    if (equipment?.boots || levels?.boots || levels?.bootsLevel) {
+        mult *= 1.03 + Math.max(0, bootsLvl - 1) * 0.045;
+    }
+    if (equipment?.head || levels?.head || levels?.headLevel) {
+        mult *= 1.025 + Math.max(0, headLvl - 1) * 0.035;
+    }
     return mult;
+}
+
+/** Сила влияния шмота и тату по уровню игрока: 1–2 ур. почти без эффекта, с 3 ур. заметно. */
+function districtLevelGearScale(playerLevel) {
+    const lvl = Math.max(1, Math.floor(Number(playerLevel) || 1));
+    if (lvl <= 1) return 0.12;
+    if (lvl === 2) return 0.38;
+    return 1;
+}
+
+function districtCombatModifiers(opts = {}) {
+    const scale = districtLevelGearScale(opts.playerLevel);
+    const weaponLevel = Math.max(1, Math.min(3, Math.floor(Number(opts.weaponLevel) || 1)));
+    const clothesLevel = Math.max(1, Math.min(3, Math.floor(Number(opts.clothesLevel) || 1)));
+    const bootsLevel = Math.max(1, Math.min(3, Math.floor(Number(opts.bootsLevel) || 1)));
+    const headLevel = Math.max(1, Math.min(3, Math.floor(Number(opts.headLevel) || 1)));
+    const tattoos = opts.tattoos && typeof opts.tattoos === "object" ? opts.tattoos : {};
+
+    const weaponStars = Math.max(0, weaponLevel - 1);
+    const clothesStars = Math.max(0, clothesLevel - 1);
+    const bootsStars = Math.max(0, bootsLevel - 1);
+    const headStars = Math.max(0, headLevel - 1);
+    const tattooPower = Math.max(0, Number(tattoos.power) || 0);
+    const tattooStamina = Math.max(0, Number(tattoos.stamina) || 0);
+    const tattooSpeed = Math.max(0, Number(tattoos.speed) || 0);
+    const tattooIntel = Math.max(0, Number(tattoos.intel) || 0);
+
+    const dealMult =
+        (1 + weaponStars * 0.11 * scale) *
+        (1 + bootsStars * 0.09 * scale) *
+        (1 + headStars * 0.07 * scale) *
+        (1 + tattooPower * 0.018 * scale) *
+        (1 + tattooSpeed * 0.008 * scale) *
+        (1 + tattooIntel * 0.006 * scale);
+    const takenMult = Math.max(
+        0.5,
+        (1 - clothesStars * 0.09 * scale) * Math.max(0.55, 1 - tattooStamina * 0.014 * scale)
+    );
+
+    return { dealMult, takenMult, dealAdd: 0, takenAdd: 0, levelScale: scale, pvp: false };
+}
+
+const OFFENSIVE_TATTOO_STATS = ["power", "speed", "intel"];
+const DEFENSIVE_TATTOO_STATS = ["stamina"];
+
+function normalizeActiveTattoos(tattoos) {
+    const t = tattoos && typeof tattoos === "object" ? tattoos : {};
+    if (t.expiresAt && Date.now() > Number(t.expiresAt)) {
+        return {};
+    }
+    return t;
+}
+
+/** +1 за каждую тату, которая есть у одного и отсутствует у другого. */
+function tattooExclusiveEdge(mine, theirs, stats) {
+    const m = normalizeActiveTattoos(mine);
+    const o = normalizeActiveTattoos(theirs);
+    let edge = 0;
+    for (const stat of stats) {
+        const hasMine = (Number(m[stat]) || 0) > 0;
+        const hasOpp = (Number(o[stat]) || 0) > 0;
+        if (hasMine && !hasOpp) edge += 1;
+        else if (!hasMine && hasOpp) edge -= 1;
+    }
+    return edge;
+}
+
+/**
+ * PvP: ~1 урона за звезду разницы, уровень важнее шмота.
+ * Атакующий: оружие vs одежда жертвы; ответный урон: оружие жертвы vs одежда атакующего.
+ */
+function districtPvpCombatModifiers(opts = {}) {
+    const pW = Math.max(1, Math.min(3, Math.floor(Number(opts.weaponLevel) || 1)));
+    const pC = Math.max(1, Math.min(3, Math.floor(Number(opts.clothesLevel) || 1)));
+    const oW = Math.max(1, Math.min(3, Math.floor(Number(opts.opponentWeaponLevel) || 1)));
+    const oC = Math.max(1, Math.min(3, Math.floor(Number(opts.opponentClothesLevel) || 1)));
+    const pLvl = Math.max(1, Math.floor(Number(opts.playerLevel) || 1));
+    const oLvl = Math.max(1, Math.floor(Number(opts.opponentLevel) || 1));
+
+    const offEdge = pW - oC;
+    const defEdge = oW - pC;
+    const levelDiff = pLvl - oLvl;
+
+    const offTattoo = tattooExclusiveEdge(opts.tattoos, opts.opponentTattoos, OFFENSIVE_TATTOO_STATS);
+    const defTattoo = tattooExclusiveEdge(opts.tattoos, opts.opponentTattoos, DEFENSIVE_TATTOO_STATS);
+
+    const dealAdd = offEdge * 1 + levelDiff * 0.9 + offTattoo * 1;
+    const takenAdd = defEdge * 1 - levelDiff * 0.55 - defTattoo * 1;
+
+    return {
+        dealMult: 1,
+        takenMult: 1,
+        dealAdd: round2(Math.max(-5, Math.min(5, dealAdd))),
+        takenAdd: round2(Math.max(-5, Math.min(5, takenAdd))),
+        levelScale: 1,
+        pvp: true
+    };
 }
 
 /** Сила боя: база × уровень × 5 × шмот × прокачка. */
 function fightStrengthScore(eff, level, opts = {}) {
     const lvl = Math.max(1, level ?? 1);
     const base = (eff.power || 10) * 1.2 + (eff.speed || 10) * 0.35 + (eff.stamina || 10) * 0.45;
-    const gear = opts.gearMult ?? equipmentGearMult(opts.equipment);
-    const bonus = opts.bonuses || {};
-    const gearBonus = 1 + ((bonus.power || 0) + (bonus.speed || 0) + (bonus.stamina || 0)) * 0.1;
+    const gearLevels = opts.gearLevels || {};
+    let gear;
+    if (opts.pvp) {
+        const w = Math.max(1, Math.floor(Number(gearLevels.weapon ?? opts.weaponLevel) || 1));
+        const c = Math.max(1, Math.floor(Number(gearLevels.clothes ?? opts.clothesLevel) || 1));
+        const b = Math.max(1, Math.floor(Number(gearLevels.boots ?? opts.bootsLevel) || 1));
+        const h = Math.max(1, Math.floor(Number(gearLevels.head ?? opts.headLevel) || 1));
+        gear = 1 + (w - 1) * 0.02 + (c - 1) * 0.015 + (b - 1) * 0.014 + (h - 1) * 0.012;
+    } else {
+        gear = opts.gearMult ?? equipmentGearMult(opts.equipment, gearLevels);
+    }
     const trained =
         1 +
         (Math.max(0, (eff.power || 10) - 10) +
             Math.max(0, (eff.speed || 10) - 10) +
             Math.max(0, (eff.stamina || 10) - 10)) *
             0.06;
-    let score = base * lvl * 5 * gear * gearBonus * trained;
+    let score = base * lvl * 5 * gear * trained;
 
     if (lvl <= 1 && (!opts.equipment || !opts.equipment.weapon)) score *= 0.5;
     if (lvl >= 2 && (opts.statPointsPending || 0) > 0) score *= 0.55;
@@ -66,7 +190,25 @@ function fightStrengthScore(eff, level, opts = {}) {
     return score;
 }
 
-function enemyStrengthScore(opponent, playerLevel) {
+function enemyStrengthScore(opponent, playerLevel, opts = {}) {
+    if (opponent.isPlayer) {
+        const oppLvl = Math.max(1, Math.floor(Number(opponent.level) || playerLevel || 1));
+        return fightStrengthScore(
+            {
+                power: opponent.power || 10,
+                speed: opponent.speed || 10,
+                stamina: opponent.stamina || 10
+            },
+            oppLvl,
+            {
+                pvp: true,
+                gearLevels: {
+                    weapon: opponent.weaponLevel ?? 1,
+                    clothes: opponent.clothesLevel ?? 1
+                }
+            }
+        );
+    }
     const lvl = Math.max(1, playerLevel ?? 1);
     const base =
         (opponent.power || 10) * 1.2 + (opponent.speed || 10) * 0.35 + (opponent.stamina || 10) * 0.45;
@@ -84,24 +226,67 @@ function tinyDamageNoise() {
     return (Math.random() - 0.5) * 0.5;
 }
 
-function planBalancedTotals(playerScore, enemyScore, won) {
+function planBalancedTotals(playerScore, enemyScore, won, playerLevel, dmgMods = {}) {
+    const lvl = Math.max(1, Math.floor(Number(playerLevel) || 1));
     const mid = 30;
-    const edge = Math.max(-1.2, Math.min(1.2, (playerScore - enemyScore) / 28));
-    let toEnemy = mid + edge * 0.35 + tinyDamageNoise();
-    let toPlayer = mid - edge * 0.35 + tinyDamageNoise();
+    const edgeDiv = lvl >= 3 ? 20 : 28;
+    const edgeCap = lvl >= 3 ? 2.4 : 1.2;
+    const edgeWeight = lvl >= 3 ? 0.72 : 0.35;
+    const edge = Math.max(-edgeCap, Math.min(edgeCap, (playerScore - enemyScore) / edgeDiv));
+    let toEnemy = mid + edge * edgeWeight + tinyDamageNoise();
+    let toPlayer = mid - edge * edgeWeight + tinyDamageNoise();
+
+    const dealMult = Number(dmgMods.dealMult) || 1;
+    const takenMult = Number(dmgMods.takenMult) || 1;
+    toEnemy = toEnemy * dealMult + (Number(dmgMods.dealAdd) || 0);
+    toPlayer = toPlayer * takenMult + (Number(dmgMods.takenAdd) || 0);
 
     if (won) {
-        if (toEnemy < toPlayer + 0.5) toEnemy = toPlayer + 0.5 + Math.random() * 0.5;
-        if (toEnemy > toPlayer + 1.0) toEnemy = toPlayer + 0.5 + Math.random() * 0.5;
+        const minGap = 0.5 + Math.random() * 0.5;
+        if (toEnemy < toPlayer + minGap) toEnemy = toPlayer + minGap;
     } else {
-        if (toPlayer < toEnemy + 0.5) toPlayer = toEnemy + 0.5 + Math.random() * 0.5;
-        if (toPlayer > toEnemy + 1.0) toPlayer = toEnemy + 0.5 + Math.random() * 0.5;
+        const minGap = 0.5 + Math.random() * 0.5;
+        if (toPlayer < toEnemy + minGap) toPlayer = toEnemy + minGap;
     }
 
+    const minDmg = lvl >= 3 ? 16 : 18;
     return {
-        totalToEnemy: round2(Math.min(FIGHT_DMG_CAP, Math.max(18, toEnemy))),
-        totalToPlayer: round2(Math.min(FIGHT_DMG_CAP, Math.max(18, toPlayer)))
+        totalToEnemy: round2(Math.min(FIGHT_DMG_CAP, Math.max(minDmg, toEnemy))),
+        totalToPlayer: round2(Math.min(FIGHT_DMG_CAP, Math.max(minDmg, toPlayer)))
     };
+}
+
+/** После талисманов урон может разойтись с исходом RNG — выровнять перед логом. */
+function enforcePlannedDamageSpread(won, totalToEnemy, totalToPlayer, playerLevel) {
+    const lvl = Math.max(1, Math.floor(Number(playerLevel) || 1));
+    const minDmg = lvl >= 3 ? 16 : 18;
+    const cap = FIGHT_DMG_CAP;
+    let toEnemy = round2(Number(totalToEnemy) || 0);
+    let toPlayer = round2(Number(totalToPlayer) || 0);
+    const minGap = 0.5 + Math.random() * 0.5;
+
+    if (won) {
+        if (toEnemy < toPlayer + minGap) toEnemy = toPlayer + minGap;
+    } else if (toPlayer < toEnemy + minGap) {
+        toPlayer = toEnemy + minGap;
+    }
+
+    toEnemy = round2(Math.min(cap, Math.max(minDmg, toEnemy)));
+    toPlayer = round2(Math.min(cap, Math.max(minDmg, toPlayer)));
+
+    if (won && toEnemy <= toPlayer) {
+        toEnemy = round2(Math.min(cap, toPlayer + minGap));
+        if (toEnemy <= toPlayer && toPlayer > minDmg) {
+            toPlayer = round2(Math.max(minDmg, toEnemy - minGap));
+        }
+    } else if (!won && toPlayer <= toEnemy) {
+        toPlayer = round2(Math.min(cap, toEnemy + minGap));
+        if (toPlayer <= toEnemy && toEnemy > minDmg) {
+            toEnemy = round2(Math.max(minDmg, toPlayer - minGap));
+        }
+    }
+
+    return { totalToEnemy: toEnemy, totalToPlayer: toPlayer };
 }
 
 function splitDamageTight(total, parts) {
@@ -193,6 +378,10 @@ function shortHit(attacker, verb, dmg) {
     return `<p class="fight-log-line">${bold(attacker)} ${verb} ${dmgTag(dmg)}</p>`;
 }
 
+function shortHitRed(attacker, verb, dmg) {
+    return `<p class="fight-log-line fight-log-line--talis-red">${bold(attacker)} ${verb} ${dmgTag(dmg)}</p>`;
+}
+
 function shortCrit(attacker, dmg) {
     return `<p class="fight-log-line fight-crit">${bold(attacker)} кританул ${dmgTag(dmg)}</p>`;
 }
@@ -211,6 +400,22 @@ function shortMiss(attacker) {
 
 function shortRageBoil(name) {
     return `<p class="fight-log-line fight-sys">${bold(name)}: ярость вскипела!</p>`;
+}
+
+function shortNeoTrigger() {
+    return '<p class="fight-log-line fight-log-line--talis-blue"><b>Сработал талисман: Фигурка Нео</b></p>';
+}
+
+function shortKlitschkoTrigger() {
+    return '<p class="fight-log-line fight-log-line--talis-red"><b>Сработал талисман: Перчатка Кличко</b></p>';
+}
+
+function shortMayaTrigger() {
+    return '<p class="fight-log-line fight-sys"><b>Сработал талисман: Маска Майя (ярость восстановлена)</b></p>';
+}
+
+function shortCloverTrigger() {
+    return '<p class="fight-log-line fight-sys"><b>Сработал талисман: Клевер (амулеты противника нейтрализованы)</b></p>';
 }
 
 function shortFinisher(attacker, defender) {
@@ -291,17 +496,89 @@ function resolveNarrativeFightFull(playerName, playerEff, opponent, playerHp, en
     const pHp = round2(playerHp);
     const eHp = round2(enemyHp);
 
+    const gearLevels = opts.gearLevels || {
+        weapon: opts.weaponLevel,
+        clothes: opts.clothesLevel,
+        boots: opts.bootsLevel,
+        head: opts.headLevel
+    };
+    const isPvp = !!opponent.isPlayer;
     const balanceOpts = {
         equipment: opts.equipment,
         bonuses: opts.bonuses,
         statPointsPending: opts.statPointsPending ?? 0,
-        gearMult: opts.gearMult
+        gearMult: opts.gearMult,
+        gearLevels,
+        pvp: isPvp
     };
+    const dmgMods = isPvp
+        ? districtPvpCombatModifiers({
+              playerLevel,
+              weaponLevel: gearLevels.weapon ?? opts.weaponLevel,
+              clothesLevel: gearLevels.clothes ?? opts.clothesLevel,
+              opponentLevel: opponent.level ?? playerLevel,
+              opponentWeaponLevel: opponent.weaponLevel ?? 1,
+              opponentClothesLevel: opponent.clothesLevel ?? 1,
+              tattoos: opts.tattoos,
+              opponentTattoos: opponent.tattoos ?? opts.opponentTattoos
+          })
+        : districtCombatModifiers({
+              playerLevel,
+              weaponLevel: gearLevels.weapon ?? opts.weaponLevel,
+              clothesLevel: gearLevels.clothes ?? opts.clothesLevel,
+              bootsLevel: gearLevels.boots ?? opts.bootsLevel,
+              headLevel: gearLevels.head ?? opts.headLevel,
+              tattoos: opts.tattoos
+          });
     const pScore = fightStrengthScore(playerEff, playerLevel, balanceOpts);
-    const eScore = enemyStrengthScore(opponent, playerLevel);
+    const eScore = enemyStrengthScore(opponent, playerLevel, balanceOpts);
     const winChance = computeWinChance(pScore, eScore, opponent.isSteward);
     const won = Math.random() < winChance;
-    const { totalToEnemy, totalToPlayer } = planBalancedTotals(pScore, eScore, won);
+    let { totalToEnemy, totalToPlayer } = planBalancedTotals(pScore, eScore, won, playerLevel, dmgMods);
+    const preTalismanToEnemy = totalToEnemy;
+    const preTalismanToPlayer = totalToPlayer;
+    const preLog = [];
+    let playerHitRed = false;
+    let mayaTriggered = false;
+
+    const districtMode = talismansCatalog.MODES.DISTRICT;
+    const playerTal = talismansCatalog.filterOwnedJsonForMode(opts.playerTalismans, districtMode);
+    const enemyTal = talismansCatalog.filterOwnedJsonForMode(opts.enemyTalismans, districtMode);
+
+    if (talismanEffects.rollClover(playerTal, Math.random, districtMode)) {
+        preLog.push(logEntry("sys", shortCloverTrigger()));
+    }
+
+    if (talismanEffects.rollNeoDodge(enemyTal, Math.random, districtMode)) {
+        totalToEnemy = 0;
+        preLog.push(logEntry("sys", shortNeoTrigger()));
+    } else {
+        const glove = talismanEffects.applyKlitschkoMultiplier(
+            playerTal,
+            totalToEnemy,
+            Math.random,
+            districtMode
+        );
+        if (glove.triggered) {
+            totalToEnemy = glove.damage;
+            playerHitRed = true;
+            preLog.push(logEntry("sys", shortKlitschkoTrigger()));
+        }
+    }
+    if (talismanEffects.rollMayaMask(playerTal, Math.random, districtMode)) {
+        mayaTriggered = true;
+        preLog.push(logEntry("sys", shortMayaTrigger()));
+    }
+
+    const postTalismanToEnemy = totalToEnemy;
+    const postTalismanToPlayer = totalToPlayer;
+    ({ totalToEnemy, totalToPlayer } = enforcePlannedDamageSpread(
+        won,
+        totalToEnemy,
+        totalToPlayer,
+        playerLevel
+    ));
+
     const log = buildFightLogFromTotals(
         playerName,
         opponent,
@@ -311,7 +588,53 @@ function resolveNarrativeFightFull(playerName, playerEff, opponent, playerHp, en
         startRage,
         openingSide
     );
-    const endRage = Math.max(0, startRage - randomInt(2, 6));
+    if (playerHitRed) {
+        const firstMe = log.find((r) => r.who === "me" && /\(−[\d.]+\s/.test(r.html || ""));
+        if (firstMe && firstMe.html) {
+            const m = firstMe.html.match(/<b>.*?<\/b>\s+([^<]+)\s+\(−([\d.]+)/);
+            if (m) {
+                firstMe.html = shortHitRed(playerName, m[1], Number(m[2]));
+            } else {
+                firstMe.html = firstMe.html.replace(
+                    'class="fight-log-line"',
+                    'class="fight-log-line fight-log-line--talis-red"'
+                );
+            }
+        }
+    }
+    if (preLog.length) {
+        log.unshift(...preLog);
+    }
+    const endRage = mayaTriggered
+        ? MAX_RAGE
+        : won
+          ? startRage
+          : Math.min(MAX_RAGE, Math.max(RAGE_BASE, startRage) + RAGE_ON_LOSS);
+
+    const adjudication = {
+        rngWon: won,
+        winChance: round2(winChance),
+        playerScore: round2(pScore),
+        enemyScore: round2(eScore),
+        preTalismanToEnemy: round2(preTalismanToEnemy),
+        preTalismanToPlayer: round2(preTalismanToPlayer),
+        postTalismanToEnemy: round2(postTalismanToEnemy),
+        postTalismanToPlayer: round2(postTalismanToPlayer),
+        playerDamage: round2(totalToEnemy),
+        opponentDamage: round2(totalToPlayer),
+        damageAdjustedAfterTalismans:
+            postTalismanToEnemy !== totalToEnemy || postTalismanToPlayer !== totalToPlayer
+    };
+
+    console.log("[district-fight adjudication]", {
+        winner: won ? playerName : opponent.name,
+        loser: won ? opponent.name : playerName,
+        playerDamage: adjudication.playerDamage,
+        opponentDamage: adjudication.opponentDamage,
+        rngWon: won,
+        winChance: adjudication.winChance,
+        damageAdjustedAfterTalismans: adjudication.damageAdjustedAfterTalismans
+    });
 
     return applyDamageAdjudication({
         status: won ? "won" : "lost",
@@ -320,7 +643,9 @@ function resolveNarrativeFightFull(playerName, playerEff, opponent, playerHp, en
         enemyHp: won ? 0 : round2(Math.max(0, eHp - totalToEnemy)),
         totalToEnemy,
         totalToPlayer,
-        endRage
+        endRage,
+        mayaTriggered,
+        adjudication
     });
 }
 
@@ -407,7 +732,7 @@ function buildFightPageHtml(ctx) {
   (function(){
     var email = localStorage.getItem('email');
     if (!email) return;
-    fetch('/getUser?email=' + encodeURIComponent(email)).then(function(r){ return r.json(); }).then(function(d){
+    fetch('/getUser?email=' + encodeURIComponent(email) + '&viewer=' + encodeURIComponent(email)).then(function(r){ return r.json(); }).then(function(d){
       if (d.success && d.user && typeof renderHeaderBlock === 'function') renderHeaderBlock(d.user);
     }).catch(function(){});
   })();
@@ -478,6 +803,14 @@ module.exports = {
     bold,
     round2,
     calcDamageFloat,
+    equipmentGearMult,
+    districtLevelGearScale,
+    districtCombatModifiers,
+    districtPvpCombatModifiers,
+    tattooExclusiveEdge,
+    fightStrengthScore,
+    planBalancedTotals,
+    enforcePlannedDamageSpread,
     resolveNarrativeFightFull,
     compactFightResolvedLog,
     sumHitDamageFromLogRows,

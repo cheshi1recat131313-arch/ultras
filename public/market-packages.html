@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пакеты — Дилер</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/center.css">
+    <link rel="stylesheet" href="css/market-packages.css">
+</head>
+<body class="hools center-scope game-shell shop-light">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="center-meat package-meat">
+        <h1 class="center-h1">Пакеты</h1>
+        <div class="dealer-intro">
+            <img class="dealer-ava" src="/images/dealer.png" alt="Дилер">
+            <p class="dealer-quote" id="dealerQuote"></p>
+        </div>
+        <div class="package-list" id="packageList" aria-label="Донат-пакеты"></div>
+        <a class="item back" href="/market.html">← К Дилеру</a>
+    </div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<div id="msg" class="msg"></div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/market-packages.js"></script>
+<script>
+(async () => {
+    const user = await fetchUser();
+    if (!user) return;
+    renderHeaderBlock(user);
+    await initMarketPackages();
+})();
+</script>
+</body>
+</html>

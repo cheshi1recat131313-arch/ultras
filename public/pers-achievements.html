@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перс — Достижения и награды</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/referrals.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
+</head>
+<body class="hools game-shell ultras-dark">
+<div class="app">
+    <header class="header" id="header"></header>
+    <div class="ref-page">
+        <h1 class="ref-title">Достижения и награды</h1>
+
+        <section class="ref-notebook" aria-label="Герой дня">
+            <h2 class="ref-notebook-title">Герой дня</h2>
+            <p class="ref-empty" id="heroOfDayEmpty" hidden>Пока нет побед в «Герое дня».</p>
+            <ul class="ref-list" id="heroOfDayList"></ul>
+        </section>
+
+        <a class="item back" href="/pers.html">← К персу</a>
+    </div>
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<div id="msg" class="msg"></div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/pers-achievements.js"></script>
+</body>
+</html>

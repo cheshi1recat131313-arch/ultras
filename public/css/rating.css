@@ -225,6 +225,15 @@
     overflow: hidden;
 }
 
+.rating-club-pos {
+    flex-shrink: 0;
+    width: 1.6em;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 700;
+    color: #5a4a10;
+}
+
 .rating-club-row {
     display: flex;
     align-items: center;
@@ -237,6 +246,17 @@
 
 .rating-club-row:last-child {
     border-bottom: none;
+}
+
+.rating-club-row--link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.rating-club-row--link:hover,
+.rating-club-row--link:focus-visible {
+    background: #b8c9a4;
 }
 
 .rating-club-emblem {
@@ -267,4 +287,161 @@
     font-size: 13px;
     line-height: 1.3;
     color: #444;
+}
+
+/* «Лучшие из лучших» — карточки в духе Hools */
+.rating-best-me {
+    margin: 0 10px 10px;
+}
+
+.rating-best-list-wrap {
+    margin: 0 10px 12px;
+}
+
+.rating-best-players {
+    background: #c5d4a8;
+    border: 1px solid #9bb08f;
+}
+
+.rating-best-player {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #b5c5a5;
+}
+
+.rating-best-player:last-child {
+    border-bottom: none;
+}
+
+.rating-best-player--me {
+    background: #e8f0d0;
+}
+
+.rating-best-me .rating-best-player {
+    border: 1px solid #9bb08f;
+}
+
+.rating-best-ava-wrap {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+}
+
+.rating-best-ava-wrap .player-avatar-frame {
+    width: 52px;
+    height: 52px;
+    border-radius: 2px;
+    border: 2px solid #ca4d29;
+}
+
+.rating-best-ava-wrap .player-avatar-img {
+    width: 52px;
+    height: 52px;
+    object-fit: contain;
+    object-position: center center;
+}
+
+.rating-best-ava {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    object-fit: cover;
+    border: 2px solid #ca4d29;
+    border-radius: 2px;
+}
+
+.rating-best-ava--ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    line-height: 1;
+}
+
+.rating-best-player-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.rating-best-player-name {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #ca4d29;
+    line-height: 1.25;
+    text-decoration: underline;
+}
+
+.rating-best-player-lvl {
+    color: #8a2010;
+    text-decoration: none;
+}
+
+.rating-best-stat {
+    margin: 0 0 2px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    line-height: 1.35;
+}
+
+.rating-best-stat--place {
+    font-size: 14px;
+}
+
+.rating-best-stat b {
+    font-weight: 800;
+}
+
+.rating-best-rep-ico {
+    vertical-align: -2px;
+    margin-left: 2px;
+}
+
+.rating-best-empty {
+    margin: 0;
+    padding: 14px 12px;
+    font-size: 13px;
+    color: #444;
+}
+
+.rating-best-pager {
+    margin-top: 10px;
+}
+
+.rating-best-pager-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.rating-best-page-num,
+.rating-best-page-next {
+    min-width: 34px;
+    padding: 8px 10px;
+    border: 1px solid #8fa87a;
+    border-radius: 4px;
+    background: #c5d4a8;
+    color: #222;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.rating-best-page-num.is-active {
+    background: #8fa87a;
+    color: #fff;
+}
+
+.rating-best-page-gap {
+    padding: 0 2px;
+    color: #555;
+}
+
+.rating-best-page-next {
+    min-width: auto;
 }

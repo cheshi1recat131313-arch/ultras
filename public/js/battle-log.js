@@ -9,6 +9,15 @@
         root.BattleLog = factory();
     }
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
+    let playerNameHtmlFn = typeof playerNameHtml === "function" ? playerNameHtml : null;
+    if (!playerNameHtmlFn) {
+        try {
+            playerNameHtmlFn = require("./player-links.js").playerNameHtml;
+        } catch {
+            /* browser without prior load */
+        }
+    }
+
     const HEART_IMG =
         '<img src="/static/icons/heart.svg" class="fight-heart" alt="❤" width="18" height="18">';
     const ICO_SILVER = '<img src="/static/location/base/ser.svg" class="fight-reward-ico" alt="">';
@@ -24,27 +33,39 @@
             .replace(/"/g, "&quot;");
     }
 
+    function fightLogNameHtml(name, email) {
+        if (playerNameHtmlFn) {
+            return playerNameHtmlFn(name, email, { className: "player-link" });
+        }
+        return `<b>${escapeHtml(name)}</b>`;
+    }
+
     function silverAmountHtml(n) {
         const amount = Math.max(0, Math.floor(Number(n) || 0));
         return `${amount} ${ICO_SILVER}`;
     }
 
     function fightAvatarImg(url, className, alt) {
-        const src = escapeHtml(url || "/images/p1.jpg");
+        const src = escapeHtml(url || "/static/personage/current/tank.png");
         return `<img class="${className}" src="${src}" width="88" height="90" alt="${escapeHtml(alt || "")}">`;
     }
 
-    function fightPlayerAvatarImg(url, alt, fill) {
-        const src = escapeHtml(url || "/images/fast-dossier.png");
+    function fightFramedAvatarImg(url, alt, fill, sideClass) {
+        const src = escapeHtml(url || "/static/personage/current/fast.png");
+        const side = sideClass || "fight-ava-pl";
         if (fill) {
             return (
-                `<span class="fight-ava fight-ava-pl player-avatar-frame">` +
+                `<span class="fight-ava ${side} player-avatar-frame">` +
                 `<span class="player-avatar-bg" style="background:${fill}" aria-hidden="true"></span>` +
                 `<img class="fight-ava-img player-avatar-img" src="${src}" width="88" height="90" alt="${escapeHtml(alt || "")}">` +
                 `</span>`
             );
         }
-        return fightAvatarImg(url, "fight-ava fight-ava-pl fight-ava-img", alt);
+        return fightAvatarImg(url, `fight-ava ${side} fight-ava-img`, alt);
+    }
+
+    function fightPlayerAvatarImg(url, alt, fill) {
+        return fightFramedAvatarImg(url, alt, fill, "fight-ava-pl");
     }
 
     function buildWinRewardHtml(ctx) {
@@ -96,7 +117,12 @@
 
         const playerAva = fightPlayerAvatarImg(ctx.playerAvatar, ctx.playerName, ctx.playerAvatarFill);
         const enemyAva = ctx.opponentAvatar
-            ? fightAvatarImg(ctx.opponentAvatar, "fight-ava fight-ava-en fight-ava-img", ctx.opponentName)
+            ? fightFramedAvatarImg(
+                  ctx.opponentAvatar,
+                  ctx.opponentName,
+                  ctx.opponentAvatarFill,
+                  "fight-ava-en"
+              )
             : `<span class="fight-ava fight-ava-en">${ctx.opponentEmoji || "👤"}</span>`;
 
         const vsRow = `<p class="fight-vs-row">
@@ -104,24 +130,27 @@
   <span class="fight-vs">VS</span>
   ${enemyAva}
 </p>
-<p class="fight-vs-names"><b>${escapeHtml(ctx.playerName)}</b> — <b>${escapeHtml(ctx.opponentName)}</b></p>`;
+<p class="fight-vs-names">${fightLogNameHtml(ctx.playerName, ctx.playerEmail)} — ${fightLogNameHtml(ctx.opponentName, ctx.opponentEmail)}</p>`;
 
         const logHtml = (ctx.logLines || []).join("\n");
         const te = Math.round(ctx.totalToPlayer || 0);
         const tp = Math.round(ctx.totalToEnemy || 0);
-        const summary = `<p class="fight-summary"><b>${escapeHtml(ctx.playerName)}</b> снёс <b>${tp}</b> ${HEART_IMG}<br>
-<b>${escapeHtml(ctx.opponentName)}</b> снёс <b>${te}</b> ${HEART_IMG}</p>`;
+        const summary = `<p class="fight-summary">${fightLogNameHtml(ctx.playerName, ctx.playerEmail)} снёс <b>${tp}</b> ${HEART_IMG}<br>
+${fightLogNameHtml(ctx.opponentName, ctx.opponentEmail)} снёс <b>${te}</b> ${HEART_IMG}</p>`;
 
         const wrapClass = opts.embedded ? "fight-main-block fight-main-block--embedded" : "fight-main-block";
+        const logBlock = opts.embedded
+            ? `<div class="fight-log-scroll">${logHtml}</div><div class="fight-summary-wrap">${summary}</div>`
+            : `<div class="fight-log-scroll">${logHtml}
+      ${summary}
+      </div>`;
 
         return `<div class="${wrapClass}">
       ${levelUpBlock}
       <h5 class="fight-title ${titleClass}"><strong>${titleText}</strong></h5>
       ${rewardBlock}
       ${vsRow}
-      <div class="fight-log-scroll">${logHtml}
-      ${summary}
-      </div>
+      ${logBlock}
     </div>`;
     }
 

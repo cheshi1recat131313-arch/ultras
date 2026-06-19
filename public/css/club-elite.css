@@ -1,0 +1,126 @@
+/* Элита клуба — рейтинг за 7 дней */
+
+.club-elite-info {
+    margin: 0 10px 12px;
+    padding: 12px 14px;
+    background: #b8d4e8;
+    border: 2px solid #5a8ab0;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1a2a35;
+    line-height: 1.45;
+}
+
+.club-elite-info-line {
+    margin: 0 0 6px;
+}
+
+.club-elite-info-line b {
+    color: #8a2010;
+}
+
+.club-elite-info-note {
+    margin: 8px 0 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #444;
+}
+
+.club-elite-skull-ico {
+    vertical-align: -2px;
+    margin: 0 1px;
+}
+
+.club-elite-list {
+    margin: 0 10px 12px;
+    background: #c5d4a8;
+    border: 1px solid #9bb08f;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.club-elite-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #a8b892;
+}
+
+.club-elite-row:last-child {
+    border-bottom: none;
+}
+
+.club-elite-row--me {
+    background: #e0ebd0;
+}
+
+.club-elite-ava-wrap {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+}
+
+.club-elite-ava-wrap .player-avatar-frame {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    border: 2px solid #ca4d29;
+}
+
+.club-elite-ava-wrap .player-avatar-img {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    object-position: center center;
+}
+
+.club-elite-ava {
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    object-fit: cover;
+    border: 2px solid #ca4d29;
+    border-radius: 4px;
+    background: transparent;
+}
+
+.club-elite-ava--ph {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    line-height: 48px;
+    text-align: center;
+}
+
+.club-elite-row-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.club-elite-name {
+    margin: 0 0 4px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #ca4d29;
+}
+
+.club-elite-lvl {
+    color: #8a2010;
+    font-weight: 800;
+}
+
+.club-elite-rank,
+.club-elite-skulls {
+    margin: 0 0 2px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #222;
+}
+
+.club-elite-rank b,
+.club-elite-skulls b {
+    color: #1a3a1a;
+}

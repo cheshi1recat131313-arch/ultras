@@ -1,4 +1,5 @@
-/* Шмот и оружие — сравнение после боя (в духе hools) */
+/* Шмот и оружие — как Hools */
+
 html:has(body.shmot-body) {
     background: #38393e;
 }
@@ -12,140 +13,377 @@ html:has(body.shmot-body) {
     color: #222;
 }
 
-.shmot-wrap {
-    max-width: 480px;
+.shmot-body .app {
+    max-width: 400px;
     margin: 0 auto;
-    background: #c5d4a8;
     min-height: 100vh;
-    box-shadow: none;
-    border: none;
-    padding: 0 0 24px;
+    background: #38393e;
+}
+
+.shmot-wrap {
+    background: #c5d4a8;
+    padding: 0 0 20px;
 }
 
 .shmot-title {
     text-align: center;
     margin: 0;
     padding: 12px 10px;
-    font-size: 1.15rem;
+    font-size: 1.2rem;
+    font-weight: 800;
     color: #ca4d29;
     background: linear-gradient(180deg, #d4e4c4, #ccdbbc);
     border-bottom: 2px solid #a8b89a;
 }
 
 .shmot-card {
-    margin: 12px 10px;
-    background: #c5d4a8;
-    border-radius: 8px;
-    border: 1px solid #a8b89a;
+    margin: 8px 6px 12px;
+    background: #b8c8a8;
+    border: 2px solid #8fa87a;
+    border-radius: 4px;
     overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
-.shmot-card-head {
-    background: linear-gradient(90deg, #eb8a17, #f5a623);
-    color: #fff;
-    padding: 8px 12px;
-    font-weight: 800;
-    font-size: 15px;
-    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
-}
-
-.shmot-slots {
+/* Шапка: аватар, ник, клуб, сборная */
+.shmot-identity {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 12px;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, #f0a030 0%, #eb8a17 100%);
+    border-bottom: 2px solid #c87818;
+    color: #fff;
+}
+
+.shmot-identity-ava {
+    position: relative;
+    flex-shrink: 0;
+    width: 56px;
+    height: 56px;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 255, 255, 0.55);
+    background: #c5d4a8;
+    display: flex;
+    align-items: center;
     justify-content: center;
 }
 
-.shmot-slot-ava .shmot-ava-img {
-    width: 48px;
-    height: 48px;
-    object-fit: cover;
-    border-radius: 6px;
+.shmot-identity-body {
+    flex: 1;
+    min-width: 0;
+    padding-top: 2px;
 }
 
-.shmot-slot-ava .player-avatar-frame--sm {
-    position: relative;
-    width: 48px;
-    height: 48px;
-    border-radius: 6px;
-    border: 2px solid #8a9a82;
-    overflow: hidden;
-    line-height: 0;
-    background: transparent;
+.shmot-identity-name {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1.2;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.25);
+}
+
+.shmot-identity-lvl {
+    font-weight: 800;
+}
+
+.shmot-id-club,
+.shmot-id-nation {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 3px;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.shmot-id-club-ico,
+.shmot-id-flag {
+    flex-shrink: 0;
+    object-fit: contain;
+    border-radius: 2px;
+}
+
+.shmot-id-emoji {
+    font-size: 32px;
+    line-height: 1;
+}
+
+/* Аватар в сетке — клубный фон + портрет; эмблема отдельным бейджем */
+.player-avatar-frame--shmot-id,
+.shmot-gear-build .player-avatar-frame--garderob {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 2px;
     isolation: isolate;
 }
 
-.shmot-slot-ava .player-avatar-frame--sm .player-avatar-bg {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
+.shmot-gear-build .garderob-cell--avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.shmot-slot-ava .player-avatar-frame--sm .player-avatar-img {
-    position: relative;
-    z-index: 2;
-    width: 48px;
-    height: 48px;
+.shmot-gear-build .garderob-cell--avatar .garderob-cell-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-size: clamp(28px, 9vw, 38px);
+    line-height: 1;
+}
+
+.shmot-identity-ava .player-avatar-frame--bot,
+.shmot-identity-ava .player-avatar-frame--shmot-id {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.shmot-identity-ava .garderob-cell-inner,
+.shmot-identity-ava .shmot-id-emoji {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Портрет NPC (районные боты / чужой фан) */
+.shmot-identity-ava .player-avatar-frame--bot,
+.shmot-gear-build .player-avatar-frame--bot {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 2px;
+    isolation: isolate;
+}
+
+.player-avatar-frame--shmot-id:not(.player-avatar-frame--bot) .player-avatar-bg,
+.shmot-gear-build .player-avatar-frame--garderob .player-avatar-bg {
+    display: block;
+}
+
+/* Мини-аватар в шапке карточки — целиком в рамке, без обрезки */
+.shmot-identity-ava .player-avatar-frame .player-avatar-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
     object-fit: contain;
     object-position: center center;
-    border-radius: 0;
-    mix-blend-mode: normal;
+}
+
+.shmot-gear-build .player-avatar-frame--garderob .player-avatar-img,
+.shmot-gear-build .player-avatar-frame--bot .player-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+}
+
+.shmot-ava-badge-wrap {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.shmot-ava-badge-wrap--id {
+    width: 56px;
+    height: 56px;
+}
+
+.shmot-club-badge {
+    position: absolute;
+    right: 1px;
+    bottom: 1px;
+    z-index: 5;
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    pointer-events: none;
+}
+
+.shmot-ava-badge-wrap--id .shmot-club-badge {
+    width: 18px;
+    height: 18px;
+}
+
+/* Сетка — общие стили из garderob.css, звёзды крупнее */
+.shmot-gear-build {
+    margin: 0 auto 4px;
+    padding: 8px 8px 4px;
+    max-width: 340px;
+}
+
+.shmot-card .garderob-stars {
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    left: 57%;
+    bottom: 5px;
+    color: #ffdf40;
+    text-shadow: 0 0 3px #000, 0 1px 2px #000, 0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.shmot-card .garderob-cell--gear.garderob-cell--filled {
+    padding: 0;
+}
+
+.shmot-card .garderob-cell-inner {
+    font-size: clamp(44px, 70%, 62px);
+}
+
+.shmot-card .garderob-item-img {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    max-height: none;
+    object-fit: cover;
+    object-position: center center;
     filter: none;
 }
 
-.shmot-slot-ava.shmot-slot-ava {
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    width: auto;
-    height: auto;
-    min-width: 48px;
-    min-height: 48px;
+.shmot-card .garderob-trophies {
+    margin-top: 6px;
 }
 
-.shmot-slot {
-    width: 56px;
-    height: 56px;
-    background: #b0c49a;
-    border: 2px solid #c4d4b4;
-    border-radius: 8px;
+/* Пустые амулеты скрыты, но сетка 3×3 сохраняется */
+.shmot-grid-spacer {
+    aspect-ratio: 1;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.shmot-gear-build .garderob-trophies:empty {
+    display: none;
+}
+
+/* Блок прокачки — компактная карточка */
+.shmot-stat-card {
+    margin: 0;
+    border-top: 2px solid #7a9468;
+    background: #eef6e4;
+    color: #1a1a1a;
+}
+
+.shmot-stat-hero {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    font-size: 26px;
-    line-height: 1;
-    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: linear-gradient(180deg, #3d5c32 0%, #2f4828 100%);
+    border-bottom: 2px solid #243820;
+    color: #fff;
 }
 
-.shmot-slot.empty {
-    color: #bbb;
-    font-size: 20px;
-}
-
-.shmot-stars {
-    font-size: 9px;
-    letter-spacing: 1px;
-    color: #e6a800;
-    margin-top: 2px;
-}
-
-.shmot-totals {
-    padding: 10px 14px 14px;
+.shmot-stat-hero-label {
+    flex: 1;
+    min-width: 0;
     font-size: 13px;
-    line-height: 1.5;
-    border-top: 1px solid #c4d4b4;
-    background: #f4f8ec;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: 0.01em;
 }
 
-.shmot-totals strong {
-    color: #1a4a1a;
+.shmot-stat-hero-value {
+    flex-shrink: 0;
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: #ffe566;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.shmot-stat-body {
+    padding: 4px 0;
+}
+
+.shmot-stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 14px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.shmot-stat-row:last-child {
+    border-bottom: none;
+}
+
+.shmot-stat-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #1f2a18;
+}
+
+.shmot-stat-value {
+    flex-shrink: 0;
+    font-size: 16px;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: #122010;
+}
+
+.shmot-stat-value--bonus {
+    color: #1a6b1a;
+}
+
+.shmot-extra {
+    padding: 10px 14px 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    border-top: 1px dashed #9cb088;
+    background: #e4efd8;
+    color: #222;
+}
+
+.shmot-extra-line {
+    margin: 0 0 6px;
+}
+
+.shmot-extra-line:last-child {
+    margin-bottom: 0;
+}
+
+.shmot-extra-line b {
+    color: #333;
+}
+
+.shmot-line--triggered {
+    margin-top: 8px;
+    padding-top: 6px;
+    border-top: 1px dashed #b9c9a9;
+    font-weight: 700;
+    color: #5a4010;
+}
+
+.shmot-talisman-ico {
+    vertical-align: middle;
+    margin-right: 2px;
 }
 
 .shmot-back {
     display: block;
-    margin: 16px 10px 0;
+    margin: 4px 8px 0;
     text-decoration: none;
 }
 
@@ -163,6 +401,18 @@ html:has(body.shmot-body) {
 }
 
 .shmot-msg {
-    padding: 20px;
+    padding: 16px 14px;
     text-align: center;
+    color: #8b1a1a;
+}
+
+@media (max-width: 360px) {
+    .shmot-gear-build {
+        padding: 6px 4px;
+    }
+
+    .shmot-card .garderob-stars {
+        font-size: 10px;
+        bottom: 4px;
+    }
 }

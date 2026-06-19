@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Проверка ширины</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
+    <style>
+        .layout-debug {
+            margin: 8px 10px;
+            padding: 8px 10px;
+            background: #252525;
+            border: 1px solid #444;
+            font-size: 12px;
+            line-height: 1.5;
+            color: #ccc;
+        }
+        .layout-debug b { color: #fff; }
+    </style>
+</head>
+<body class="hools game-shell game-home ultras-dark">
+<div class="app">
+    <header class="header" id="header">
+        <div class="hools-topbar">
+            <a class="hools-topbar-home" href="/game.html" aria-label="На главную">
+                <img class="hools-logo-img" src="/images/ultras-header-banner.png?v=2" width="256" height="34" alt="ULTRAS">
+            </a>
+            <button type="button" class="hools-refresh" title="Обновить" aria-label="Обновить">
+                <img src="/static/assets/img/recycle.svg" width="22" height="22" alt="">
+            </button>
+        </div>
+        <div class="hools-statbar">
+            <div class="hools-stats-row">
+                <span class="hdr-stat hdr-time">21:30</span>
+                <a class="hdr-nick" href="/pers.html">Тестовый_Игрок</a>
+                <a class="hdr-stat hdr-stat--link" href="/work.html"><span class="hdr-val">12(45%)</span></a>
+            </div>
+        </div>
+    </header>
+    <img class="banner" src="/images/bg.jpg" alt="" role="presentation">
+    <div class="layout-debug" id="layoutDebug">…</div>
+    <nav class="menu">
+        <a class="tab" href="/tasks.html"><img class="menu-ico" src="/static/location/index/target.svg" width="28" height="28" alt=""><span>Задания [3]</span></a>
+        <a class="tab" href="/events.html"><img class="menu-ico" src="/static/location/index/favorite.png" width="28" height="28" alt="">События</a>
+        <a class="tab" href="/rating.html"><img class="menu-ico" src="/static/location/index/trophy.svg" width="28" height="28" alt="">Рейтинг</a>
+    </nav>
+    <div class="list">
+        <a class="item" href="/district"><img class="item-ico" src="/static/location/index/brass.png" width="16" height="16" alt="">Район</a>
+        <a class="item" href="/center"><img class="item-ico" src="/static/location/index/center.png" width="16" height="16" alt="">Центр</a>
+        <a class="item" href="/stadium.html"><img class="item-ico" src="/static/location/index/stadium.png" width="16" height="16" alt="">Стадион [14]</a>
+        <a class="item" href="/game.html">← Главная</a>
+    </div>
+</div>
+<script>
+(function () {
+    const el = document.getElementById("layoutDebug");
+    const app = document.querySelector(".app");
+    function report() {
+        const iw = window.innerWidth;
+        const aw = app ? Math.round(app.getBoundingClientRect().width) : 0;
+        const side = Math.max(0, Math.round((iw - aw) / 2));
+        el.innerHTML =
+            "<b>innerWidth:</b> " + iw + "px · " +
+            "<b>.app:</b> " + aw + "px · " +
+            "<b>поля по бокам:</b> ~" + side + "px каждое";
+    }
+    report();
+    window.addEventListener("resize", report);
+})();
+</script>
+</body>
+</html>

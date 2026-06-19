@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Расписание — Стадион</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/stadium.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
+</head>
+<body class="hools game-shell ultras-dark ultras-theme-green">
+<div class="app">
+    <header class="header" id="header"></header>
+
+    <div class="page-title" id="stadiumTitle">Расписание</div>
+    <div class="stadium-strike-flash stadium-strike-flash--page-top" id="stadiumStrikeFlash" hidden></div>
+
+    <div class="stadium-meat">
+        <div class="stadium-week-block" id="stadiumWeekBlock" hidden>
+            <p class="stadium-section-title">Ближайшие матчи</p>
+            <p class="stadium-week-hint" id="stadiumWeekHint"></p>
+            <div class="stadium-week-list" id="stadiumWeekList"></div>
+        </div>
+
+        <div class="stadium-match-detail" id="stadiumMatchDetail" hidden>
+        <div class="stadium-match-head">
+            <div class="stadium-score-bar" id="stadiumScoreBar">0 — 0</div>
+            <p class="stadium-countdown" id="stadiumCountdown"></p>
+            <p class="stadium-participants" id="stadiumParticipants" hidden></p>
+            <p class="stadium-ticket-hint" id="stadiumTicketHint" hidden></p>
+            <p class="stadium-eliminated-msg" id="stadiumEliminatedMsg" hidden>Ты выбыл из боя</p>
+            <div class="stadium-actions" id="stadiumActions">
+                <a class="stadium-action-btn stadium-action-btn--fight" id="stadiumToTribunes" href="/stadium-tribunes.html" hidden>В бой</a>
+                <button type="button" class="stadium-action-btn" id="stadiumRefreshBtn">Обновить</button>
+            </div>
+        </div>
+
+        <div class="stadium-rosters-block" id="stadiumRostersBlock">
+            <p class="stadium-section-title">Состав матча</p>
+            <div class="stadium-rosters" id="stadiumRosters"></div>
+        </div>
+
+        <div class="stadium-feed-block">
+            <div class="stadium-feed-head">
+                <p class="stadium-section-title stadium-feed-title" id="stadiumFeedTitle">Лента матча</p>
+                <button type="button" class="stadium-feed-refresh-btn" id="stadiumFeedRefreshBtn">Обновить</button>
+            </div>
+            <div class="stadium-feed-wrap">
+                <div class="stadium-feed" id="stadiumFeed"></div>
+            </div>
+            <div class="stadium-feed-pager" id="stadiumFeedPager"></div>
+            <div class="stadium-gadget-bar stadium-provisions-bar" id="stadiumProvisionsBar" hidden></div>
+        </div>
+
+        <a class="item stadium-best-btn" id="stadiumBestBtn" href="/stadium-best.html" hidden>
+            <span class="stadium-best-ico" aria-hidden="true">🏅</span> Лучшие бойцы
+        </a>
+        <a class="item back" id="stadiumBackLink" href="/stadium.html">← Стадион</a>
+        </div>
+    </div>
+
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/clubs.js"></script>
+<script src="js/club-theme.js"></script>
+<script src="js/stadium-match-ui.js"></script>
+<script src="js/stadium-feed.js"></script>
+<script src="js/provisions-ui.js"></script>
+<script src="js/stadium-rage-poll.js"></script>
+<script src="js/stadium-flash.js"></script>
+<script src="js/stadium-schedule.js"></script>
+</body>
+</html>

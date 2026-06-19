@@ -6,28 +6,35 @@
     <title>Стадион</title>
     <link rel="stylesheet" href="css/hools.css">
     <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/stadium.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
 </head>
-<body class="hools game-shell">
+<body class="hools game-shell ultras-dark ultras-theme-green stadium-home">
 <div class="app">
     <header class="header" id="header"></header>
-    <img class="loc-banner" src="/images/locations/stadium.png" alt="">
+    <div class="loc-banner-wrap loc-banner-wrap--stadium" role="img" aria-label="Стадион"></div>
 
-    <div class="page-title">Стадион [0]</div>
-    <div class="list">
-        <p class="district-empty" style="text-align:left;padding:16px 14px;line-height:1.45;">Стадионные бои и фан-сектор — скоро.</p>
-        <a class="item back" href="/game.html">← На главную</a>
+    <div class="stadium-alert" id="stadiumAlert" hidden>
+        <p class="stadium-alert-text">На стадионе наших бьют!</p>
+        <a class="stadium-alert-btn" id="stadiumAlertBtn" href="/stadium-tribunes.html">Перейти в фан-сектор</a>
     </div>
+
+    <nav class="list stadium-menu">
+        <a class="item" href="/stadium-schedule.html"><span class="item-ico">📅</span>Расписание</a>
+        <a class="item" href="/stadium-tribunes.html"><span class="item-ico">🥊</span>Фан-сектор</a>
+        <a class="item" href="/stadium-kassa.html"><span class="item-ico">🎟</span>Касса</a>
+        <a class="item" href="/stadium-perekup.html"><span class="item-ico">🔄</span>Перекупщик</a>
+        <a class="item" href="/stadium-bookmaker.html"><span class="item-ico">📊</span>Букмекер</a>
+        <a class="item" href="/stadium-bets.html"><span class="item-ico">📜</span>История ставок</a>
+        <a class="item" href="/stadium-stats.html"><span class="item-ico">🏆</span>Статистика</a>
+        <a class="item back" href="/game.html">← На главную</a>
+    </nav>
 
     <footer class="site-footer" id="site-footer"></footer>
 </div>
 <script src="js/session.js"></script>
 <script src="js/api.js"></script>
 <script src="js/header.js"></script>
-<script>
-(async () => {
-    const user = await fetchUser();
-    if (user) renderHeaderBlock(user);
-})();
-</script>
+<script src="js/stadium-home.js"></script>
 </body>
 </html>

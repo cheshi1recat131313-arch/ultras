@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перс — Сейф</title>
+    <link rel="stylesheet" href="css/hools.css">
+    <link rel="stylesheet" href="css/game-shell.css">
+    <link rel="stylesheet" href="css/pers-safe.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
+</head>
+<body class="hools game-shell ultras-dark">
+<div class="app">
+    <header class="header" id="header"></header>
+
+    <div class="safe-page">
+        <h1 class="safe-title">Твой сейф</h1>
+        <p class="safe-desc">Сейф поможет сохранить серебро во время махача.</p>
+
+        <section class="safe-panel" id="safeDepositPanel">
+            <div class="safe-balance-bar" id="safeBalanceBar">Сейчас в сейфе: 0</div>
+            <label class="safe-field-label" for="safeAmountInput">Количество серебра</label>
+            <input class="safe-input" id="safeAmountInput" type="number" min="1" inputmode="numeric" placeholder="0">
+            <div class="safe-actions">
+                <button type="button" class="safe-btn safe-btn--deposit" id="safeDepositBtn">Положить</button>
+                <button type="button" class="safe-btn safe-btn--withdraw" id="safeWithdrawBtn">Снять</button>
+            </div>
+        </section>
+
+        <section class="safe-panel" id="safeUpgradePanel">
+            <div class="safe-upgrade-block">
+                <div class="safe-upgrade-ico" aria-hidden="true">🔐</div>
+                <div class="safe-upgrade-main">
+                    <h2 class="safe-section-title">Сейф</h2>
+                    <p class="safe-meta">Определяет, сколько серебра можно хранить одновременно.</p>
+                    <p class="safe-meta" id="safeLevelLine"></p>
+                    <p class="safe-meta" id="safeCapacityLine"></p>
+                    <p class="safe-meta" id="safeNextLevelLine"></p>
+                    <p class="safe-meta" id="safeUpgradeCostLine"></p>
+                    <button type="button" class="safe-btn safe-btn--upgrade" id="safeUpgradeBtn">Улучшить</button>
+                </div>
+            </div>
+        </section>
+
+        <a class="item back" href="/pers.html">← К персу</a>
+    </div>
+
+    <footer class="site-footer" id="site-footer"></footer>
+</div>
+<div id="msg" class="msg"></div>
+<script src="js/session.js"></script>
+<script src="js/api.js"></script>
+<script src="js/header.js"></script>
+<script src="js/pers-safe.js"></script>
+</body>
+</html>

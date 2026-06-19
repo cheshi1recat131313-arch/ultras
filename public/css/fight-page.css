@@ -258,6 +258,16 @@ html:has(body.fight-body) {
     font-weight: bold;
 }
 
+.fight-log-line.fight-log-line--talis-blue {
+    color: #2563eb;
+    font-weight: 700;
+}
+
+.fight-log-line.fight-log-line--talis-red {
+    color: #b91c1c;
+    font-weight: 700;
+}
+
 .fight-sys {
     color: #3d5a38;
     font-style: italic;

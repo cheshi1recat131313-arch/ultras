@@ -10,29 +10,58 @@
 
 <div class="overlay">
     <div class="form">
-        <h1>ВХОД</h1>
+        <nav class="auth-tabs" aria-label="Режим авторизации">
+            <button type="button" class="auth-tab auth-tab--active" id="tabLogin" data-mode="login">ВХОД</button>
+            <button type="button" class="auth-tab" id="tabRegister" data-mode="register">РЕГИСТРАЦИЯ</button>
+        </nav>
 
-        <p>
-            Футбол — это страсть, объединяющая тысячи сердец.<br>
-            Тут ты найдёшь атмосферу настоящих трибун.
-        </p>
+        <div id="loginPanel">
+            <p class="form-hint" id="loginHint">Введите <strong>ник или email</strong> — подойдёт любой способ, который указывали при регистрации.</p>
+            <div class="input-box">
+                <input id="loginInput" type="text" placeholder="Ник или email" autocomplete="username">
+            </div>
+            <div class="error" id="loginError"></div>
 
-        <div class="input-box">
-            <input id="email" type="text" placeholder="Email">
+            <div class="input-box">
+                <input id="passwordInput" type="password" placeholder="Пароль" autocomplete="current-password">
+            </div>
+            <div class="error" id="passwordError"></div>
+
+            <button class="login" id="loginBtn" type="button">Войти</button>
+            <button class="link-btn" id="forgotBtn" type="button">Забыли пароль?</button>
         </div>
-        <div class="error" id="emailError"></div>
 
-        <div class="input-box">
-            <input id="password" type="password" placeholder="Пароль">
+        <div id="registerPanel" hidden>
+            <p id="registerHint" class="form-hint">
+                Укажи email для восстановления доступа.<br><br>
+                Это необязательно. Можно пропустить сейчас и добавить позже в настройках персонажа.
+            </p>
+
+            <div class="email-row" id="emailRow">
+                <div class="input-box input-box--grow">
+                    <input id="recoveryEmailInput" type="email" placeholder="Email (необязательно)" autocomplete="email">
+                </div>
+                <button class="skip-btn" id="skipEmailBtn" type="button">Пропустить</button>
+            </div>
+            <div class="error" id="recoveryEmailError"></div>
+
+            <div class="recovery-warning" id="recoveryWarning" hidden>
+                Без email восстановить доступ будет невозможно. Его можно добавить позже в настройках персонажа.
+            </div>
+
+            <div class="input-box">
+                <input id="nicknameInput" type="text" placeholder="Ник" autocomplete="nickname">
+            </div>
+            <div class="error" id="nicknameError"></div>
+
+            <div class="input-box">
+                <input id="registerPasswordInput" type="password" placeholder="Пароль" autocomplete="new-password">
+            </div>
+            <div class="error" id="registerPasswordError"></div>
+
+            <button class="login" id="registerBtn" type="button">Создать аккаунт</button>
+            <button class="link-btn" id="registerGoLoginBtn" type="button">Уже есть аккаунт? Войти</button>
         </div>
-        <div class="error" id="passwordError"></div>
-
-        <button class="login" id="loginBtn">ВОЙТИ</button>
-
-        <div class="divider">ИЛИ</div>
-
-        <button class="register" id="registerBtn">СОЗДАТЬ АККАУНТ</button>
-        <button class="register" id="resetBtn">СБРОСИТЬ ПАРОЛЬ</button>
 
         <div class="terms" id="message">
             Продолжая, вы соглашаетесь с нашими условиями
@@ -40,125 +69,24 @@
     </div>
 </div>
 
+<div class="auth-modal" id="resetModal" hidden>
+    <div class="auth-modal-backdrop" id="resetModalBackdrop"></div>
+    <div class="auth-modal-card" role="dialog" aria-labelledby="resetModalTitle">
+        <h2 class="auth-modal-title" id="resetModalTitle">Восстановление доступа</h2>
+        <p class="auth-modal-text">
+            Укажи email, который ты добавлял при регистрации. Когда восстановление заработает, мы отправим код для сброса пароля.
+        </p>
+        <div class="input-box">
+            <input id="resetEmailInput" type="email" placeholder="Email">
+        </div>
+        <div class="error" id="resetEmailError"></div>
+        <p class="auth-modal-msg" id="resetModalMessage"></p>
+        <button class="login" id="resetSubmitBtn" type="button">Отправить запрос</button>
+        <button class="link-btn" id="resetCloseBtn" type="button">Закрыть</button>
+    </div>
+</div>
+
 <script src="js/session.js"></script>
-<script>
-const MIN_EMAIL_LENGTH = 5;
-const MIN_PASSWORD_LENGTH = 6;
-
-const emailInput = document.getElementById("email");
-const passwordInput = document.getElementById("password");
-
-try {
-    const saved = getStoredEmail();
-    if (saved && !emailInput.value) emailInput.value = saved;
-} catch (e) {
-    /* ignore */
-}
-
-(async function autoLoginIfSaved() {
-    const user = await tryRestoreSession();
-    if (user && isProfileComplete(user)) {
-        window.location.replace("/game.html");
-    } else if (user) {
-        window.location.replace(onboardingUrl(user));
-    }
-})();
-const emailError = document.getElementById("emailError");
-const passwordError = document.getElementById("passwordError");
-const message = document.getElementById("message");
-
-function clearErrors() {
-    emailError.textContent = "";
-    passwordError.textContent = "";
-    message.textContent = "";
-}
-
-function validateFields(email, password) {
-    let valid = true;
-
-    if (email.length < MIN_EMAIL_LENGTH) {
-        emailError.textContent = "Минимум 5 символов в email";
-        valid = false;
-    }
-
-    if (password.length < MIN_PASSWORD_LENGTH) {
-        passwordError.textContent = "Минимум 6 символов в пароле";
-        valid = false;
-    }
-
-    return valid;
-}
-
-async function postJson(url, payload) {
-    const response = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    return { ok: response.ok, data };
-}
-
-document.getElementById("registerBtn").addEventListener("click", async () => {
-    clearErrors();
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-
-    if (!validateFields(email, password)) return;
-
-    try {
-        const { ok, data } = await postJson("/register", { email, password });
-        if (!ok) {
-            message.textContent = data.error || "Ошибка при регистрации";
-            return;
-        }
-        saveSessionEmail(email);
-        const user = data.user || { email, name: null, character: null, club: null };
-        syncSessionFromUser(user);
-        window.location.replace("/name.html");
-    } catch (error) {
-        message.textContent = "Ошибка соединения с сервером";
-    }
-});
-
-document.getElementById("loginBtn").addEventListener("click", async () => {
-    clearErrors();
-    const email = emailInput.value.trim().toLowerCase();
-    const password = passwordInput.value.trim();
-
-    if (!validateFields(email, password)) return;
-
-    try {
-        const { ok, data } = await postJson("/login", { email, password });
-        if (!ok) {
-            message.textContent = data.error || "Ошибка при входе";
-            return;
-        }
-
-        saveSessionEmail(email);
-        await handleAuthSuccess(email, data.user);
-    } catch (error) {
-        message.textContent = "Ошибка соединения с сервером";
-    }
-});
-
-document.getElementById("resetBtn").addEventListener("click", async () => {
-    clearErrors();
-    const email = emailInput.value.trim().toLowerCase();
-    const newPassword = passwordInput.value.trim();
-
-    if (!validateFields(email, newPassword)) return;
-
-    try {
-        const { ok, data } = await postJson("/reset-password", { email, newPassword });
-        message.textContent = ok
-            ? "Пароль обновлен. Теперь нажми ВОЙТИ."
-            : (data.error || "Ошибка при сбросе пароля");
-    } catch (error) {
-        message.textContent = "Ошибка соединения с сервером";
-    }
-});
-</script>
-
+<script src="js/auth-ui.js"></script>
 </body>
 </html>

@@ -4,27 +4,74 @@
     box-sizing: border-box;
 }
 
+/**
+ * Верхняя оболочка ULTRAS / Hools — логотип, панель игрока, info-баннер.
+ * Логотип ULTRAS и разметка шапки не трогаем, только цвета.
+ */
+:root {
+    --hools-topbar-bg: #333435;
+    --hools-topbar-border: #000000;
+    --hools-statbar-bg-top: #3a4a32;
+    --hools-statbar-bg-bottom: #2a3824;
+    --hools-statbar-border: #233a1d;
+    --hools-statbar-text: #f2f2f2;
+    --hools-statbar-text-hover: #ffffff;
+    --hools-statbar-link-hover: rgba(255, 255, 255, 0.14);
+    --hools-statbar-link-active: rgba(255, 255, 255, 0.22);
+    --hools-chrome-divider: #335e33;
+    --hools-banner-border: #5a7a48;
+    --hools-tip-bg: #70adb2;
+    --hools-tip-text: #122327;
+    --hools-tip-border: #3f7276;
+    --hools-tip-link: #0645ad;
+
+    /* Единая зелёная палитра игровых страниц (главная, game-shell) */
+    --game-outer-bg: #38393e;
+    --game-column-bg: #c5d4a8;
+    --game-panel-dark: #2b4f2b;
+    --game-panel-mid: #b0c49a;
+    --game-border: #335e33;
+    --game-border-light: #9bb08f;
+    --game-border-mid: #8faa82;
+    --game-text: #222;
+    --game-text-light: #fff;
+    --game-btn-border: #3a6036;
+    --game-btn-grad-top: #5f9150;
+    --game-btn-grad-bottom: #528446;
+    --game-btn-hover-top: #69a057;
+    --game-btn-hover-bottom: #5a904c;
+    --game-btn-dark-top: #426a42;
+    --game-btn-dark-bottom: #355835;
+    --game-footer-bg: #2b4f2b;
+    --game-footer-border: #2d4b29;
+    --game-links-bg: #243d24;
+    --game-menu-border: #2d4b29;
+    --game-list-border: #335e33;
+    --game-item-grad-top: #689452;
+    --game-item-grad-bottom: #598b4e;
+    --game-title-bg: #2b4f2b;
+}
+
 body.hools {
     font-family: Arial, sans-serif;
     color: #fff;
     background: #090b0a;
-    min-height: 100vh;
 }
 
-/* Ларёк: тёмные поля + светлая колонка (эталон; остальные страницы — game-shell.css) */
 body.hools.game-shell {
-    background: #2a2a2a;
+    min-height: auto;
 }
 
 body.hools.game-shell > .app {
     background: #c5d4a8;
     box-shadow: 0 0 0 1px #9bb08f, 0 0 28px rgba(0, 0, 0, 0.55);
+    min-height: auto;
 }
 
 .app {
     width: 100%;
     max-width: 480px;
-    min-height: 100vh;
+    min-height: auto;
     margin: 0 auto;
     background: #15251b;
     box-shadow: 0 0 0 1px #223b2c;
@@ -35,40 +82,43 @@ body.hools.game-shell > .app {
 /* Верх — как на hools: чёрная полоска + зелёная панель статов */
 .header {
     padding: 0;
-    border-bottom: 2px solid #233a1d;
+    border-bottom: none;
 }
 
 .hools-topbar {
     position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #38393e;
-    padding: 5px 44px 5px 10px;
-    min-height: 42px;
-    border-bottom: 1px solid #000;
+    display: block;
+    background: var(--hools-topbar-bg);
+    padding: 0;
+    min-height: 44px;
+    height: 44px;
+    border-bottom: 1px solid var(--hools-topbar-border);
+    overflow: hidden;
 }
 
-.hools-logo {
-    font-family: Impact, "Arial Black", Arial, sans-serif;
-    font-weight: 900;
-    font-size: 1.65rem;
-    line-height: 1.1;
-    color: #ff6a28;
+.hools-topbar-home {
+    position: absolute;
+    inset: 0;
+    display: block;
+    overflow: hidden;
     text-decoration: none;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    text-shadow:
-        2px 0 #fff,
-        -2px 0 #fff,
-        0 2px #fff,
-        0 -2px #fff,
-        1px 1px #fff,
-        -1px -1px #fff;
+    z-index: 1;
+    cursor: pointer;
 }
 
-.hools-logo:hover {
-    color: #ff8844;
+.hools-topbar-home:hover .hools-logo-img {
+    opacity: 0.92;
+}
+
+.hools-logo-img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .hools-refresh {
@@ -76,6 +126,7 @@ body.hools.game-shell > .app {
     right: 6px;
     top: 50%;
     transform: translateY(-50%);
+    z-index: 2;
     width: 36px;
     height: 36px;
     border: none;
@@ -98,8 +149,13 @@ body.hools.game-shell > .app {
 }
 
 .hools-statbar {
-    background: linear-gradient(#3e6132, #314e28);
+    background: linear-gradient(
+        180deg,
+        var(--hools-statbar-bg-top) 0%,
+        var(--hools-statbar-bg-bottom) 100%
+    );
     padding: 7px 6px 8px;
+    border-bottom: 1px solid var(--hools-statbar-border);
 }
 
 .hools-stats-row {
@@ -110,8 +166,9 @@ body.hools.game-shell > .app {
     gap: 4px 10px;
     font-size: 12px;
     font-weight: bold;
-    color: #f5f5f5;
+    color: var(--hools-statbar-text);
     text-align: center;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.65);
 }
 
 .hdr-stat {
@@ -121,12 +178,32 @@ body.hools.game-shell > .app {
     white-space: nowrap;
 }
 
+.hdr-stat--link {
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 4px;
+    margin: -2px -4px;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.hdr-stat--link:hover {
+    background: var(--hools-statbar-link-hover);
+}
+
+.hdr-stat--link:active {
+    background: var(--hools-statbar-link-active);
+    opacity: 0.92;
+}
+
 .hdr-time {
     font-weight: bold;
 }
 
 .hdr-nick {
-    color: #f5f5f5;
+    color: var(--hools-statbar-text);
     text-decoration: none;
     font-weight: bold;
     max-width: 120px;
@@ -138,6 +215,7 @@ body.hools.game-shell > .app {
 }
 
 .hdr-nick:hover {
+    color: var(--hools-statbar-text-hover);
     text-decoration: underline;
 }
 
@@ -171,15 +249,88 @@ body.hools.game-shell > .app {
     border-radius: 3px;
 }
 
-/* Баннер раздела — та же картинка, что и иконка на главной */
+/* Верхние баннеры — полная ширина, без чёрных полос */
+.banner {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: clamp(130px, 36vw, 168px);
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    vertical-align: top;
+    object-fit: cover;
+    object-position: center 42%;
+    overflow: hidden;
+    border-bottom: 2px solid var(--hools-banner-border);
+    background-color: #0a0f0c;
+}
+
+/* Локации: весь кадр целиком (1024×682), без обрезки */
+.loc-banner-wrap {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1024 / 682;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border-bottom: 2px solid #2b4826;
+    background-color: #0a0f0c;
+    background-repeat: no-repeat;
+    background-size: 100% auto;
+    background-position: center center;
+    flex: 0 0 auto;
+    align-self: stretch;
+    min-width: 0;
+}
+
+.loc-banner-wrap--district {
+    background-image: url("/images/locations/district-banner.png");
+}
+
+.loc-banner-wrap--center {
+    background-image: url("/images/locations/center.png?v=3");
+}
+
+.loc-banner-wrap--stadium {
+    background-image: url("/images/locations/stadium.png");
+}
+
+.loc-banner-wrap--wasteland {
+    background-image: url("/images/locations/wasteland.png");
+}
+
+.loc-banner-wrap--industrial {
+    background-image: url("/images/locations/industrial.png");
+}
+
+/* @deprecated — img-баннеры локаций, оставлено на случай старых страниц */
 .loc-banner {
     display: block;
     width: 100%;
-    max-height: 160px;
-    object-fit: cover;
-    object-position: center;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1024 / 682;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    box-sizing: border-box;
+    vertical-align: top;
+    object-fit: contain;
+    object-position: center center;
     border-bottom: 2px solid #2b4826;
-    background: #0a0f0c;
+    background-color: #0a0f0c;
+}
+
+.app > .banner,
+.app > .loc-banner,
+.app > .loc-banner-wrap {
+    flex: 0 0 auto;
+    align-self: stretch;
+    min-width: 0;
 }
 
 .list .item {
@@ -187,24 +338,18 @@ body.hools.game-shell > .app {
     align-items: center;
 }
 
-.banner {
-    height: 130px;
-    background: url("../images/bg.jpg") center/cover no-repeat;
-    border-bottom: 2px solid #2b4826;
-}
-
 .tip {
-    background: #70adb2;
-    color: #122327;
+    background: var(--hools-tip-bg);
+    color: var(--hools-tip-text);
     text-align: center;
     font-weight: bold;
     padding: 9px 10px;
     font-size: 12px;
-    border-bottom: 1px solid #3f7276;
+    border-bottom: 1px solid var(--hools-tip-border);
 }
 
 .tip-link {
-    color: #0645ad;
+    color: var(--hools-tip-link);
     text-decoration: underline;
 }
 
@@ -304,8 +449,12 @@ body.hools.game-shell > .app {
 }
 
 .site-footer {
-    border-top: 2px solid #2f4d2b;
-    background: #2f5039;
+    border-top: 2px solid #111;
+    background: #161616;
+    margin-top: auto;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    flex-shrink: 0;
 }
 
 .footer-nav-grid {
@@ -320,22 +469,28 @@ body.hools.game-shell > .app {
     gap: 6px;
     min-height: 48px;
     padding: 0 10px;
-    border: 1px solid #3e6c4b;
+    border: 1px solid #333;
     border-top: none;
     border-left: none;
-    background: linear-gradient(#5a9a92, #4a8a82);
-    color: #fff;
+    background: linear-gradient(180deg, #2a2a2a 0%, #1c1c1c 100%);
+    color: #f0f0f0;
     text-decoration: none;
     font-size: 13px;
     font-weight: bold;
 }
 
 .footer-nav-cell:nth-child(odd) {
-    border-left: 1px solid #3e6c4b;
+    border-left: 1px solid #333;
 }
 
 .footer-nav-cell:hover {
-    filter: brightness(1.05);
+    background: linear-gradient(180deg, #3a3a3a 0%, #2a2a2a 100%);
+    filter: none;
+}
+
+.footer-ico {
+    flex-shrink: 0;
+    object-fit: contain;
 }
 
 .footer-ico-emoji {
@@ -345,8 +500,8 @@ body.hools.game-shell > .app {
 }
 
 .site-links {
-    padding: 10px 8px 14px;
-    background: #1a1a1a;
+    padding: 10px 8px 8px;
+    background: #111;
     text-align: center;
     font-size: 11px;
     line-height: 1.65;
@@ -372,6 +527,31 @@ body.hools.game-shell > .app {
 
 .site-logout {
     color: #ccc !important;
+}
+
+.site-online {
+    margin: 8px 0 0;
+    padding: 0;
+    font-size: 12px;
+    color: #bbb;
+}
+
+.site-online-link {
+    color: #e07030;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.site-online-link:hover {
+    text-decoration: underline;
+}
+
+/* Пустой тост не оставляет полосу под футером */
+.msg:empty {
+    display: none;
+    min-height: 0;
+    padding: 0;
+    border: none;
 }
 
 .meta {
@@ -596,6 +776,14 @@ body.hools.game-shell > .app {
     text-decoration: underline;
 }
 
+.dossier-club-link {
+    font-weight: 700;
+}
+
+.dossier-club-link:hover {
+    color: #8a1414;
+}
+
 .dossier-club-val {
     display: inline-flex;
     align-items: center;
@@ -669,6 +857,27 @@ body.hools.game-shell > .app {
 
 .dossier-back:hover {
     background: linear-gradient(#69a057, #558850);
+}
+
+.dossier-actions {
+    margin-top: 14px;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.dossier-actions .item {
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.dossier-action-ico {
+    width: 22px;
+    text-align: center;
+    flex-shrink: 0;
+    font-size: 18px;
+    line-height: 1;
 }
 
 /* Персонаж (legacy) */
@@ -755,9 +964,123 @@ body.hools.game-shell > .app {
     border: 1px solid #3a6036;
 }
 
-.district-bots {
+.district-hero {
+    margin: 0;
+    padding: 6px 10px 7px;
+    background: linear-gradient(180deg, #f5e6a8 0%, #e8d070 100%);
+    border-bottom: 2px solid #c89820;
+    text-align: center;
+}
+
+.district-hero-line {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.3;
+    font-weight: 600;
+    color: #3a2810;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2em 0.35em;
+}
+
+.district-hero-label {
+    font-weight: 800;
+    color: #5a3010;
+}
+
+.district-hero-dot {
+    opacity: 0.65;
+    user-select: none;
+}
+
+.district-hero-stat {
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.district-hero-skull-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    white-space: nowrap;
+}
+
+.district-hero-you {
+    font-weight: 700;
+}
+
+.district-hero-title {
+    margin: 0 0 6px;
+    font-size: 15px;
+    font-weight: 800;
+    color: #5a3010;
+}
+
+.district-hero-name-line {
+    margin: 0 0 4px;
+    font-size: 16px;
+    line-height: 1.25;
+}
+
+.district-hero-name,
+.player-link {
+    color: #8a2810;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.district-hero-name:hover,
+.player-link:hover {
+    text-decoration: underline;
+}
+
+a.player-link:visited {
+    color: #8a2810;
+}
+
+.district-hero-meta {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #3a2810;
+    font-weight: 600;
+}
+
+.district-hero-skull-ico {
+    width: 13px;
+    height: 13px;
+    vertical-align: -2px;
+    object-fit: contain;
+}
+
+.district-bots .bot-card {
+    overflow: hidden;
+}
+
+.district-bots .bot-ava {
+    overflow: hidden;
+    border-radius: 6px;
+}
+
+.district-list {
+    flex: 0 0 auto;
     background: #b0c49a;
-    min-height: 120px;
+}
+
+body.district-page > .app {
+    min-height: 0;
+}
+
+.district-bots {
+    background: transparent;
+    min-height: 0;
+}
+
+.district-bots:has(.district-empty) {
+    min-height: 72px;
 }
 
 .district-search-btn {
@@ -765,20 +1088,22 @@ body.hools.game-shell > .app {
     align-items: center;
     justify-content: center;
     gap: 8px;
-    width: calc(100% - 20px);
-    margin: 10px;
-    padding: 12px 14px;
-    border: 1px solid #3a6036;
-    border-radius: 8px;
-    background: linear-gradient(#56864c, #4a7540);
-    color: #fff;
+    width: 100%;
+    margin: 0;
+    padding: 14px;
+    border: none;
+    border-top: 1px solid #9bb08f;
+    border-radius: 0;
+    background: #c5d4a8;
+    color: #3a6036;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 800;
     cursor: pointer;
+    font-family: Arial, sans-serif;
 }
 
 .district-search-btn:active {
-    filter: brightness(0.95);
+    filter: brightness(0.96);
 }
 
 .district-empty {
@@ -789,11 +1114,39 @@ body.hools.game-shell > .app {
 }
 
 .district-hp-alert {
+    position: relative;
     margin: 0;
     padding: 12px 14px 14px;
+    padding-right: 36px;
     background: #f5e6a8;
     border-bottom: 2px solid #c9a020;
     color: #2a2208;
+}
+
+.district-notice-close {
+    position: absolute;
+    top: 6px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: #4a3a10;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.district-notice-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+.district-hp-alert-inline {
+    color: #4a3a10;
+    font-weight: 700;
+    text-decoration: underline;
 }
 
 .district-hp-alert-title {
@@ -850,15 +1203,74 @@ body.hools.game-shell > .app {
     min-height: 56px;
     text-align: center;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
-.bot-ava-img {
+.bot-ava-img,
+.district-bots .bot-ava img {
     width: 56px;
     height: 56px;
+    max-width: 56px;
+    max-height: 56px;
     object-fit: cover;
     border-radius: 6px;
     border: 1px solid #8a9a82;
     display: block;
+}
+
+.bot-ava .player-avatar-frame--bot,
+.stadium-roster-ava-wrap .player-avatar-frame--xs,
+.pb-roster-ava .player-avatar-frame--xs {
+    width: 100%;
+    height: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #8a9a82;
+}
+
+.bot-ava .player-avatar-frame--bot .player-avatar-img,
+.stadium-roster-ava-wrap .player-avatar-frame--xs .player-avatar-img,
+.pb-roster-ava .player-avatar-frame--xs .player-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center center;
+}
+
+.bot-ava-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    font-size: 28px;
+    line-height: 1;
+}
+
+.stadium-roster-ava {
+    flex-shrink: 0;
+}
+
+.stadium-roster-ava-wrap {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.pb-roster-ava {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+}
+
+.pb-roster-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.pb-roster-body {
+    min-width: 0;
 }
 
 .bot-info {

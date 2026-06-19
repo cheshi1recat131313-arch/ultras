@@ -23,15 +23,12 @@ h1 { margin-bottom: 20px; text-align: center; }
 }
 .card img {
     width: 70px; height: 70px; border-radius: 10px; margin-right: 12px; flex-shrink: 0;
-    background: #e8c84a;
+    background: #0b0b0b;
     box-shadow: none;
     object-fit: cover;
+    object-position: center top;
 }
-/* Прозрачные PNG (Шустрый) — фон карточки, без жёлтой подложки */
-.card img.img-ava-clear {
-    background: transparent;
-}
-.info { width: 100%; }
+.info { flex: 1; min-width: 0; }
 .info h2 { font-size: 16px; margin-bottom: 5px; }
 .info p { font-size: 13px; color: #bbb; margin-bottom: 8px; }
 .btn {

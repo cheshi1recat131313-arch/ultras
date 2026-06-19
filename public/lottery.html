@@ -7,87 +7,88 @@
     <link rel="stylesheet" href="css/hools.css">
     <link rel="stylesheet" href="css/game-shell.css">
     <link rel="stylesheet" href="css/center.css">
+    <link rel="stylesheet" href="css/ultras-dark-theme.css">
 </head>
-<body class="hools center-scope game-shell">
-<div class="app">
-    <header class="header" id="header"></header>
-    <div class="center-meat">
-        <h1 class="center-h1">Беспроигрышная лотерея</h1>
-        <div class="lottery-face-row">
-            <div class="lottery-dealer" aria-hidden="true">🎩</div>
-            <div class="salon-quote" style="margin:0">
-                Купи билет — и пусть удача улыбнётся. Главный приз в нашей вселенной — куча золота (шутка, но призы реальные).
+<body class="hools center-scope game-shell ultras-dark">
+    <div class="app">
+        <header class="header" id="header"></header>
+        <div class="center-meat">
+            <h1 class="center-h1">Беспроигрышная лотерея</h1>
+            <div class="lottery-face-row">
+                <div class="lottery-dealer" aria-hidden="true">🎩</div>
+                <div class="salon-quote" style="margin:0">
+                    Купи билет — и пусть удача улыбнётся. Главный приз в нашей вселенной — куча золота (шутка, но призы реальные).
+                </div>
             </div>
+            <div class="center-hint">Подсказка.</div>
+            <div class="lottery-price">
+                Цена: <strong>10 $</strong> или <strong>10 🍄</strong><br>
+                <span id="freeTickets">Бесплатных билетов: 0</span>
+            </div>
+            <button type="button" class="lottery-play-big" id="playGold">Играть за $</button>
+            <button type="button" class="lottery-play-big" id="playShroom" style="background:#7a4a9c;margin-top:0">Играть за грибы</button>
+            <div id="msg" class="msg"></div>
+            <h3 style="margin:16px 14px 8px;font-size:14px;color:#9aaa9f">Последние выигрыши</h3>
+            <ul class="lottery-log" id="log"></ul>
+            <a class="item back" href="/center.html">← Назад в Центр</a>
         </div>
-        <div class="center-hint">Подсказка.</div>
-        <div class="lottery-price">
-            Цена: <strong>10 $</strong> или <strong>10 🍄</strong><br>
-            <span id="freeTickets">Бесплатных билетов: 0</span>
-        </div>
-        <button type="button" class="lottery-play-big" id="playGold">Играть за $</button>
-        <button type="button" class="lottery-play-big" id="playShroom" style="background:#7a4a9c;margin-top:0">Играть за грибы</button>
-        <div id="msg" class="msg"></div>
-        <h3 style="margin:16px 14px 8px;font-size:14px;color:#9aaa9f">Последние выигрыши</h3>
-        <ul class="lottery-log" id="log"></ul>
-        <a class="item back" href="/center.html">← Назад в Центр</a>
+        <footer class="site-footer" id="site-footer"></footer>
     </div>
-    <footer class="site-footer" id="site-footer"></footer>
-</div>
-<script src="js/session.js"></script>
-<script src="js/api.js"></script>
-<script src="js/header.js"></script>
-<script>
-async function loadLog() {
-    const res = await fetch("/center/lottery/log");
-    const data = await res.json();
-    const ul = document.getElementById("log");
-    if (!data.success || !data.rows || !data.rows.length) {
-        ul.innerHTML = "<li>Пока пусто — будь первым.</li>";
-        return;
-    }
-    ul.innerHTML = data.rows
-        .map(
-            (r) =>
-                `<li><span class="time">${r.ts}</span> — <span class="who">${escapeHtml(r.name)}</span> — ${escapeHtml(r.prize)}</li>`
-        )
-        .join("");
-}
-
-function escapeHtml(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
-}
-
-async function play(currency) {
-    const { ok, data } = await postJson("/center/lottery/play", {
-        email: getEmail(),
-        currency
-    });
-    showMsg(ok ? data.message : data.error, !ok);
-    if (data.user) {
-        renderHeaderBlock(data.user);
-        const freeEl = document.getElementById("freeTickets");
-        if (freeEl) {
-            freeEl.textContent = "Бесплатных билетов: " + (data.user.lotteryFreeTickets ?? 0);
+    <script src="js/session.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/header.js"></script>
+    <script>
+        async function loadLog() {
+            const res = await fetch("/center/lottery/log");
+            const data = await res.json();
+            const ul = document.getElementById("log");
+            if (!data.success || !data.rows || !data.rows.length) {
+                ul.innerHTML = "<li>Пока пусто — будь первым.</li>";
+                return;
+            }
+            ul.innerHTML = data.rows
+                .map(
+                    (r) =>
+                        `<li><span class="time">${r.ts}</span> — <span class="who">${playerNameHtml(r.name, r.email)}</span> — ${escapeHtml(r.prize)}</li>`
+                )
+                .join("");
         }
-    }
-    await loadLog();
-}
 
-(async () => {
-    const user = await fetchUser();
-    if (!user) return;
-    renderHeaderBlock(user);
-    const freeEl = document.getElementById("freeTickets");
-    if (freeEl) {
-        const n = user.lotteryFreeTickets ?? 0;
-        freeEl.textContent = "Бесплатных билетов: " + n;
-    }
-    await loadLog();
-    document.getElementById("playGold").onclick = () => play("dollars");
-    document.getElementById("playShroom").onclick = () => play("mushrooms");
-})();
-</script>
+        function escapeHtml(s) {
+            const d = document.createElement("div");
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        async function play(currency) {
+            const { ok, data } = await postJson("/center/lottery/play", {
+                email: getEmail(),
+                currency
+            });
+            showMsg(ok ? data.message : data.error, !ok);
+            if (data.user) {
+                renderHeaderBlock(data.user);
+                const freeEl = document.getElementById("freeTickets");
+                if (freeEl) {
+                    freeEl.textContent = "Бесплатных билетов: " + (data.user.lotteryFreeTickets ?? 0);
+                }
+            }
+            await loadLog();
+        }
+
+        (async () => {
+            const user = await fetchUser();
+            if (!user) return;
+            renderHeaderBlock(user);
+            const freeEl = document.getElementById("freeTickets");
+            if (freeEl) {
+                const n = user.lotteryFreeTickets ?? 0;
+                freeEl.textContent = "Бесплатных билетов: " + n;
+            }
+            await loadLog();
+            document.getElementById("playGold").onclick = () => play("dollars");
+            document.getElementById("playShroom").onclick = () => play("mushrooms");
+        })();
+    </script>
 </body>
 </html>

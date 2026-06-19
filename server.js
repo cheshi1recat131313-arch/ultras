@@ -1,17 +1,53 @@
 const crypto = require("crypto");
+const fs = require("fs");
 const path = require("path");
+const { resolveDbPath, ensureDbDirectory } = require("./core/db-path");
+const { parseJson } = require("./core/parse-json");
+const { createPlayerStats } = require("./core/player-stats");
 const fightSsr = require("./fight-ssr");
 const xpLevels = require("./xp-levels");
 const workLogic = require("./work-logic");
 const clubsData = require("./clubs-data");
-const playerOnline = require("./player-online");
-const { rankTitleFromTotalSkulls } = require("./club-elite");
 const dailyQuests = require("./daily-quests");
+const mainQuests = require("./main-quests");
 const playerEvents = require("./player-events");
 const silverLoss = require("./silver-loss");
 const happyHour = require("./happy-hour");
+const gearUpgrades = require("./gear-upgrades");
+const industrialWorkshop = require("./industrial-workshop");
+const pubChat = require("./pub-chat");
+const talismans = require("./talismans");
+const talismanEffects = require("./talisman-effects");
+const provisionsData = require("./provisions-data");
+const purchaseLogic = require("./purchase-logic");
+const stadiumEngine = require("./stadium-engine");
+const stadiumTickets = require("./stadium-tickets");
+const { buildBotDisplayGear } = require("./bot-display-gear");
+const { createStadiumService } = require("./stadium-service");
+const { createPubBattleModule } = require("./pub-battle");
+const { createNationalTeamsModule } = require("./national-teams");
+const { createPackagesModule } = require("./packages");
+const { createAuthModule, isRecoveryEmail: isUserRecoveryEmail } = require("./auth");
+const nationalTeamsData = require("./national-teams/data");
+const { createRepEarningsService } = require("./rep-earnings");
+const { createHeroOfDayService } = require("./hero-of-day");
+const { buildClubElitePayload, rankTitleFromTotalSkulls } = require("./club-elite");
+const stadiumBots = require("./stadium-bots");
+const playerOnline = require("./player-online");
+const districtNpcTheme = require("./district-npc-theme");
+const { resolveDistrictOpponentDisplay } = require("./district-opponent-display");
+const clubCharacters = require("./club-characters");
+const {
+    createDistrictPlayersService,
+    PLAYER_SLOT_INDEX,
+    NPC_SLOT_GOP,
+    NPC_SLOT_FAN
+} = require("./district-players");
+const { createFirmsService } = require("./firms/service");
+const { registerFirmsRoutes } = require("./firms/routes");
+const { createReferralsModule } = require("./referrals");
+const { createSqliteDatabase } = require("./core/sqlite-connection");
 const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
 
 const app = express();
 const PORT = 3000;
@@ -51,33 +87,138 @@ const CHARACTER_STATS = {
     tank: { power: 14, speed: 8, intel: 8, stamina: 14 },
     fast: { power: 8, speed: 14, intel: 10, stamina: 10 },
     balanced: { power: 10, speed: 10, intel: 10, stamina: 10 },
-    valk: { power: 12, speed: 10, intel: 8, stamina: 12 },
-    shadow: { power: 9, speed: 12, intel: 12, stamina: 9 },
-    spark: { power: 10, speed: 13, intel: 11, stamina: 8 },
     tough: { power: 11, speed: 9, intel: 9, stamina: 15 },
     redhead: { power: 9, speed: 13, intel: 10, stamina: 9 },
     fighter: { power: 15, speed: 8, intel: 7, stamina: 13 },
     chick: { power: 10, speed: 11, intel: 11, stamina: 10 }
 };
 
-/** Портреты ботов на районе. */
-const BOT_AVATAR = {
-    boro: "/static/bots/boro.png",
-    kopch: "/static/bots/kopch.png",
-    steward: "/static/bots/steward.png"
-};
+/** Портреты ботов на районе — см. district-npc-theme.js */
+const BOT_AVATAR = districtNpcTheme.DISTRICT_NPC_BOT_AVATARS;
 
 function botAvatarPath(botId) {
-    return BOT_AVATAR[botId] || null;
+    return districtNpcTheme.districtNpcBotAvatar(botId) || BOT_AVATAR[botId] || null;
 }
 
+function districtOpponentDisplay(opponent) {
+    return resolveDistrictOpponentDisplay(opponent, {
+        botAvatarPath,
+        getClubAvatarTheme: (club) => clubsData.getClubAvatarTheme(club)
+    });
+}
+
+/** Район: PNG у NPC; у игрока и «Чужого фана» — портрет и клубный фон. */
 function enrichBotSlot(bot) {
     if (!bot) return null;
+    if (bot.isPlayer) {
+        return {
+            ...bot,
+            avatar: bot.avatar || avatarPath(bot.character),
+            club: bot.club || null,
+            level: Math.max(1, Math.floor(Number(bot.level) || 1)),
+            emoji: bot.emoji || "👤",
+            isPlayer: true
+        };
+    }
     const id = bot.templateId || bot.id;
+    if (id === "fan") {
+        const seed =
+            bot.appearanceSeed ||
+            `${bot.templateId || "fan"}:${bot.name || "fan"}:${randomInt(1, 999999999)}`;
+        const appearance = clubCharacters.pickDistrictFanAppearance(null, seed);
+        const out = {
+            ...bot,
+            character: appearance.character,
+            club: appearance.club,
+            avatar: appearance.avatar,
+            appearanceSeed: seed,
+            emoji: bot.emoji || "🧢",
+            isPlayer: false
+        };
+        delete out.targetEmail;
+        return out;
+    }
+    const districtAvatar = botAvatarPath(id);
+    const out = {
+        ...bot,
+        avatar: districtAvatar || bot.avatar || null,
+        club: bot.club || null,
+        character: bot.character || null,
+        emoji: bot.emoji || "👤",
+        isPlayer: false
+    };
+    delete out.targetEmail;
+    return out;
+}
+
+function districtNpcTemplate(templateId) {
+    const tpl = DISTRICT_WEAK_BOTS.find((b) => b.id === templateId);
+    if (tpl) return tpl;
+    return DISTRICT_WEAK_BOTS[0];
+}
+
+function decorateFanBot(bot, user, appearanceSeed) {
+    const seed =
+        appearanceSeed ||
+        `${user?.email || "fan"}:${Date.now()}:${randomInt(1, 999999999)}`;
+    const appearance = clubCharacters.pickDistrictFanAppearance(user?.club, seed);
     return {
         ...bot,
-        avatar: bot.avatar || botAvatarPath(id)
+        character: appearance.character,
+        club: appearance.club,
+        avatar: appearance.avatar,
+        appearanceSeed: seed
     };
+}
+
+function buildDistrictPlayerSlot(row) {
+    const level = Math.max(1, Math.floor(Number(row.level) || 1));
+    const scale = (1.12 + (level - 1) * 0.02) * (level <= 1 ? 1.08 : 1);
+    return {
+        templateId: "player",
+        name: row.name || "Игрок",
+        phrase: districtPlayers().randomPlayerPhrase(),
+        emoji: "👤",
+        character: row.character,
+        club: row.club,
+        avatar: avatarPath(row.character),
+        level,
+        power: Math.round(10 * scale),
+        speed: Math.round(10 * scale),
+        intel: Math.round(10 * scale),
+        stamina: Math.round(10 * scale),
+        rubles: [3, 10],
+        xp: [8, 12],
+        isPlayer: true,
+        targetEmail: String(row.email || "").trim().toLowerCase(),
+        isSteward: false
+    };
+}
+
+async function buildDistrictNpcSlot(slotIndex, user, level, playerEff) {
+    if (slotIndex === NPC_SLOT_FAN) {
+        return decorateFanBot(
+            scaleWeakDistrictBot(districtNpcTemplate("fan"), level),
+            user,
+            `${user.email}:fan:${Date.now()}:${randomInt(1, 999999999)}`
+        );
+    }
+    if (slotIndex === NPC_SLOT_GOP) {
+        return scaleWeakDistrictBot(districtNpcTemplate("gop"), level);
+    }
+    return pickRefillNpc(user, playerEff, level);
+}
+
+async function pickRefillNpc(user, playerEff, level) {
+    const now = Date.now();
+    const lastSt = user.last_steward_spawn ?? 0;
+    if (now - lastSt >= STEWARD_COOLDOWN_MS) {
+        await runQuery("UPDATE users SET last_steward_spawn = ? WHERE email = ?", [now, user.email]);
+        return scaleStewardBot(STEWARD_BOT, level, playerEff);
+    }
+    const npcPool = DISTRICT_WEAK_BOTS.filter((b) => b.id !== "fan");
+    const tpl = npcPool[randomInt(0, npcPool.length - 1)];
+    return scaleWeakDistrictBot(tpl, level);
 }
 
 /** Первые 5 — районные боты (сила задаётся балансом боя). */
@@ -160,32 +301,13 @@ const STEWARD_BOT = {
     isSteward: true
 };
 
-const SHOP_ITEMS = {
-    newspaper: {
-        slot: "weapon",
-        label: "Газета",
-        emoji: "📰",
-        cost: 9,
-        currency: "rubles",
-        power: 1,
-        speed: 0,
-        intel: 0,
-        stamina: 0,
-        minLevel: 1
-    },
-    rainbow_shirt: {
-        slot: "clothes",
-        label: "Футболка с радугой",
-        emoji: "👕",
-        cost: 24,
-        currency: "rubles",
-        power: 0,
-        speed: 0,
-        intel: 0,
-        stamina: 2,
-        minLevel: 2
-    }
-};
+const {
+    SHOP_ITEMS,
+    shopSections,
+    primaryStatForItem
+} = require("./gear-catalog");
+
+const { getActiveTattoos, getEquipmentBonuses, getEffectiveStats } = createPlayerStats(SHOP_ITEMS);
 
 function getUserInventory(row) {
     const raw = parseJson(row.inventory, []);
@@ -242,12 +364,38 @@ function getUserConsumables(row) {
     for (const id of Object.keys(LAREK_ITEMS)) {
         out[id] = Math.max(0, Math.floor(Number(raw[id]) || 0));
     }
+    for (const id of provisionsData.PROVISION_IDS) {
+        out[id] = Math.max(0, Math.floor(Number(raw[id]) || 0));
+    }
     return out;
+}
+
+function findConsumableItem(itemId) {
+    return LAREK_ITEMS[itemId] || provisionsData.PROVISION_ITEMS[itemId] || null;
+}
+
+function larekFoodCatalogForShop(consumables) {
+    return Object.keys(LAREK_ITEMS).map((id) => {
+        const def = LAREK_ITEMS[id];
+        return {
+            id: def.id,
+            label: def.label,
+            icon: def.icon,
+            emoji: def.emoji,
+            description: def.description,
+            usageHtml: def.usageLimit,
+            effectHtml: def.effectLabel,
+            cost: def.cost,
+            currency: def.currency,
+            count: consumables[id] || 0,
+            kind: "food"
+        };
+    });
 }
 
 function getConsumablesUsedAt(row) {
     const raw = parseJson(row.consumables_used_at, {});
-    const out = {};
+    const out = { ...provisionsData.parseProvisionUsedAt(raw) };
     for (const id of Object.keys(LAREK_ITEMS)) {
         const t = Math.floor(Number(raw[id]) || 0);
         if (t > 0) out[id] = t;
@@ -274,18 +422,50 @@ function formatCooldownMinSec(ms) {
 function equipmentItemFromShop(itemId) {
     const def = SHOP_ITEMS[itemId];
     if (!def) return null;
+    const statKey = primaryStatForItem(def);
     return {
         id: itemId,
+        slot: def.slot,
         label: def.label,
         emoji: def.emoji,
-        power: def.power,
-        speed: def.speed,
-        intel: def.intel,
-        stamina: def.stamina
+        power: statKey === "power" ? def.power || 0 : 0,
+        speed: statKey === "speed" ? def.speed || 0 : 0,
+        intel: statKey === "intel" ? def.intel || 0 : 0,
+        stamina: statKey === "stamina" ? def.stamina || 0 : 0
     };
 }
 
-const db = new sqlite3.Database(path.join(__dirname, "users.db"));
+function shopItemForApi(id, def) {
+    const statKey = primaryStatForItem(def);
+    return {
+        id,
+        slot: def.slot,
+        label: def.label,
+        emoji: def.emoji,
+        icon: def.icon || null,
+        image: def.image || def.icon || null,
+        cost: def.cost,
+        currency: def.currency || "rubles",
+        power: def.power || 0,
+        speed: def.speed || 0,
+        intel: def.intel || 0,
+        stamina: def.stamina || 0,
+        minLevel: def.minLevel,
+        maxLevel: def.maxLevel || 3,
+        primaryStat: statKey,
+        chainTier: def.chainTier,
+        bonusAtStars: def.bonusAtStars || null,
+        maxBonus: def.maxBonus ?? null,
+        shopHidden: !!def.shopHidden
+    };
+}
+const DB_PATH = resolveDbPath();
+ensureDbDirectory(DB_PATH);
+
+let runQuery;
+let getQuery;
+let allQuery;
+let runTransaction;
 
 app.use(express.json());
 
@@ -298,6 +478,18 @@ function redirectPreserveQuery(req, res, targetBase) {
 
 app.get("/district", (req, res) => {
     redirectPreserveQuery(req, res, "/district.html");
+});
+
+app.get("/stadium", (req, res) => {
+    redirectPreserveQuery(req, res, "/stadium.html");
+});
+
+app.get("/stadium/schedule", (req, res) => {
+    redirectPreserveQuery(req, res, "/stadium-schedule.html");
+});
+
+app.get("/stadium/kassa", (req, res) => {
+    redirectPreserveQuery(req, res, "/stadium-kassa.html");
 });
 
 app.get("/center", (req, res) => {
@@ -387,7 +579,9 @@ async function resolveEventBattleView(email, detail) {
     return {
         status,
         playerName: user.name || "Игрок",
+        playerEmail: email,
         opponentName,
+        opponentEmail: detail.opponentEmail || null,
         opponentEmoji,
         opponentAvatar,
         playerAvatar: user.avatar,
@@ -480,6 +674,141 @@ app.get("/rating", (req, res) => {
     redirectPreserveQuery(req, res, "/rating.html");
 });
 
+let repEarningsService = null;
+let heroOfDayService = null;
+let districtPlayersService = null;
+
+function districtPlayers() {
+    if (!districtPlayersService) {
+        districtPlayersService = createDistrictPlayersService({
+            runQuery,
+            allQuery,
+            minDistrictHp: MIN_DISTRICT_HP
+        });
+    }
+    return districtPlayersService;
+}
+
+/** Элита клуба — черепки за 7 дней, все игроки клуба. */
+app.get("/rating/club-elite", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        if (!user.club) {
+            res.status(400).json({ success: false, error: "Сначала выбери клуб." });
+            return;
+        }
+        if (!repEarningsService) {
+            res.status(503).json({ success: false, error: "Сервис рейтинга недоступен" });
+            return;
+        }
+
+        const sinceMs = Date.now() - repEarningsService.RETENTION_MS;
+        const weeklyMap = await repEarningsService.sumWeeklySkullsByClub(user.club, sinceMs);
+        const members = await allQuery(
+            "SELECT email, name, level, character, club FROM users WHERE club = ? ORDER BY name ASC",
+            [user.club]
+        );
+        const clubName = clubsData.getClubName(user.club) || user.club;
+        const players = members.map((m) => {
+            const key = normalizeEmail(m.email);
+            const w = weeklyMap[key] || { weeklySkulls: 0 };
+            return {
+                email: key,
+                name: m.name || "Игрок",
+                level: m.level ?? 1,
+                avatar: avatarPath(m.character),
+                weeklySkulls: w.weeklySkulls
+            };
+        });
+
+        const elite = buildClubElitePayload(clubName, players, email);
+        res.json({ success: true, elite });
+    } catch (error) {
+        console.error("rating/club-elite error:", error);
+        res.status(500).json({ success: false, error: "Ошибка элиты клуба" });
+    }
+});
+
+/** Лучшие из лучших — общий рейтинг игроков по эффективной силе. */
+app.get("/rating/top-best", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const page = Math.max(1, Math.floor(Number(req.query.page) || 1));
+        const perPage = Math.min(50, Math.max(1, Math.floor(Number(req.query.perPage) || 20)));
+
+        const viewer = email ? await requireExistingUser(email) : null;
+        if (email && !viewer) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        const rows = await allQuery(
+            `SELECT * FROM users WHERE name IS NOT NULL AND TRIM(name) != ''`
+        );
+
+        const ranked = rows
+            .map((row) => {
+                const { effective } = getEffectiveStats(row);
+                const xp = normalizeXp(row.xp);
+                const level = levelFromXp(xp);
+                const key = normalizeEmail(row.email);
+                return {
+                    email: key,
+                    name: row.name || "Игрок",
+                    level,
+                    avatar: avatarPath(row.character),
+                    power: Math.max(0, Math.floor(Number(effective.power) || 0))
+                };
+            })
+            .sort((a, b) => b.power - a.power || String(a.name).localeCompare(String(b.name), "ru"));
+
+        const total = ranked.length;
+        const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
+        const offset = (page - 1) * perPage;
+        const slice = ranked.slice(offset, offset + perPage);
+
+        let me = null;
+        if (email) {
+            const idx = ranked.findIndex((p) => p.email === email);
+            if (idx >= 0) {
+                me = { position: idx + 1, power: ranked[idx].power, level: ranked[idx].level };
+            }
+        }
+
+        res.json({
+            success: true,
+            players: slice.map((p, i) => ({
+                ...p,
+                position: offset + i + 1,
+                isMe: email && p.email === email
+            })),
+            page,
+            perPage,
+            total,
+            totalPages,
+            me
+        });
+    } catch (error) {
+        console.error("rating/top-best error:", error);
+        res.status(500).json({ success: false, error: "Ошибка рейтинга" });
+    }
+});
+
+/** Каталог сборных — до static, чтобы всегда отдавался JSON (досье и др.). */
+app.get("/national-teams/catalog", (req, res) => {
+    try {
+        res.json({ success: true, teams: nationalTeamsData.teamsCatalogForClient() });
+    } catch (error) {
+        console.error("national-teams/catalog error:", error);
+        res.status(500).json({ success: false, error: "Ошибка каталога сборных" });
+    }
+});
+
 /** Рейтинг клубов (пока заглушка: все клубы, rating = 0). */
 app.get("/rating/clubs", (req, res) => {
     try {
@@ -513,6 +842,14 @@ app.get("/fight", async (req, res) => {
             res.redirect(302, "/district.html?noRubles=1");
             return;
         }
+        if (!out.ok && out.code === "low_energy") {
+            res.redirect(302, "/district.html?lowEnergy=1");
+            return;
+        }
+        if (!out.ok && out.code === "player_protected") {
+            res.redirect(302, "/district.html?playerProtected=1");
+            return;
+        }
         res.status(out.ok ? 200 : 400).type("html").send(fightSsr.buildFightPageHtml(out));
     } catch (error) {
         console.error("GET /fight error:", error);
@@ -522,43 +859,10 @@ app.get("/fight", async (req, res) => {
 
 app.use(express.static(path.join(__dirname, "public")));
 
-function runQuery(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.run(sql, params, function onRun(err) {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(this);
-        });
-    });
-}
-
-function getQuery(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.get(sql, params, (err, row) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(row);
-        });
-    });
-}
-
-function allQuery(sql, params = []) {
-    return new Promise((resolve, reject) => {
-        db.all(sql, params, (err, rows) => {
-            if (err) {
-                reject(err);
-                return;
-            }
-            resolve(rows);
-        });
-    });
-}
-
 async function initDatabase() {
+    await runQuery("PRAGMA busy_timeout = 5000");
+    await runQuery("PRAGMA journal_mode = WAL");
+
     await runQuery(`
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -640,6 +944,91 @@ async function initDatabase() {
     `);
     await runQuery(`CREATE INDEX IF NOT EXISTS idx_kick_spawn ON district_kick_tokens(spawn_id, bot_index)`);
 
+    await runQuery(`
+        CREATE TABLE IF NOT EXISTS stadium_matches (
+            id TEXT PRIMARY KEY,
+            level INTEGER NOT NULL,
+            home_club TEXT NOT NULL,
+            away_club TEXT NOT NULL,
+            status TEXT NOT NULL,
+            starts_at INTEGER NOT NULL,
+            ends_at INTEGER NOT NULL,
+            score_home INTEGER DEFAULT 0,
+            score_away INTEGER DEFAULT 0,
+            fighters_json TEXT NOT NULL,
+            feed_json TEXT NOT NULL,
+            meta_json TEXT NOT NULL DEFAULT '{}',
+            created_at INTEGER NOT NULL
+        )
+    `);
+    await runQuery(
+        `CREATE INDEX IF NOT EXISTS idx_stadium_level_status ON stadium_matches(level, status)`
+    );
+
+    await runQuery(`
+        CREATE TABLE IF NOT EXISTS stadium_newspaper (
+            id TEXT PRIMARY KEY,
+            match_id TEXT NOT NULL UNIQUE,
+            level INTEGER NOT NULL,
+            report_json TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        )
+    `);
+    await runQuery(
+        `CREATE INDEX IF NOT EXISTS idx_stadium_newspaper_created ON stadium_newspaper(created_at DESC)`
+    );
+
+    await runQuery(`
+        CREATE TABLE IF NOT EXISTS stadium_club_rating (
+            club TEXT PRIMARY KEY,
+            points INTEGER NOT NULL DEFAULT 0
+        )
+    `);
+
+    await runQuery(`
+        CREATE TABLE IF NOT EXISTS mail_messages (
+            id TEXT PRIMARY KEY,
+            email TEXT NOT NULL,
+            category TEXT NOT NULL,
+            subject TEXT,
+            body_json TEXT NOT NULL DEFAULT '{}',
+            ref_id TEXT,
+            read_at INTEGER,
+            created_at INTEGER NOT NULL
+        )
+    `);
+    await runQuery(
+        `CREATE INDEX IF NOT EXISTS idx_mail_email_cat ON mail_messages(email, category, created_at DESC)`
+    );
+
+    await runQuery(`
+        CREATE TABLE IF NOT EXISTS rep_earnings (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            club TEXT,
+            rep INTEGER NOT NULL DEFAULT 0,
+            skulls INTEGER NOT NULL DEFAULT 0,
+            source TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        )
+    `);
+    await runQuery(
+        `CREATE INDEX IF NOT EXISTS idx_rep_earnings_club_time ON rep_earnings(club, created_at DESC)`
+    );
+    await runQuery(
+        `CREATE INDEX IF NOT EXISTS idx_rep_earnings_email_time ON rep_earnings(email, created_at DESC)`
+    );
+
+    await runQuery(`
+        CREATE TABLE IF NOT EXISTS firms (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE,
+            leader_email TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        )
+    `);
+    await runQuery(`CREATE INDEX IF NOT EXISTS idx_firms_leader ON firms(leader_email)`);
+
     const columns = await allQuery("PRAGMA table_info(users)");
     const existing = new Set(columns.map((col) => col.name));
     const alterStatements = [];
@@ -653,7 +1042,6 @@ async function initDatabase() {
     if (!existing.has("name")) alterStatements.push("ALTER TABLE users ADD COLUMN name TEXT");
     if (!existing.has("character")) alterStatements.push("ALTER TABLE users ADD COLUMN character TEXT");
     if (!existing.has("club")) alterStatements.push("ALTER TABLE users ADD COLUMN club TEXT");
-    if (!existing.has("last_active_at")) alterStatements.push("ALTER TABLE users ADD COLUMN last_active_at INTEGER DEFAULT 0");
     if (!existing.has("energy")) alterStatements.push("ALTER TABLE users ADD COLUMN energy INTEGER DEFAULT 100");
     if (!existing.has("money")) alterStatements.push("ALTER TABLE users ADD COLUMN money INTEGER DEFAULT 69");
     if (!existing.has("rubles")) alterStatements.push("ALTER TABLE users ADD COLUMN rubles INTEGER DEFAULT 69");
@@ -694,6 +1082,19 @@ async function initDatabase() {
         `CREATE INDEX IF NOT EXISTS idx_player_events_email ON player_events(email, created_at DESC)`
     );
 
+    await runQuery(`
+        CREATE TABLE IF NOT EXISTS pub_chat (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL,
+            player_name TEXT NOT NULL,
+            message TEXT NOT NULL,
+            created_at INTEGER NOT NULL
+        )
+    `);
+    await runQuery(
+        `CREATE INDEX IF NOT EXISTS idx_pub_chat_created ON pub_chat(created_at DESC)`
+    );
+
     const colsK = await allQuery("PRAGMA table_info(users)");
     const exK = new Set(colsK.map((c) => c.name));
     if (!exK.has("kicker_last_play")) {
@@ -728,17 +1129,37 @@ async function initDatabase() {
         ["consumables_used_at", "TEXT DEFAULT '{}'"],
         ["stat_points", "INTEGER DEFAULT 0"],
         ["daily_quests", "TEXT DEFAULT ''"],
+        ["main_quests", "TEXT DEFAULT ''"],
         ["gym_passes", "INTEGER DEFAULT 0"],
         ["lottery_free_tickets", "INTEGER DEFAULT 0"],
         ["happy_hour_day", "TEXT DEFAULT ''"],
         ["happy_hour_claims", "INTEGER DEFAULT 0"],
-        ["happy_hour_cooldown_until", "INTEGER DEFAULT 0"]
+        ["happy_hour_cooldown_until", "INTEGER DEFAULT 0"],
+        ["gear_upgrades", "TEXT DEFAULT '{}'"],
+        ["stadium_tickets", "TEXT DEFAULT '{}'"],
+        ["talismans", "TEXT DEFAULT '{}'"],
+        ["stadium_gadgets", "TEXT DEFAULT '{\"sharp_pepper\":3,\"chocolate\":3,\"energy_drink\":6}'"],
+        ["national_team", "TEXT DEFAULT ''"],
+        ["hero_of_day_wins", "INTEGER DEFAULT 0"],
+        ["registered_at", "INTEGER DEFAULT 0"],
+        ["last_active_at", "INTEGER DEFAULT 0"],
+        ["ui_prefs", "TEXT DEFAULT '{}'"]
     ];
     for (const [col, def] of profileCols) {
         if (!exK.has(col)) {
             await runQuery(`ALTER TABLE users ADD COLUMN ${col} ${def}`);
         }
     }
+
+    await runQuery(
+        `UPDATE users SET registered_at = last_regen_at
+         WHERE (registered_at IS NULL OR registered_at = 0) AND COALESCE(last_regen_at, 0) > 0`
+    );
+    await runQuery(
+        `UPDATE users SET registered_at = ?
+         WHERE registered_at IS NULL OR registered_at = 0`,
+        [Date.now()]
+    );
 
     await runQuery(
         `UPDATE users SET rage = ${RAGE_BASE} WHERE rage IS NULL OR rage < ${RAGE_BASE}`
@@ -766,13 +1187,47 @@ async function initDatabase() {
     for (const u of allUsers) {
         await ensureUserLevelMatchesXp(u.email);
     }
+
+    authModule = createAuthModule({ runQuery, getQuery, allQuery });
+    await authModule.ensureSchema();
 }
 
-function parseJson(value, fallback) {
-    try {
-        return value ? JSON.parse(value) : fallback;
-    } catch {
-        return fallback;
+let stadiumService = null;
+let firmsService = null;
+let pubBattleModule = null;
+let nationalTeamsModule = null;
+let packagesModule = null;
+let authModule = null;
+let referralsModule = null;
+
+async function seedStadiumDemoIfEmpty() {
+    const row = await getQuery("SELECT id FROM stadium_matches LIMIT 1");
+    if (row) return;
+    const now = Date.now();
+    for (let lv = 1; lv <= 5; lv += 1) {
+        const startsAt = stadiumEngine.nextMatchStartMs(now);
+        const match = stadiumEngine.createMatch(lv, "army", "sparta", startsAt);
+        const r = stadiumEngine.rowFromMatch(match);
+        await runQuery(
+            `INSERT INTO stadium_matches
+             (id, level, home_club, away_club, status, starts_at, ends_at, score_home, score_away, fighters_json, feed_json, meta_json, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+                r.id,
+                r.level,
+                r.home_club,
+                r.away_club,
+                r.status,
+                r.starts_at,
+                r.ends_at,
+                r.score_home,
+                r.score_away,
+                r.fighters_json,
+                r.feed_json,
+                r.meta_json,
+                now
+            ]
+        );
     }
 }
 
@@ -883,13 +1338,11 @@ function normalizeRage(value) {
     return Math.max(RAGE_BASE, Math.min(MAX_RAGE, Math.round(r)));
 }
 
-/** Победа: ярость чуть тратится. Поражение: +10 к максимуму (100→110→120…). */
-function districtRageAfterFight(won, storedRage) {
+/** Победа: ярость не меняется. Поражение: +10 (100→110→120…, макс. 150). */
+function districtRageAfterFight(won, storedRage, opts = {}) {
+    if (opts.mayaTriggered) return MAX_RAGE;
     const cur = normalizeRage(storedRage);
-    if (won) {
-        const spend = randomInt(3, 10);
-        return Math.max(RAGE_BASE, cur - spend);
-    }
+    if (won) return cur;
     return Math.min(MAX_RAGE, cur + RAGE_ON_LOSS);
 }
 
@@ -932,36 +1385,57 @@ function buildDistrictSpawnPayload(spawnId, slots, kicksByIndex) {
     return { spawnId, bots: payload };
 }
 
-async function pickRefillBot(user, playerEff) {
+async function pickRefillBot(user, playerEff, slotIndex) {
     const level = user.level ?? 1;
-    const email = user.email;
-    const now = Date.now();
-    const lastSt = user.last_steward_spawn ?? 0;
-    if (now - lastSt >= STEWARD_COOLDOWN_MS) {
-        await runQuery("UPDATE users SET last_steward_spawn = ? WHERE email = ?", [now, email]);
-        return scaleStewardBot(STEWARD_BOT, level, playerEff);
+
+    if (slotIndex === PLAYER_SLOT_INDEX) {
+        const playerRow = await districtPlayers().pickDistrictPlayer(user, level);
+        return playerRow
+            ? buildDistrictPlayerSlot(playerRow)
+            : scaleWeakDistrictBot(districtNpcTemplate("rayon"), level);
     }
-    const tpl = DISTRICT_WEAK_BOTS[randomInt(0, DISTRICT_WEAK_BOTS.length - 1)];
-    return scaleWeakDistrictBot(tpl, level);
+
+    if (slotIndex === NPC_SLOT_FAN) {
+        return decorateFanBot(
+            scaleWeakDistrictBot(districtNpcTemplate("fan"), level),
+            user,
+            `${user.email}:fan:${Date.now()}:${randomInt(1, 999999999)}`
+        );
+    }
+
+    if (slotIndex === NPC_SLOT_GOP) {
+        return scaleWeakDistrictBot(districtNpcTemplate("gop"), level);
+    }
+
+    return pickRefillNpc(user, playerEff, level);
 }
 
-/** Новая волна района: 3 бота (иногда один слот — Стюард). */
+/** Новая волна района: Гопник + Чужой фан + реальный игрок (или Районный). */
 async function createDistrictSpawnInitial(email, user) {
     await clearDistrictSession(email);
+    await districtPlayers().ensureSchema();
 
     const level = user.level ?? 1;
-    const picks = shufflePick(DISTRICT_WEAK_BOTS, DISTRICT_SLOT_COUNT);
-    const slots = picks.map((tpl) => scaleWeakDistrictBot(tpl, level));
     const { effective: playerEff } = getEffectiveStats(user);
     const now = Date.now();
+
+    const slots = [];
+    slots[NPC_SLOT_GOP] = await buildDistrictNpcSlot(NPC_SLOT_GOP, user, level, playerEff);
+    slots[NPC_SLOT_FAN] = await buildDistrictNpcSlot(NPC_SLOT_FAN, user, level, playerEff);
+
+    const playerRow = await districtPlayers().pickDistrictPlayer(user, level);
+    slots[PLAYER_SLOT_INDEX] = playerRow
+        ? buildDistrictPlayerSlot(playerRow)
+        : scaleWeakDistrictBot(districtNpcTemplate("rayon"), level);
+
     const lastSt = user.last_steward_spawn ?? 0;
     if (now - lastSt >= STEWARD_COOLDOWN_MS) {
-        const slot = randomInt(0, DISTRICT_SLOT_COUNT - 1);
-        slots[slot] = scaleStewardBot(STEWARD_BOT, level, playerEff);
+        const stewardSlot = randomInt(0, DISTRICT_SLOT_COUNT - 1);
+        slots[stewardSlot] = scaleStewardBot(STEWARD_BOT, level, playerEff);
         await runQuery("UPDATE users SET last_steward_spawn = ? WHERE email = ?", [now, email]);
     }
 
-    const spawnId = `s_${Date.now()}_${randomInt(1000, 9999)}`;
+    const spawnId = `s_${now}_${randomInt(1000, 9999)}`;
     await runQuery("INSERT INTO district_spawn (spawn_id, email, bots_json, created_at) VALUES (?, ?, ?, ?)", [
         spawnId,
         email,
@@ -1004,7 +1478,7 @@ async function refillDistrictSlot(email, user) {
     for (let i = 0; i < DISTRICT_SLOT_COUNT; i += 1) {
         const k = kicksByIndex[i];
         if (k && k.leftKick && k.rightKick) continue;
-        slots[i] = await pickRefillBot(user, playerEff);
+        slots[i] = await pickRefillBot(user, playerEff, i);
         const kicks = await insertKickPair(email, row.spawn_id, i, null);
         kicksByIndex[i] = kicks;
         refilled = true;
@@ -1046,51 +1520,6 @@ async function getDistrictSpawnForClient(email, user) {
 
 const { levelFromXp, normalizeXp, xpProgressFromTotals } = xpLevels;
 
-function getActiveTattoos(row) {
-    const tattoos = parseJson(row.tattoos, {});
-    if (tattoos.expiresAt && Date.now() > tattoos.expiresAt) {
-        return { power: 0, speed: 0, intel: 0, stamina: 0, expiresAt: 0 };
-    }
-    return tattoos;
-}
-
-function getEquipmentBonuses(row) {
-    const eq = parseJson(row.equipment, {});
-    const bonuses = { power: 0, speed: 0, intel: 0, stamina: 0 };
-    for (const key of Object.keys(eq)) {
-        const item = eq[key];
-        if (!item) continue;
-        const def = item.id ? SHOP_ITEMS[item.id] : null;
-        if (item.id && !def) {
-            delete eq[key];
-            continue;
-        }
-        bonuses.power += def ? def.power : item.power || 0;
-        bonuses.speed += def ? def.speed : item.speed || 0;
-        bonuses.intel += def ? def.intel : item.intel || 0;
-        bonuses.stamina += def ? def.stamina : item.stamina || 0;
-    }
-    return { equipment: eq, bonuses };
-}
-
-function getEffectiveStats(row) {
-    const tattoos = getActiveTattoos(row);
-    const { equipment, bonuses } = getEquipmentBonuses(row);
-    const base = {
-        power: row.power ?? 10,
-        speed: row.speed ?? 10,
-        intel: row.intel ?? 10,
-        stamina: row.stamina ?? 10
-    };
-    const effective = {
-        power: base.power + (tattoos.power || 0) + bonuses.power,
-        speed: base.speed + (tattoos.speed || 0) + bonuses.speed,
-        intel: base.intel + (tattoos.intel || 0) + bonuses.intel,
-        stamina: base.stamina + (tattoos.stamina || 0) + bonuses.stamina
-    };
-    return { base, effective, tattoos, equipment, bonuses };
-}
-
 function calcMaxHp(stamina, level) {
     return MAX_HP_CAP;
 }
@@ -1130,9 +1559,32 @@ function applyResourceRegen(row) {
     };
 }
 
+async function syncGearUpgradesRow(email, user) {
+    let upgrades = parseJson(user.gear_upgrades, {});
+    const normalized = gearUpgrades.normalizeUpgrades(upgrades, SHOP_ITEMS);
+    upgrades = normalized.upgrades;
+    const ticked = gearUpgrades.tickUpgrades(upgrades, Date.now(), SHOP_ITEMS);
+    if (!normalized.changed && !ticked.changed) return user;
+    await runQuery("UPDATE users SET gear_upgrades = ? WHERE email = ?", [
+        JSON.stringify(ticked.upgrades),
+        email
+    ]);
+    return getQuery("SELECT * FROM users WHERE email = ?", [email]);
+}
+
+async function ensureRegisteredAt(email, userRow) {
+    const ts = Number(userRow?.registered_at);
+    if (Number.isFinite(ts) && ts > 0) return false;
+    const now = Date.now();
+    await runQuery("UPDATE users SET registered_at = ? WHERE email = ?", [now, email]);
+    return true;
+}
+
 async function syncUserResources(email) {
     const user = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
     if (!user) return null;
+
+    await ensureRegisteredAt(email, user);
 
     const regen = applyResourceRegen(user);
     const needsSave =
@@ -1149,7 +1601,9 @@ async function syncUserResources(email) {
         );
     }
 
-    if (user) {
+    let fresh = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
+    if (fresh) {
+        fresh = await syncGearUpgradesRow(email, fresh);
         await ensureUserLevelMatchesXp(email);
     }
     return getQuery("SELECT * FROM users WHERE email = ?", [email]);
@@ -1201,40 +1655,33 @@ async function ensureUserLevelMatchesXp(email) {
     const oldLevel = row.level ?? 1;
     if (oldLevel !== level) {
         await grantStatPointsForLevelDelta(email, oldLevel, level);
-        await runQuery("UPDATE users SET level = ?, rank_title = ? WHERE email = ?", [
-            level,
-            rankFromLevel(level),
-            email
-        ]);
+        await runQuery("UPDATE users SET level = ? WHERE email = ?", [level, email]);
     }
 }
 
-function rankFromLevel(level) {
-    const lv = level ?? 1;
-    if (lv >= 20) return "Легенда района";
-    if (lv >= 15) return "Старший боец";
-    if (lv >= 10) return "Помощник лидера";
-    if (lv >= 5) return "Свой в доску";
-    return "Молодой фан";
+function avatarPath(character) {
+    return clubCharacters.avatarPathForCharacter(character);
 }
 
-/** Аватарки: свои (tank/fast) + personage из Hools для остальных. */
-const CHARACTER_AVATAR = {
-    tank: "/images/tank-dossier.png",
-    fast: "/images/fast-dossier.png",
-    balanced: "/static/personage/balanced.png",
-    tough: "/static/personage/tough.png",
-    redhead: "/static/personage/redhead.png",
-    fighter: "/static/personage/fighter.png",
-    chick: "/static/personage/chick.png",
-    valk: "/static/personage/valk.png",
-    shadow: "/static/personage/shadow.png",
-    spark: "/static/personage/spark.png"
-};
+/** Стаж: 1-й день в день регистрации, +1 за каждый новый календарный день. */
+function computeTenureDays(registeredAtMs) {
+    const ts = Number(registeredAtMs);
+    if (!Number.isFinite(ts) || ts <= 0) return 1;
+    const start = new Date(ts);
+    const now = new Date();
+    const startDay = Date.UTC(start.getUTCFullYear(), start.getUTCMonth(), start.getUTCDate());
+    const todayDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const diff = Math.floor((todayDay - startDay) / 86400000);
+    return Math.max(1, diff + 1);
+}
 
-function avatarPath(character) {
-    const id = String(character || "").trim() || "balanced";
-    return CHARACTER_AVATAR[id] || CHARACTER_AVATAR.balanced;
+function formatTenureLabel(days) {
+    const n = Math.max(1, Math.floor(Number(days) || 1));
+    const mod10 = n % 10;
+    const mod100 = n % 100;
+    if (mod10 === 1 && mod100 !== 11) return `${n} день`;
+    if (mod10 >= 2 && mod10 <= 4 && (mod100 < 10 || mod100 >= 20)) return `${n} дня`;
+    return `${n} дней`;
 }
 
 function sanitizeUser(row) {
@@ -1245,15 +1692,26 @@ function sanitizeUser(row) {
     const level = levelFromXp(xp);
     const maxHp = MAX_HP_CAP;
     const rubles = row.rubles ?? row.money ?? START_RUBLES;
+    const skulls = row.skulls ?? Math.floor((row.reputation ?? 0) / SKULL_EVERY_REP);
 
     return {
         id: row.id,
         email: row.email,
+        recoveryEmail:
+            normalizeEmail(row.recovery_email) ||
+            (isUserRecoveryEmail(row.email) ? normalizeEmail(row.email) : null),
+        hasRecoveryContact: !!(
+            normalizeEmail(row.recovery_email) ||
+            isUserRecoveryEmail(row.email)
+        ),
         name: row.name,
         character: row.character,
         club: row.club,
         clubName: clubsData.getClubName(row.club) || row.club || null,
         clubEmblem: clubsData.getClubEmblem(row.club) || null,
+        nationalTeam: row.national_team ? String(row.national_team).trim() || null : null,
+        nationalTeamName: nationalTeamsData.getTeamName(row.national_team) || null,
+        nationalTeamFlag: nationalTeamsData.getTeamFlag(row.national_team) || null,
         power: base.power,
         speed: base.speed,
         intel: base.intel,
@@ -1274,9 +1732,12 @@ function sanitizeUser(row) {
         hp: Math.min(maxHp, Math.max(0, Math.round(Number.isFinite(Number(row.hp)) ? row.hp : maxHp))),
         maxHp,
         energy: Math.min(MAX_ENERGY, Math.max(0, row.energy ?? MAX_ENERGY)),
-        rage: normalizeRage(row.rage),
+        rage:
+            row.rage == null || !Number.isFinite(Number(row.rage))
+                ? RAGE_BASE
+                : Math.max(0, Math.min(MAX_RAGE, Math.round(Number(row.rage)))),
         reputation: row.reputation ?? 0,
-        skulls: row.skulls ?? Math.floor((row.reputation ?? 0) / SKULL_EVERY_REP),
+        skulls,
         silverWon: row.silver_won ?? 0,
         silverLost: row.silver_lost ?? 0,
         districtStreak: row.district_streak ?? 0,
@@ -1284,11 +1745,50 @@ function sanitizeUser(row) {
         statPoints: Math.max(0, Math.floor(Number(row.stat_points) || 0)),
         gymPasses: Math.max(0, Math.floor(Number(row.gym_passes) || 0)),
         lotteryFreeTickets: Math.max(0, Math.floor(Number(row.lottery_free_tickets) || 0)),
+        stadiumTickets: parseJson(row.stadium_tickets, {}),
+        talismans: talismans.catalogWithOwnership(row.talismans),
+        talismansOwned: talismans.parseOwnedTalismans(row.talismans),
         firm: row.firm || "",
         country: row.country || "",
-        rank: row.rank_title || rankFromLevel(level),
+        rank: rankTitleFromTotalSkulls(skulls),
+        heroOfDayWins: Math.max(0, Math.floor(Number(row.hero_of_day_wins) || 0)),
         avatar: avatarPath(row.character),
-        xpProgress: xpProgressFromTotals(xp, level)
+        xpProgress: xpProgressFromTotals(xp, level),
+        gearUpgrades: gearUpgrades.parseUpgrades(parseJson(row.gear_upgrades, {})),
+        tenureDays: computeTenureDays(row.registered_at),
+        tenureLabel: formatTenureLabel(computeTenureDays(row.registered_at))
+    };
+}
+
+/** Публичное досье — без денег, опыта, навыков и скрытых ресурсов. */
+function sanitizePublicUser(row) {
+    const full = sanitizeUser(row);
+    if (!full) return null;
+    return {
+        email: full.email,
+        name: full.name,
+        character: full.character,
+        avatar: full.avatar,
+        club: full.club,
+        clubName: full.clubName,
+        clubEmblem: full.clubEmblem,
+        nationalTeam: full.nationalTeam,
+        nationalTeamName: full.nationalTeamName,
+        nationalTeamFlag: full.nationalTeamFlag,
+        level: full.level,
+        rank: full.rank,
+        reputation: full.reputation,
+        tenureDays: full.tenureDays,
+        tenureLabel: full.tenureLabel,
+        silverWon: full.silverWon,
+        silverLost: full.silverLost,
+        districtStreak: full.districtStreak,
+        districtStreakMax: full.districtStreakMax,
+        firm: full.firm || "",
+        firmId: "",
+        firmName: "",
+        inGame: isPlayerInGame(row.last_active_at),
+        playerStatus: playerStatusLabel(isPlayerInGame(row.last_active_at))
     };
 }
 
@@ -1321,12 +1821,55 @@ function normalizeEmail(email) {
     return String(email || "").trim().toLowerCase();
 }
 
+/** @deprecated — см. player-online.js */
+const PLAYER_IN_GAME_MS = playerOnline.PLAYER_ONLINE_MS;
+const PLAYER_ACTIVITY_TOUCH_MS = playerOnline.PLAYER_ACTIVITY_TOUCH_MS;
+
+function isPlayerInGame(lastActiveAt, now = Date.now()) {
+    return playerOnline.isPlayerOnline(lastActiveAt, now);
+}
+
+function playerStatusLabel(inGame) {
+    return playerOnline.playerStatusLabel(inGame);
+}
+
+async function touchPlayerActivity(email, now = Date.now()) {
+    const key = normalizeEmail(email);
+    if (!key) return;
+    await runQuery(
+        `UPDATE users SET last_active_at = ? WHERE email = ? AND COALESCE(last_active_at, 0) < ?`,
+        [now, key, now - PLAYER_ACTIVITY_TOUCH_MS]
+    );
+    await districtPlayers().clearAttackBlockOnLogin(key);
+}
+
+async function enrichUserProfileExtras(row, payload) {
+    if (!payload || !row) return payload;
+    const inGame = isPlayerInGame(row.last_active_at);
+    payload.inGame = inGame;
+    payload.playerStatus = playerStatusLabel(inGame);
+    const firm = await resolveUserFirm(row);
+    payload.firmId = firm?.id || "";
+    payload.firmName = firm?.name || "";
+    return payload;
+}
+
 async function requireExistingUser(email, opts = {}) {
+    const key = normalizeEmail(email);
+    if (!key) return null;
     if (opts.regen === false) {
-        const user = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
+        const user = await getQuery("SELECT * FROM users WHERE email = ?", [key]);
         return user || null;
     }
-    return syncUserResources(email);
+    const user = await syncUserResources(key);
+    if (user && opts.touchActivity !== false) {
+        await touchPlayerActivity(key);
+        user.last_active_at = Math.max(
+            Math.floor(Number(user.last_active_at) || 0),
+            Date.now()
+        );
+    }
+    return user;
 }
 
 const CLUB_FIGHT_EMOJI = {
@@ -1345,10 +1888,129 @@ function normalizePlayerName(name) {
     return String(name || "").trim();
 }
 
+async function resolveUserFirm(user) {
+    if (!firmsService) return null;
+    return firmsService.resolveUserFirm(user);
+}
+
 function dailyQuestUserCtx(row) {
     return {
         level: row.level ?? 1,
         xp: row.xp ?? 0
+    };
+}
+
+function parseUiPrefs(raw) {
+    const o = parseJson(raw, {});
+    if (!o || typeof o !== "object") {
+        return { mainQuestWidgetDismissedQuestId: null };
+    }
+    const id = String(o.mainQuestWidgetDismissedQuestId || "").trim();
+    return { mainQuestWidgetDismissedQuestId: id || null };
+}
+
+function mergeUiPrefs(raw, patch) {
+    const cur = parseJson(raw, {});
+    const base = cur && typeof cur === "object" ? { ...cur } : {};
+    return JSON.stringify({ ...base, ...patch });
+}
+
+function isMainQuestWidgetHidden(uiPrefs, activeMainQuest) {
+    if (!activeMainQuest?.id || !uiPrefs?.mainQuestWidgetDismissedQuestId) return false;
+    return uiPrefs.mainQuestWidgetDismissedQuestId === activeMainQuest.id;
+}
+
+function hasGearUpgrade(gearUpgradesRaw) {
+    const upgrades = parseJson(gearUpgradesRaw, {});
+    return Object.values(upgrades).some((row) => {
+        if (!row || typeof row !== "object") return false;
+        return (row.level || 0) >= 2 || !!row.until;
+    });
+}
+
+function hasDealerItem(inventoryRaw) {
+    const inventory = parseJson(inventoryRaw, []);
+    return Array.isArray(inventory) && inventory.length > 0;
+}
+
+function hasStadiumTicket(stadiumTicketsRaw) {
+    const tickets = stadiumTickets.parseTickets(stadiumTicketsRaw);
+    return Object.keys(tickets).length > 0;
+}
+
+function hasCompletedWork(workCompletedRaw) {
+    const done = parseJson(workCompletedRaw, {});
+    return Object.keys(done).length > 0;
+}
+
+function mainQuestUserCtx(row) {
+    const owned = talismans.parseOwnedTalismans(row.talismans);
+    const dailyState = dailyQuests.parseDailyQuestState(parseJson(row.daily_quests, null));
+    return {
+        level: row.level ?? 1,
+        xp: row.xp ?? 0,
+        club: row.club || null,
+        rubles: row.rubles ?? row.money ?? 0,
+        hasTalisman: Object.keys(owned).length > 0,
+        hasStadiumTicket: hasStadiumTicket(row.stadium_tickets),
+        hasGearUpgrade: hasGearUpgrade(row.gear_upgrades),
+        hasDealerItem: hasDealerItem(row.inventory),
+        hasCompletedWork: hasCompletedWork(row.work_completed),
+        dailyLevel2Rewarded: Boolean(dailyState.level2Rewarded)
+    };
+}
+
+async function saveMainQuestResult(email, result) {
+    const row = await getQuery("SELECT mushrooms, gym_passes FROM users WHERE email = ?", [email]);
+    if (!row) return;
+    const rewards = result.rewards || {};
+    const mushrooms = (row.mushrooms ?? 0) + (rewards.mushrooms || 0);
+    const gymPasses = (row.gym_passes ?? 0) + (rewards.gymPasses || 0);
+    await runQuery("UPDATE users SET main_quests = ?, mushrooms = ?, gym_passes = ? WHERE email = ?", [
+        JSON.stringify(result.state),
+        mushrooms,
+        gymPasses,
+        email
+    ]);
+    if (result.messages?.length) {
+        await recordQuestEventsFromMessages(email, result.messages);
+    }
+}
+
+async function persistMainQuestEvent(email, event) {
+    const row = await getQuery(
+        `SELECT main_quests, daily_quests, level, xp, club, rubles, money, talismans, stadium_tickets,
+                gear_upgrades, work_completed, inventory FROM users WHERE email = ?`,
+        [email]
+    );
+    if (!row) return { messages: [], rewards: { mushrooms: 0, gymPasses: 0 } };
+
+    const raw = parseJson(row.main_quests, null);
+    const ctx = mainQuestUserCtx(row);
+    const result = mainQuests.processEvent(raw, ctx, event);
+    await saveMainQuestResult(email, result);
+    return result;
+}
+
+async function loadMainQuestsForUser(email) {
+    const row = await getQuery(
+        `SELECT main_quests, daily_quests, level, xp, club, rubles, money, talismans, stadium_tickets,
+                gear_upgrades, work_completed, inventory, mushrooms FROM users WHERE email = ?`,
+        [email]
+    );
+    if (!row) return null;
+
+    const ctx = mainQuestUserCtx(row);
+    const raw = parseJson(row.main_quests, null);
+    const settled = mainQuests.settleMainQuestState(raw, ctx);
+    await saveMainQuestResult(email, settled);
+
+    const payload = mainQuests.getMainQuestsPayload(settled.state, ctx);
+    return {
+        mainQuests: payload.quests,
+        activeMainQuest: payload.activeHomeQuest || null,
+        mainQuestsAllDone: payload.allDone,
+        rewardMessages: settled.messages.map((m) => m.message)
     };
 }
 
@@ -1381,6 +2043,7 @@ async function persistDailyQuestFightProgress(email, won) {
     const raw = parseJson(row.daily_quests, null);
     const result = dailyQuests.recordDistrictFightProgress(raw, won, dailyQuestUserCtx(row));
     await saveDailyQuestResult(email, result);
+    await persistMainQuestEvent(email, "sync");
     return result;
 }
 
@@ -1407,12 +2070,22 @@ async function loadDailyQuestsForUser(email) {
     await saveDailyQuestResult(email, settled);
 
     const payload = dailyQuests.getDailyQuestsPayload(settled.state, ctx);
+    const main = await loadMainQuestsForUser(email);
     const updated = await requireExistingUser(email);
+    const dailyRewardMessages = settled.messages.map((m) => m.message);
+    const mainRewardMessages = main?.rewardMessages || [];
+    const uiPrefs = parseUiPrefs(user.ui_prefs);
+    const activeMainQuest = main?.activeMainQuest || null;
     return {
         quests: payload.quests,
+        dailyQuests: payload.quests,
+        mainQuests: main?.mainQuests || [],
+        activeMainQuest,
+        mainQuestWidgetHidden: isMainQuestWidgetHidden(uiPrefs, activeMainQuest),
+        mainQuestsAllDone: main?.mainQuestsAllDone ?? false,
         resetInMs: payload.resetInMs,
         resetLabel: payload.resetLabel,
-        rewardMessages: settled.messages.map((m) => m.message),
+        rewardMessages: dailyRewardMessages.concat(mainRewardMessages),
         user: sanitizeUser(updated)
     };
 }
@@ -1509,13 +2182,32 @@ async function runDistrictFight(emailFromClient, kickToken) {
         return { ok: false, error: "Противник не найден." };
     }
 
+    if (botTemplate.isPlayer && botTemplate.targetEmail) {
+        const guard = await districtPlayers().assertCanAttackPlayer(botTemplate.targetEmail);
+        if (!guard.ok) {
+            return {
+                ok: false,
+                code: guard.code || "player_protected",
+                error: guard.error,
+                user: sanitizeUser(user)
+            };
+        }
+    }
+
     let fight = tok.fight_id
         ? await getQuery("SELECT * FROM district_fights WHERE id = ? AND email = ?", [tok.fight_id, email])
         : null;
 
     if (!fight) {
         if ((user.energy ?? MAX_ENERGY) < FIGHT_ENERGY_COST) {
-            return { ok: false, error: "Мало энергии для боя.", user: sanitizeUser(user) };
+            return {
+                ok: false,
+                code: "low_energy",
+                energy: Math.max(0, Math.floor(Number(user.energy) || 0)),
+                need: FIGHT_ENERGY_COST,
+                error: "Мало энергии для боя.",
+                user: sanitizeUser(user)
+            };
         }
 
         const stats = getEffectiveStats(user);
@@ -1558,6 +2250,10 @@ async function runDistrictFight(emailFromClient, kickToken) {
 
         fight = await getQuery("SELECT * FROM district_fights WHERE id = ?", [fightId]);
         user = await requireExistingUser(email);
+
+        if (botTemplate.isPlayer && botTemplate.targetEmail) {
+            await districtPlayers().recordAttackOnPlayer(email, botTemplate.targetEmail);
+        }
     }
 
     await runQuery("DELETE FROM district_kick_tokens WHERE spawn_id = ? AND bot_index = ? AND used = 0", [
@@ -1583,7 +2279,9 @@ async function runDistrictFight(emailFromClient, kickToken) {
             startRage: normalizeRage(user.rage),
             equipment: stats.equipment,
             bonuses: stats.bonuses,
-            statPointsPending: Math.max(0, Math.floor(Number(user.stat_points) || 0))
+            statPointsPending: Math.max(0, Math.floor(Number(user.stat_points) || 0)),
+            playerTalismans: user.talismans || "{}",
+            enemyTalismans: "{}"
         }
     );
 
@@ -1604,7 +2302,8 @@ async function runDistrictFight(emailFromClient, kickToken) {
         hpStart: startHp,
         totalDamageTaken,
         hpAfter: hpAfterFight,
-        endRage: resolved.endRage
+        startRage: normalizeRage(user.rage),
+        mayaTriggered: !!resolved.mayaTriggered
     };
 
     let xpGain = 0;
@@ -1669,7 +2368,9 @@ async function runDistrictFight(emailFromClient, kickToken) {
     const battleView = {
         status: resolved.status,
         playerName,
+        playerEmail: email,
         opponentName: opponent.name,
+        opponentEmail: opponent.email ? String(opponent.email).toLowerCase() : null,
         opponentEmoji,
         opponentAvatar,
         playerAvatar: su.avatar,
@@ -1736,7 +2437,9 @@ async function runDistrictFight(emailFromClient, kickToken) {
         ok: true,
         status: resolved.status,
         playerName,
+        playerEmail: email,
         opponentName: opponent.name,
+        opponentEmail: opponent.email ? String(opponent.email).toLowerCase() : null,
         opponentEmoji,
         opponentAvatar,
         playerAvatar: su.avatar,
@@ -1764,101 +2467,6 @@ async function runDistrictFight(emailFromClient, kickToken) {
     };
 }
 
-app.post("/register", async (req, res) => {
-    try {
-        const body = req.body && typeof req.body === "object" ? req.body : {};
-        const email = normalizeEmail(body.email);
-        const password = String(body.password || "").trim();
-
-        if (email.length < MIN_EMAIL_LENGTH) {
-            res.status(400).json({ success: false, error: "Email слишком короткий" });
-            return;
-        }
-
-        if (password.length < MIN_PASSWORD_LENGTH) {
-            res.status(400).json({ success: false, error: "Пароль слишком короткий" });
-            return;
-        }
-
-        const exists = await requireExistingUser(email);
-        if (exists) {
-            res.status(409).json({ success: false, error: "Пользователь с таким email уже существует" });
-            return;
-        }
-
-        const t = Date.now();
-        await runQuery("INSERT INTO users (email, password, last_regen_at) VALUES (?, ?, ?)", [email, password, t]);
-        const created = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
-        res.json({ success: true, user: sanitizeUser(created) });
-    } catch (error) {
-        console.error("Register error:", error);
-        res.status(500).json({ success: false, error: "Ошибка сервера при регистрации" });
-    }
-});
-
-app.post("/login", async (req, res) => {
-    try {
-        const body = req.body && typeof req.body === "object" ? req.body : {};
-        const email = normalizeEmail(body.email);
-        const password = String(body.password || "").trim();
-
-        if (email.length < MIN_EMAIL_LENGTH || password.length < MIN_PASSWORD_LENGTH) {
-            res.status(400).json({ success: false, error: "Введите корректные email и пароль" });
-            return;
-        }
-
-        const user = await getQuery(
-            "SELECT * FROM users WHERE email = ? AND password = ?",
-            [email, password]
-        );
-
-        if (!user) {
-            res.status(401).json({ success: false, error: "Неверный email или пароль" });
-            return;
-        }
-
-        const synced = await syncUserResources(email);
-        res.json({
-            success: true,
-            user: sanitizeUser(synced),
-            onboarded: !!(synced.character && synced.club && synced.name)
-        });
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ success: false, error: "Ошибка сервера при входе" });
-    }
-});
-
-app.post("/reset-password", async (req, res) => {
-    try {
-        const body = req.body && typeof req.body === "object" ? req.body : {};
-        const email = normalizeEmail(body.email);
-        const newPassword = String(body.newPassword || "").trim();
-
-        if (email.length < MIN_EMAIL_LENGTH) {
-            res.status(400).json({ success: false, error: "Email слишком короткий" });
-            return;
-        }
-
-        if (newPassword.length < MIN_PASSWORD_LENGTH) {
-            res.status(400).json({ success: false, error: "Новый пароль слишком короткий" });
-            return;
-        }
-
-        const user = await requireExistingUser(email);
-        if (!user) {
-            res.status(404).json({ success: false, error: "Пользователь не найден" });
-            return;
-        }
-
-        await runQuery("UPDATE users SET password = ? WHERE email = ?", [newPassword, email]);
-        res.json({ success: true, message: "Пароль успешно обновлён" });
-    } catch (error) {
-        console.error("Reset password error:", error);
-        res.status(500).json({ success: false, error: "Ошибка сервера при смене пароля" });
-    }
-});
-
 app.post("/character", async (req, res) => {
     try {
         const body = req.body && typeof req.body === "object" ? req.body : {};
@@ -1876,12 +2484,12 @@ app.post("/character", async (req, res) => {
             return;
         }
 
-        const stats = CHARACTER_STATS[character] || CHARACTER_STATS.balanced;
-        const maxHp = calcMaxHp(stats.stamina, 1);
-        if (!CHARACTER_STATS[character]) {
+        const stats = CHARACTER_STATS[character];
+        if (!stats) {
             res.status(400).json({ success: false, error: "Неизвестный тип персонажа" });
             return;
         }
+        const maxHp = calcMaxHp(stats.stamina, 1);
 
         await runQuery(
             `UPDATE users SET "character" = ?, power = ?, speed = ?, intel = ?, stamina = ?,
@@ -1976,6 +2584,410 @@ app.post("/name", async (req, res) => {
     }
 });
 
+app.get("/api/stadium/upcoming-count", async (req, res) => {
+    try {
+        const count = await stadiumService.countChampionshipMatchesNext7Days(Date.now());
+        res.json({ success: true, count });
+    } catch (error) {
+        console.error("stadium upcoming-count error:", error);
+        res.status(500).json({ success: false, error: "Ошибка расписания" });
+    }
+});
+
+app.get("/stadium/schedule/list", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const list = await stadiumService.listScheduleWeek(user);
+        res.json({ success: true, user: sanitizeUser(user), schedule: list });
+    } catch (error) {
+        console.error("stadium schedule list error:", error);
+        res.status(500).json({ success: false, error: "Ошибка расписания" });
+    }
+});
+
+app.get("/stadium/kassa/info", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const info = await stadiumService.getKassaInfo(user);
+        if (!info.ok) {
+            res.status(400).json({ success: false, error: info.error });
+            return;
+        }
+        res.json({ success: true, user: sanitizeUser(user), kassa: info });
+    } catch (error) {
+        console.error("stadium kassa info error:", error);
+        res.status(500).json({ success: false, error: "Ошибка кассы" });
+    }
+});
+
+app.post("/stadium/kassa/buy", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const out = await stadiumService.buyTicket(email, user, body.matchId || null);
+        if (!out.ok) {
+            res.status(400).json({ success: false, error: out.error });
+            return;
+        }
+        await persistMainQuestEvent(email, "stadium_ticket");
+        const updated = await requireExistingUser(email);
+        const info = await stadiumService.getKassaInfo(updated);
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            kassa: info.ok ? info : null,
+            message: "Билет куплен."
+        });
+    } catch (error) {
+        console.error("stadium kassa buy error:", error);
+        res.status(500).json({ success: false, error: "Ошибка покупки" });
+    }
+});
+
+app.get("/stadium/home", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const status = await stadiumService.getHomeStatus(user);
+        res.json({ success: true, user: sanitizeUser(user), stadium: status });
+    } catch (error) {
+        console.error("stadium home error:", error);
+        res.status(500).json({ success: false, error: "Ошибка стадиона" });
+    }
+});
+
+app.get("/api/mail/menu", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const unreadGazeta = await getQuery(
+            `SELECT COUNT(*) AS c FROM mail_messages WHERE email = ? AND category = 'gazeta_third' AND read_at IS NULL`,
+            [email]
+        );
+        const gazetaTotal = await getQuery("SELECT COUNT(*) AS c FROM stadium_newspaper");
+        res.json({
+            success: true,
+            sections: [
+                { id: "personal", label: "Личные", href: "/mail-personal.html", unread: 0, stub: true },
+                { id: "firm", label: "Почта фирмы", href: "/mail-firm.html", unread: 0, stub: true },
+                { id: "firm_leader", label: "Сообщения лидера фирмы", href: "/mail-firm-leader.html", unread: 0, stub: true },
+                { id: "club", label: "Клубные сообщения", href: "/mail-club.html", unread: 0, stub: true },
+                { id: "game_news", label: "Новости игры", href: "/mail-news.html", unread: 0, stub: true },
+                {
+                    id: "gazeta_third",
+                    label: "Газета «Третий тайм»",
+                    href: "/mail-gazeta.html",
+                    unread: unreadGazeta?.c ?? 0,
+                    stub: false,
+                    total: gazetaTotal?.c ?? 0
+                }
+            ]
+        });
+    } catch (error) {
+        console.error("mail menu error:", error);
+        res.status(500).json({ success: false, error: "Ошибка почты" });
+    }
+});
+
+app.get("/api/mail/gazeta", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const page = Math.max(1, Math.floor(Number(req.query.page) || 1));
+        const list = await stadiumService.listNewspaperIssues(page);
+        res.json({ success: true, ...list });
+    } catch (error) {
+        console.error("mail gazeta list error:", error);
+        res.status(500).json({ success: false, error: "Ошибка газеты" });
+    }
+});
+
+app.get("/api/mail/gazeta/detail", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const issueId = String(req.query.id || "").trim();
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        if (!issueId) {
+            res.status(400).json({ success: false, error: "Нет номера газеты" });
+            return;
+        }
+        const report = await stadiumService.getNewspaperIssue(issueId);
+        if (!report) {
+            res.status(404).json({ success: false, error: "Выпуск не найден" });
+            return;
+        }
+        await runQuery(
+            `UPDATE mail_messages SET read_at = ? WHERE email = ? AND category = 'gazeta_third' AND ref_id = ? AND read_at IS NULL`,
+            [Date.now(), email, issueId]
+        );
+        res.json({ success: true, report });
+    } catch (error) {
+        console.error("mail gazeta detail error:", error);
+        res.status(500).json({ success: false, error: "Ошибка выпуска" });
+    }
+});
+
+app.get("/stadium/best-fighters", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const matchId = String(req.query.matchId || "").trim();
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        let match = matchId
+            ? await stadiumService.loadMatch(matchId)
+            : await stadiumService.getOrCreateMatchForLevel(Math.max(1, user.level ?? 1), user.club);
+
+        if (!match) {
+            res.status(404).json({ success: false, error: "Матч не найден" });
+            return;
+        }
+
+        const page = Math.max(1, Math.floor(Number(req.query.page) || 1));
+
+        res.json({
+            success: true,
+            user: sanitizeUser(user),
+            best: stadiumService.buildBestFighters(match, user, page)
+        });
+    } catch (error) {
+        console.error("stadium best-fighters error:", error);
+        res.status(500).json({ success: false, error: "Ошибка рейтинга" });
+    }
+});
+
+app.get("/stadium/match", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const matchId = String(req.query.matchId || "").trim();
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        let match = matchId
+            ? await stadiumService.loadMatch(matchId)
+            : await stadiumService.getOrCreateMatchForLevel(Math.max(1, user.level ?? 1), user.club);
+
+        if (!match) {
+            res.status(404).json({ success: false, error: "Матч не найден" });
+            return;
+        }
+
+        const stats = getEffectiveStats(user);
+        const updated = await requireExistingUser(email);
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            match: await stadiumService.buildScheduleResponse(match, updated, stats),
+            gadgets: provisionsData.catalogOwnedForClient(getUserConsumables(updated))
+        });
+    } catch (error) {
+        console.error("stadium match error:", error);
+        res.status(500).json({ success: false, error: "Ошибка матча" });
+    }
+});
+
+app.get("/stadium/tribunes", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const matchId = String(req.query.matchId || "").trim();
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        if (!user.club) {
+            res.status(400).json({ success: false, error: "Сначала выбери клуб." });
+            return;
+        }
+
+        let match = matchId
+            ? await stadiumService.loadMatch(matchId)
+            : await stadiumService.getOrCreateMatchForLevel(Math.max(1, user.level ?? 1), user.club);
+
+        if (!match) {
+            res.status(404).json({ success: false, error: "Матч не найден" });
+            return;
+        }
+
+        const stats = getEffectiveStats(user);
+        const updated = await requireExistingUser(email);
+        const focusTargetId = String(req.query.targetId || "").trim();
+        const matchPayload = await stadiumService.buildTribunesPayload(match, updated, stats, {
+            focusTargetId
+        });
+
+        const consumables = getUserConsumables(updated);
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            match: matchPayload,
+            gadgets: provisionsData.catalogOwnedForClient(consumables)
+        });
+    } catch (error) {
+        console.error("stadium tribunes error:", error);
+        res.status(500).json({ success: false, error: "Ошибка фан-сектора" });
+    }
+});
+
+app.post("/stadium/tribunes/refresh", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const matchId = String(body.matchId || "").trim();
+        const user = await requireExistingUser(email);
+        if (!user?.club) {
+            res.status(400).json({ success: false, error: "Сначала выбери клуб." });
+            return;
+        }
+        if (!matchId) {
+            res.status(400).json({ success: false, error: "Нет матча." });
+            return;
+        }
+
+        const out = await stadiumService.refreshTribuneOpponents(matchId, user);
+        if (!out.ok) {
+            res.status(400).json({ success: false, error: out.error });
+            return;
+        }
+
+        const match = await stadiumService.loadMatch(matchId);
+        const stats = getEffectiveStats(user);
+        const updated = await requireExistingUser(email);
+        const consumables = getUserConsumables(updated);
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            match: await stadiumService.buildTribunesPayload(match, updated, stats),
+            gadgets: provisionsData.catalogOwnedForClient(consumables)
+        });
+    } catch (error) {
+        console.error("stadium tribunes refresh error:", error);
+        res.status(500).json({ success: false, error: "Ошибка обновления" });
+    }
+});
+
+app.post("/stadium/join", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const matchId = String(body.matchId || "").trim();
+        const user = await requireExistingUser(email);
+        if (!user?.club) {
+            res.status(400).json({ success: false, error: "Сначала выбери клуб." });
+            return;
+        }
+        if (!matchId) {
+            res.status(400).json({ success: false, error: "Нет матча." });
+            return;
+        }
+
+        const stats = getEffectiveStats(user);
+        const out = await stadiumService.joinMatch(matchId, user, stats);
+        if (!out.ok) {
+            res.status(400).json({ success: false, error: out.error });
+            return;
+        }
+
+        const match = await stadiumService.loadMatch(matchId);
+        const updated = await requireExistingUser(email);
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            match: await stadiumService.buildTribunesPayload(match, updated, stats, {
+                playerFighter: out.fighter
+            })
+        });
+    } catch (error) {
+        console.error("stadium join error:", error);
+        res.status(500).json({ success: false, error: "Ошибка входа в бой" });
+    }
+});
+
+app.post("/stadium/attack", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const matchId = String(body.matchId || "").trim();
+        const targetId = String(body.targetId || "").trim();
+        const attackType = body.attackType === "strong" ? "strong" : "normal";
+        const gadgetId = String(body.gadgetId || "").trim();
+
+        const user = await requireExistingUser(email, { regen: true });
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        if (!user.club) {
+            res.status(400).json({ success: false, error: "Сначала выбери клуб." });
+            return;
+        }
+        if (!matchId || !targetId) {
+            res.status(400).json({ success: false, error: "Нет цели или матча." });
+            return;
+        }
+
+        const stats = getEffectiveStats(user);
+        const out = await stadiumService.playerAttack(matchId, user, stats, targetId, attackType, {
+            gadgetId: gadgetId || null
+        });
+        if (!out.ok) {
+            res.status(400).json({ success: false, error: out.error });
+            return;
+        }
+
+        const updated = await requireExistingUser(email);
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            strike: out.result,
+            strikeFlash: out.strikeFlash || null,
+            repGain: out.repGain ?? 0,
+            matchId: out.matchId,
+            gadgets: out.gadgets || provisionsData.catalogOwnedForClient(getUserConsumables(updated))
+        });
+    } catch (error) {
+        console.error("stadium attack error:", error);
+        res.status(500).json({ success: false, error: "Ошибка удара" });
+    }
+});
+
 app.post("/district/attack-check", async (req, res) => {
     try {
         const body = req.body && typeof req.body === "object" ? req.body : {};
@@ -1997,13 +3009,36 @@ app.post("/district/attack-check", async (req, res) => {
         }
         const rublesNow = Math.max(0, Math.floor(user.rubles ?? user.money ?? 0));
         if (rublesNow < 1) {
-            res.json({ success: false, code: "no_rubles", rubles: rublesNow });
+            res.json({ success: false, code: "no_rubles", rubles: rublesNow, user: sanitizeUser(user) });
+            return;
+        }
+        const energyNow = Math.max(0, Math.floor(Number(user.energy) || 0));
+        if (energyNow < FIGHT_ENERGY_COST) {
+            res.json({
+                success: false,
+                code: "low_energy",
+                energy: energyNow,
+                need: FIGHT_ENERGY_COST,
+                user: sanitizeUser(user)
+            });
             return;
         }
         res.json({ success: true, user: sanitizeUser(user) });
     } catch (error) {
         console.error("district attack-check error:", error);
         res.status(500).json({ success: false, error: "Ошибка проверки" });
+    }
+});
+
+app.get("/api/hero-of-day", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const heroOfDay =
+            heroOfDayService ? await heroOfDayService.getPayload(email) : { active: false, yourSkulls: 0 };
+        res.json({ success: true, heroOfDay });
+    } catch (error) {
+        console.error("hero-of-day error:", error);
+        res.status(500).json({ success: false, error: "Ошибка героя дня" });
     }
 });
 
@@ -2016,9 +3051,12 @@ app.get("/district/spawn", async (req, res) => {
             return;
         }
         const payload = await getDistrictSpawnForClient(email, user);
+        const heroOfDay =
+            heroOfDayService ? await heroOfDayService.getPayload(email) : { active: false, yourSkulls: 0 };
         res.json({
             success: true,
             spawn: { spawnId: payload.spawnId, bots: payload.bots },
+            heroOfDay,
             user: sanitizeUser(user)
         });
     } catch (error) {
@@ -2038,10 +3076,13 @@ app.post("/district/refresh", async (req, res) => {
         }
 
         const result = await createDistrictSpawnInitial(email, user);
+        const heroOfDay =
+            heroOfDayService ? await heroOfDayService.getPayload(email) : { active: false, yourSkulls: 0 };
 
         res.json({
             success: true,
             spawn: { spawnId: result.spawnId, bots: result.bots },
+            heroOfDay,
             user: sanitizeUser(await requireExistingUser(email))
         });
     } catch (error) {
@@ -2075,6 +3116,7 @@ app.get("/district/fight-gear", async (req, res) => {
         }
 
         const opponent = JSON.parse(row.opponent || "{}");
+        const fightLog = parseJson(row.log, []);
         const { base } = getEffectiveStats(userRow);
         const gearB = getEquipmentBonuses(userRow).bonuses;
         const tat = getActiveTattoos(userRow);
@@ -2084,19 +3126,99 @@ app.get("/district/fight-gear", async (req, res) => {
         const charSum = sumB(base);
         const gearSum = sumB(gearB);
         const tattooSum = (tat.power || 0) + (tat.speed || 0) + (tat.intel || 0) + (tat.stamina || 0);
-        const amuletSum = 0;
-        const playerTotal = charSum + gearSum + tattooSum + amuletSum;
+        const sumItemStats = (item) =>
+            (item?.power || 0) + (item?.speed || 0) + (item?.intel || 0) + (item?.stamina || 0);
 
-        const oPow = opponent.power ?? 10;
-        const oSp = opponent.speed ?? 10;
-        const oIn = opponent.intel ?? 10;
-        const oSt = opponent.stamina ?? 10;
+        let oPow = opponent.power ?? 10;
+        let oSp = opponent.speed ?? 10;
+        let oIn = opponent.intel ?? 10;
+        let oSt = opponent.stamina ?? 10;
+        let oppLevel = opponent.level ?? userRow.level ?? 1;
+        let oppGearSum = 0;
+        let oppEquipment = {};
+        let oppGearUpgrades = {};
+        let oppDisplayGearSum = 0;
+        let oppDisplayTattooSum = 0;
+        let oppDisplayAmuletSum = 0;
+        let oppDisplayTattoo = null;
+        if (opponent.isPlayer && opponent.targetEmail) {
+            const targetRow = await requireExistingUser(opponent.targetEmail);
+            if (targetRow) {
+                const tStats = getEffectiveStats(targetRow);
+                const suTarget = sanitizeUser(targetRow);
+                oppLevel = suTarget.level ?? 1;
+                oPow = tStats.effective.power;
+                oSp = tStats.effective.speed;
+                oIn = tStats.effective.intel;
+                oSt = tStats.effective.stamina;
+                oppGearSum = sumB(getEquipmentBonuses(targetRow).bonuses);
+                oppEquipment = suTarget.equipment || {};
+                oppGearUpgrades = suTarget.gearUpgrades || {};
+            }
+        }
         const oppCharSum = oPow + oSp + oIn + oSt;
-        const oppGearSum = 0;
         const oppTotal = oppCharSum + oppGearSum;
 
         const su = sanitizeUser(userRow);
         const eq = su.equipment || {};
+        const playerAmulets = [];
+        let computedAmuletSum = 0;
+        for (const key of Object.keys(eq)) {
+            const item = eq[key];
+            if (!item || typeof item !== "object") continue;
+            const isAmuletSlot = String(key).startsWith("amulet") || item.slot === "amulet";
+            if (!isAmuletSlot) continue;
+            if (typeof item.label === "string" && item.label.trim()) {
+                playerAmulets.push(item);
+                computedAmuletSum += sumItemStats(item);
+            }
+        }
+        const playerTalismans = (su.talismans || [])
+            .filter((t) => t && t.owned)
+            .map((t) => ({
+                id: t.id,
+                name: t.name,
+                icon: t.icon,
+                level: t.level,
+                effectPercent: t.effectPercent
+            }));
+        const talismanSum = playerTalismans.reduce(
+            (acc, t) => acc + Math.max(0, Math.round(Number(t.effectPercent) || 0)),
+            0
+        );
+        const playerTotalWithExtras = charSum + gearSum + tattooSum + computedAmuletSum;
+
+        if (!opponent.isPlayer) {
+            const visual = buildBotDisplayGear({
+                opponentLevel: oppLevel,
+                oppTotal,
+                playerTotal: playerTotalWithExtras,
+                playerLost: row.status === "lost",
+                seedKey: `${fightId}:${opponent.id || opponent.name || "bot"}`
+            });
+            oppEquipment = visual.equipment;
+            oppGearUpgrades = visual.gearUpgrades;
+            oppDisplayGearSum = visual.displayGearSum;
+            oppDisplayTattooSum = visual.displayTattooSum;
+            oppDisplayAmuletSum = visual.displayAmuletSum;
+            oppDisplayTattoo = visual.displayTattoo;
+        }
+
+        const triggeredTalismans = [];
+        const seenTalismans = new Set();
+        for (const rowLine of fightLog) {
+            const rawHtml = String(rowLine?.html || rowLine?.text || "");
+            if (!rawHtml) continue;
+            const text = rawHtml.replace(/<[^>]*>/g, " ");
+            const m = text.match(/Сработал талисман:\s*([^\n\r]+)/i);
+            if (!m) continue;
+            const talName = String(m[1] || "").trim().replace(/\s+/g, " ");
+            if (!talName) continue;
+            const key = talName.toLowerCase();
+            if (seenTalismans.has(key)) continue;
+            seenTalismans.add(key);
+            triggeredTalismans.push(talName);
+        }
 
         res.json({
             success: true,
@@ -2106,21 +3228,67 @@ app.get("/district/fight-gear", async (req, res) => {
                 level: su.level,
                 character: su.character,
                 avatar: su.avatar,
+                club: su.club,
+                clubName: su.clubName,
+                clubEmblem: su.clubEmblem,
+                nationalTeam: su.nationalTeam,
+                nationalTeamName: su.nationalTeamName,
+                nationalTeamFlag: su.nationalTeamFlag,
                 equipment: eq,
+                gearUpgrades: su.gearUpgrades || {},
+                amulets: playerAmulets,
+                talismans: playerTalismans,
+                triggeredTalismans,
                 charSum,
                 gearSum,
                 tattooSum,
-                amuletSum,
-                total: playerTotal
+                amuletSum: computedAmuletSum,
+                talismanSum,
+                total: playerTotalWithExtras
             },
-            opponent: {
-                name: opponent.name || "Бот",
-                level: userRow.level ?? 1,
-                emoji: opponent.emoji || "👤",
-                charSum: oppCharSum,
-                gearSum: oppGearSum,
-                total: oppTotal
-            }
+            opponent: (() => {
+                const oppDisplay = districtOpponentDisplay(opponent);
+                const isBot = !opponent.isPlayer;
+                const oppAmulets = [];
+                let oppAmuletSum = 0;
+                for (const key of Object.keys(oppEquipment)) {
+                    const item = oppEquipment[key];
+                    if (!item || typeof item !== "object") continue;
+                    const isAmuletSlot = String(key).startsWith("amulet") || item.slot === "amulet";
+                    if (!isAmuletSlot || !String(item.label || "").trim()) continue;
+                    oppAmulets.push(item);
+                    if (isBot) {
+                        oppAmuletSum +=
+                            oppDisplayAmuletSum > 0
+                                ? Math.ceil(oppDisplayAmuletSum / Math.max(1, oppAmulets.length))
+                                : 0;
+                    } else {
+                        oppAmuletSum += sumItemStats(item);
+                    }
+                }
+                const botTotal =
+                    oppCharSum +
+                    (isBot ? oppDisplayGearSum + oppDisplayTattooSum + oppDisplayAmuletSum : 0);
+                return {
+                    name: oppDisplay.name,
+                    level: oppLevel,
+                    isPlayer: !!opponent.isPlayer,
+                    emoji: oppDisplay.avatar ? null : oppDisplay.emoji,
+                    avatar: oppDisplay.avatar,
+                    club: oppDisplay.club,
+                    avatarFill: oppDisplay.avatarFill,
+                    templateId: oppDisplay.templateId,
+                    equipment: oppEquipment,
+                    gearUpgrades: oppGearUpgrades,
+                    amulets: oppAmulets,
+                    charSum: oppCharSum,
+                    gearSum: isBot ? oppDisplayGearSum : oppGearSum,
+                    tattooSum: isBot ? oppDisplayTattooSum : 0,
+                    amuletSum: isBot ? oppDisplayAmuletSum : oppAmuletSum,
+                    displayTattoo: isBot ? oppDisplayTattoo : null,
+                    total: isBot ? botTotal : oppTotal + oppAmuletSum
+                };
+            })()
         });
     } catch (error) {
         console.error("fight-gear error:", error);
@@ -2130,12 +3298,19 @@ app.get("/district/fight-gear", async (req, res) => {
 
 async function finishDistrictFightWin(user, opponent, email, fightId, log, enemyHp, preRewards, fightMeta) {
     const now = Date.now();
+    const talRaw = talismans.resolveOwnedRaw(user);
+    const luckyDollar = talismanEffects.rollLuckyDollar(talRaw, Math.random, talismans.MODES.DISTRICT);
+    const zircon = talismanEffects.rollZirconBracelet(talRaw, Math.random, talismans.MODES.DISTRICT);
+
     let rublesGain =
         preRewards && typeof preRewards.rublesGain === "number"
             ? preRewards.rublesGain
             : randomInt(opponent.rubles[0], opponent.rubles[1]);
     const silverCap = opponent.isSteward ? 32 : 10;
     rublesGain = Math.min(silverCap, Math.max(0, rublesGain));
+    if (luckyDollar) {
+        rublesGain = Math.min(silverCap * 2, rublesGain * 2);
+    }
 
     const oldLevel = levelFromXp(user.xp ?? 0);
     const lastXpAt = user.last_xp_at ?? 0;
@@ -2147,13 +3322,26 @@ async function finishDistrictFightWin(user, opponent, email, fightId, log, enemy
     const newLevel = levelFromXp(newXp);
     const newLastXpAt = xpGain > 0 ? now : lastXpAt;
     const newRubles = (user.rubles ?? user.money ?? 0) + rublesGain;
-    const newRep = (user.reputation ?? 0) + REP_PER_DISTRICT_WIN;
-    const skullsEarned = Math.floor(newRep / SKULL_EVERY_REP) - Math.floor((user.reputation ?? 0) / SKULL_EVERY_REP);
-    const newSkulls = (user.skulls ?? 0) + Math.max(0, skullsEarned);
+    const grant = repEarningsService
+        ? await repEarningsService.grantPlayerReputation({
+              email,
+              baseRep: REP_PER_DISTRICT_WIN,
+              source: "district",
+              club: user.club,
+              prevReputation: user.reputation ?? 0,
+              talismansRaw: talRaw
+          })
+        : { repGain: REP_PER_DISTRICT_WIN, skullsEarned: 0, mercedesBoost: false };
+    const repReward = grant.repGain || 0;
+    const skullsEarned = grant.skullsEarned || 0;
+    const newRep = (user.reputation ?? 0) + repReward;
+    const newSkulls = (user.skulls ?? 0) + skullsEarned;
     const newStreak = (user.district_streak ?? 0) + 1;
     const newStreakMax = Math.max(user.district_streak_max ?? 0, newStreak);
     const newSilverWon = (user.silver_won ?? 0) + rublesGain;
-    const endRage = fightMeta?.endRage ?? districtRageAfterFight(true, user.rage ?? RAGE_BASE);
+    const endRage = districtRageAfterFight(true, fightMeta?.startRage ?? user.rage ?? RAGE_BASE, {
+        mayaTriggered: !!fightMeta?.mayaTriggered
+    });
     let dollarsGain = 0;
     if (opponent.isSteward) {
         dollarsGain = randomInt(opponent.dollars?.[0] ?? 1, opponent.dollars?.[1] ?? 5);
@@ -2167,9 +3355,12 @@ async function finishDistrictFightWin(user, opponent, email, fightId, log, enemy
 
     const stats = getEffectiveStats(user);
     const maxHp = calcMaxHp(stats.effective.stamina, newLevel);
-    const hpAfter = fightSsr.round2(
+    let hpAfter = fightSsr.round2(
         Math.max(0, Math.min(maxHp, Number(fightMeta?.hpAfter ?? fightMeta?.hpStart ?? user.hp)))
     );
+    if (zircon) {
+        hpAfter = fightSsr.round2(Math.max(0, Math.min(maxHp, hpAfter * 2)));
+    }
 
     await runQuery(
         "UPDATE district_fights SET status = 'won', player_hp = ?, enemy_hp = ?, log = ? WHERE id = ?",
@@ -2181,8 +3372,7 @@ async function finishDistrictFightWin(user, opponent, email, fightId, log, enemy
         `UPDATE users SET xp = ?, level = ?, rubles = ?, money = ?, dollars = ?, hp = ?, max_hp = ?,
          power = ?, speed = ?, intel = ?, stamina = ?, rage = ?, reputation = ?, skulls = ?,
          silver_won = ?, district_streak = ?, district_streak_max = ?,
-         last_xp_at = ?,
-         rank_title = ? WHERE email = ?`,
+         last_xp_at = ? WHERE email = ?`,
         [
             newXp,
             newLevel,
@@ -2202,7 +3392,6 @@ async function finishDistrictFightWin(user, opponent, email, fightId, log, enemy
             newStreak,
             newStreakMax,
             newLastXpAt,
-            rankFromLevel(newLevel),
             email
         ]
     );
@@ -2210,8 +3399,9 @@ async function finishDistrictFightWin(user, opponent, email, fightId, log, enemy
         xpGain,
         rublesGain,
         dollarsGain,
-        repGain: REP_PER_DISTRICT_WIN,
-        skullsEarned: Math.max(0, skullsEarned),
+        repGain: repReward,
+        skullsEarned,
+        mercedesBoost: !!grant.mercedesBoost,
         levelUp: newLevel > oldLevel ? newLevel : null,
         statPointsGained,
         statPointsMessage: statPointsGainMessage(statPointsGained),
@@ -2226,8 +3416,10 @@ async function finishDistrictFightLost(user, email, fightId, log, enemyHp, fight
     const lostAmount = silverLoss.calcSilverLossOnDefeat(cashOnHand);
     const silverLossAmount = Math.min(lostAmount, rublesBefore);
     const newSilverLost = (user.silver_lost ?? 0) + silverLossAmount;
-    const prevRage = normalizeRage(user.rage ?? RAGE_BASE);
-    const endRage = fightMeta?.endRage ?? districtRageAfterFight(false, prevRage);
+    const prevRage = normalizeRage(fightMeta?.startRage ?? user.rage ?? RAGE_BASE);
+    const endRage = districtRageAfterFight(false, prevRage, {
+        mayaTriggered: !!fightMeta?.mayaTriggered
+    });
 
     const stats = getEffectiveStats(user);
     const maxHp = calcMaxHp(stats.effective.stamina, user.level ?? 1);
@@ -2249,6 +3441,28 @@ async function finishDistrictFightLost(user, email, fightId, log, enemyHp, fight
     return { silverLoss: silverLossAmount, cashOnHand };
 }
 
+app.post("/wasteland/visit", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const result = await persistMainQuestEvent(email, "wasteland_visit");
+        const updated = await requireExistingUser(email);
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            rewardMessages: (result.messages || []).map((m) => m.message)
+        });
+    } catch (error) {
+        console.error("wasteland visit error:", error);
+        res.status(500).json({ success: false, error: "Ошибка посещения" });
+    }
+});
+
 app.get("/daily-quests", async (req, res) => {
     try {
         const email = normalizeEmail(req.query.email);
@@ -2261,6 +3475,40 @@ app.get("/daily-quests", async (req, res) => {
     } catch (error) {
         console.error("daily-quests error:", error);
         res.status(500).json({ success: false, error: "Ошибка загрузки заданий" });
+    }
+});
+
+app.post("/main-quest-widget/hide", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        const main = await loadMainQuestsForUser(email);
+        const questId =
+            main?.activeMainQuest?.id || String(body.questId || body.itemId || "").trim();
+        if (!questId) {
+            res.json({ success: true, mainQuestWidgetHidden: true });
+            return;
+        }
+
+        await runQuery("UPDATE users SET ui_prefs = ? WHERE email = ?", [
+            mergeUiPrefs(user.ui_prefs, { mainQuestWidgetDismissedQuestId: questId }),
+            email
+        ]);
+
+        res.json({
+            success: true,
+            mainQuestWidgetHidden: true,
+            dismissedQuestId: questId
+        });
+    } catch (error) {
+        console.error("main-quest-widget hide error:", error);
+        res.status(500).json({ success: false, error: "Ошибка сохранения" });
     }
 });
 
@@ -2349,8 +3597,9 @@ app.post("/district/tattoo", async (req, res) => {
         }
 
         const rubles = user.rubles ?? user.money ?? 0;
-        if (rubles < TATTOO_COST) {
-            res.status(400).json({ success: false, error: `Нужно ${TATTOO_COST} ₽` });
+        const pay = purchaseLogic.rublesPayPlan(rubles, TATTOO_COST);
+        if (!pay.ok) {
+            res.status(400).json({ success: false, error: pay.error });
             return;
         }
 
@@ -2366,7 +3615,7 @@ app.post("/district/tattoo", async (req, res) => {
         }
         tattoos.expiresAt = Date.now() + TATTOO_DURATION_MS;
 
-        const newRubles = rubles - TATTOO_COST;
+        const newRubles = pay.newRubles;
         await runQuery("UPDATE users SET tattoos = ?, rubles = ?, money = ? WHERE email = ?", [
             JSON.stringify(tattoos),
             newRubles,
@@ -2390,23 +3639,135 @@ app.get("/clubs/catalog", (req, res) => {
     res.json({ success: true, clubs: clubsData.clubsCatalogForClient() });
 });
 
+app.get("/clubs/profile", async (req, res) => {
+    try {
+        const clubId = String(req.query.club || req.query.id || "").trim();
+        const club = clubsData.getClub(clubId);
+        if (!club) {
+            res.status(404).json({ success: false, error: "Клуб не найден" });
+            return;
+        }
+        const ids = clubsData.clubIdsForFanCount(clubId);
+        const placeholders = ids.map(() => "?").join(", ");
+        const row = await getQuery(
+            `SELECT COUNT(*) AS n FROM users WHERE club IN (${placeholders})`,
+            ids
+        );
+        const fanCount = Math.max(0, Math.floor(Number(row?.n) || 0));
+        res.json({
+            success: true,
+            club: {
+                id: club.id,
+                name: club.name,
+                emblem: club.emblem,
+                description: clubsData.getClubDescription(clubId),
+                fanCount,
+                fanCountLabel: `${fanCount} ${clubsData.fanWord(fanCount)}`,
+                rating: 0
+            }
+        });
+    } catch (error) {
+        console.error("clubs/profile error:", error);
+        res.status(500).json({ success: false, error: "Ошибка загрузки клуба" });
+    }
+});
+
+app.get("/mag/talismans", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        res.json({
+            success: true,
+            user: sanitizeUser(user),
+            talismans: talismans.catalogWithOwnership(user.talismans)
+        });
+    } catch (error) {
+        console.error("mag/talismans error:", error);
+        res.status(500).json({ success: false, error: "Ошибка талисманов" });
+    }
+});
+
+app.post("/mag/talismans/buy", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const talismanId = String(body.talismanId || "").trim();
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const def = talismans.TALISMANS[talismanId];
+        if (!def) {
+            res.status(400).json({ success: false, error: "Талисман не найден." });
+            return;
+        }
+
+        const ownedCheck = talismans.parseOwnedTalismans(talismans.resolveOwnedRaw(user));
+        if (ownedCheck[talismanId]) {
+            res.status(400).json({ success: false, error: "Талисман уже куплен." });
+            return;
+        }
+
+        const haveDollars = Math.max(0, Math.floor(Number(user.dollars) || 0));
+        const haveMushrooms = Math.max(0, Math.floor(Number(user.mushrooms) || 0));
+        const needDollars = Math.max(0, Math.floor(Number(def.priceDollars) || 0));
+        const needMushrooms = Math.max(0, Math.floor(Number(def.priceMushrooms) || 0));
+
+        const pay = purchaseLogic.dualCurrencyPayPlan(
+            haveDollars,
+            haveMushrooms,
+            needDollars,
+            needMushrooms
+        );
+        if (!pay.ok) {
+            res.status(400).json({ success: false, error: pay.error });
+            return;
+        }
+
+        const bought = talismans.buyTalisman(user, talismanId);
+        if (!bought.ok) {
+            res.status(400).json({ success: false, error: bought.error });
+            return;
+        }
+
+        if (pay.payWith === "dollars") {
+            await runQuery("UPDATE users SET dollars = ?, talismans = ? WHERE email = ?", [
+                pay.newDollars,
+                JSON.stringify(bought.owned),
+                email
+            ]);
+        } else {
+            await runQuery("UPDATE users SET mushrooms = ?, talismans = ? WHERE email = ?", [
+                pay.newMushrooms,
+                JSON.stringify(bought.owned),
+                email
+            ]);
+        }
+
+        await persistMainQuestEvent(email, "talisman_buy");
+        const updated = await requireExistingUser(email);
+        res.json({
+            success: true,
+            user: sanitizeUser(updated),
+            talismans: talismans.catalogWithOwnership(updated.talismans)
+        });
+    } catch (error) {
+        console.error("mag/talismans/buy error:", error);
+        res.status(500).json({ success: false, error: "Ошибка покупки талисмана" });
+    }
+});
+
 app.get("/shop/items", (req, res) => {
     const items = {};
     for (const [id, def] of Object.entries(SHOP_ITEMS)) {
-        items[id] = {
-            id,
-            slot: def.slot,
-            label: def.label,
-            emoji: def.emoji,
-            cost: def.cost,
-            power: def.power,
-            speed: def.speed,
-            intel: def.intel,
-            stamina: def.stamina,
-            minLevel: def.minLevel
-        };
+        items[id] = shopItemForApi(id, def);
     }
-    res.json({ success: true, items });
+    res.json({ success: true, items, sections: shopSections() });
 });
 
 app.post("/shop/buy", async (req, res) => {
@@ -2418,6 +3779,10 @@ app.post("/shop/buy", async (req, res) => {
         const item = SHOP_ITEMS[itemId];
         if (!item) {
             res.status(400).json({ success: false, error: "Товар не найден" });
+            return;
+        }
+        if (item.shopHidden) {
+            res.status(400).json({ success: false, error: "Этот предмет больше не продаётся у дилера" });
             return;
         }
 
@@ -2441,20 +3806,21 @@ app.post("/shop/buy", async (req, res) => {
         }
 
         const rubles = user.rubles ?? user.money ?? 0;
-        if (rubles < item.cost) {
-            res.status(400).json({ success: false, error: `Нужно ${item.cost} серебра` });
+        const pay = purchaseLogic.rublesPayPlan(rubles, item.cost);
+        if (!pay.ok) {
+            res.status(400).json({ success: false, error: pay.error });
             return;
         }
 
         inventory.push(itemId);
-        const newRubles = rubles - item.cost;
-        await runQuery("UPDATE users SET inventory = ?, rubles = ?, money = ? WHERE email = ?", [
-            JSON.stringify(inventory),
-            newRubles,
-            newRubles,
-            email
-        ]);
+        const newRubles = pay.newRubles;
+        const upgrades = gearUpgrades.ensureItemUpgrade(parseJson(user.gear_upgrades, {}), itemId);
+        await runQuery(
+            "UPDATE users SET inventory = ?, rubles = ?, money = ?, gear_upgrades = ? WHERE email = ?",
+            [JSON.stringify(inventory), newRubles, newRubles, JSON.stringify(upgrades), email]
+        );
 
+        await persistMainQuestEvent(email, "dealer_buy");
         const updated = await requireExistingUser(email);
         res.json({
             success: true,
@@ -2475,6 +3841,184 @@ app.get("/larek/items", (req, res) => {
     res.json({ success: true, items });
 });
 
+app.get("/larek/catalog", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const consumables = getUserConsumables(user);
+        res.json({
+            success: true,
+            user: sanitizeUser(user),
+            food: larekFoodCatalogForShop(consumables),
+            provisions: provisionsData.catalogForShop(consumables)
+        });
+    } catch (error) {
+        console.error("larek catalog error:", error);
+        res.status(500).json({ success: false, error: "Ошибка ларька" });
+    }
+});
+
+/** @deprecated — используй /larek/catalog */
+app.get("/mag/provisions", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+        const consumables = getUserConsumables(user);
+        res.json({
+            success: true,
+            user: sanitizeUser(user),
+            items: provisionsData.catalogForShop(consumables)
+        });
+    } catch (error) {
+        console.error("mag provisions error:", error);
+        res.status(500).json({ success: false, error: "Ошибка провианта" });
+    }
+});
+
+async function buyProvisionItems(user, itemId, qty) {
+    const item = provisionsData.PROVISION_ITEMS[itemId];
+    if (!item) return { ok: false, error: "Товар не найден" };
+
+    const totalDollars = item.priceDollars * qty;
+    const totalMushrooms = item.priceMushrooms * qty;
+    const haveDollars = Math.max(0, Math.floor(Number(user.dollars) || 0));
+    const haveMushrooms = Math.max(0, Math.floor(Number(user.mushrooms) || 0));
+
+    const pay = purchaseLogic.dualCurrencyPayPlan(
+        haveDollars,
+        haveMushrooms,
+        totalDollars,
+        totalMushrooms
+    );
+    if (!pay.ok) return { ok: false, error: pay.error };
+
+    const consumables = { ...parseJson(user.consumables, {}), ...getUserConsumables(user) };
+    consumables[itemId] = (consumables[itemId] || 0) + qty;
+
+    if (pay.payWith === "dollars") {
+        await runQuery("UPDATE users SET consumables = ?, dollars = ? WHERE email = ?", [
+            JSON.stringify(consumables),
+            pay.newDollars,
+            user.email
+        ]);
+    } else {
+        await runQuery("UPDATE users SET consumables = ?, mushrooms = ? WHERE email = ?", [
+            JSON.stringify(consumables),
+            pay.newMushrooms,
+            user.email
+        ]);
+    }
+
+    return {
+        ok: true,
+        message: `Куплено: ${item.label} ×${qty}. Смотри в гардеробе.`,
+        count: consumables[itemId]
+    };
+}
+
+app.post("/provisions/use", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const itemId = String(body.itemId || "").trim();
+
+        if (!provisionsData.PROVISION_ITEMS[itemId]) {
+            res.status(400).json({ success: false, error: "Предмет не найден" });
+            return;
+        }
+
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        const maxHp = MAX_HP_CAP;
+        const out = provisionsData.useProvisionFromInventory(
+            {
+                consumables: getUserConsumables(user),
+                consumablesUsedAt: getConsumablesUsedAt(user),
+                rage: user.rage,
+                hp: user.hp
+            },
+            itemId,
+            Date.now(),
+            { maxHp }
+        );
+
+        if (!out.ok) {
+            res.status(400).json({ success: false, error: out.error });
+            return;
+        }
+
+        const sets = ["consumables = ?", "consumables_used_at = ?"];
+        const params = [JSON.stringify(out.consumables), JSON.stringify(out.usedAt)];
+
+        if (out.updates?.hp != null) {
+            sets.push("hp = ?");
+            params.push(out.updates.hp);
+        }
+        if (out.updates?.rage != null) {
+            sets.push("rage = ?");
+            params.push(out.updates.rage);
+        }
+
+        params.push(email);
+        await runQuery(`UPDATE users SET ${sets.join(", ")} WHERE email = ?`, params);
+
+        const updated = await requireExistingUser(email);
+        res.json({
+            success: true,
+            message: out.message,
+            user: sanitizeUser(updated),
+            count: out.consumables[itemId] ?? 0
+        });
+    } catch (error) {
+        console.error("provisions use error:", error);
+        res.status(500).json({ success: false, error: "Ошибка использования" });
+    }
+});
+
+app.post("/provisions/buy", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const itemId = String(body.itemId || "").trim();
+        const qty = Math.max(1, Math.min(10, Math.floor(Number(body.qty) || 1)));
+
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        const out = await buyProvisionItems(user, itemId, qty);
+        if (!out.ok) {
+            res.status(400).json({ success: false, error: out.error });
+            return;
+        }
+
+        const updated = await requireExistingUser(email);
+        res.json({
+            success: true,
+            message: out.message,
+            user: sanitizeUser(updated),
+            count: out.count
+        });
+    } catch (error) {
+        console.error("provisions buy error:", error);
+        res.status(500).json({ success: false, error: "Ошибка покупки" });
+    }
+});
+
 app.post("/larek/buy", async (req, res) => {
     try {
         const body = req.body && typeof req.body === "object" ? req.body : {};
@@ -2482,7 +4026,7 @@ app.post("/larek/buy", async (req, res) => {
         const itemId = String(body.itemId || "").trim();
         const qty = Math.max(1, Math.min(10, Math.floor(Number(body.qty) || 1)));
 
-        const item = LAREK_ITEMS[itemId];
+        const item = findConsumableItem(itemId);
         if (!item) {
             res.status(400).json({ success: false, error: "Товар не найден" });
             return;
@@ -2494,30 +4038,53 @@ app.post("/larek/buy", async (req, res) => {
             return;
         }
 
-        const totalCost = item.cost * qty;
-        const currency = item.currency === "mushrooms" ? "mushrooms" : "rubles";
-        const consumables = getUserConsumables(user);
+        if (provisionsData.PROVISION_ITEMS[itemId]) {
+            const out = await buyProvisionItems(user, itemId, qty);
+            if (!out.ok) {
+                res.status(400).json({ success: false, error: out.error });
+                return;
+            }
+            const updated = await requireExistingUser(email);
+            res.json({
+                success: true,
+                message: out.message,
+                user: sanitizeUser(updated),
+                count: out.count
+            });
+            return;
+        }
+
+        const food = LAREK_ITEMS[itemId];
+        if (!food) {
+            res.status(400).json({ success: false, error: "Товар не найден" });
+            return;
+        }
+
+        const totalCost = food.cost * qty;
+        const currency = food.currency === "mushrooms" ? "mushrooms" : "rubles";
+        const consumables = { ...parseJson(user.consumables, {}), ...getUserConsumables(user) };
         consumables[itemId] = (consumables[itemId] || 0) + qty;
 
         if (currency === "mushrooms") {
             const mushrooms = user.mushrooms ?? 0;
-            if (mushrooms < totalCost) {
-                res.status(400).json({ success: false, error: `Нужно ${totalCost} грибов` });
+            const pay = purchaseLogic.mushroomsPayPlan(mushrooms, totalCost);
+            if (!pay.ok) {
+                res.status(400).json({ success: false, error: pay.error });
                 return;
             }
-            const newMushrooms = mushrooms - totalCost;
             await runQuery("UPDATE users SET consumables = ?, mushrooms = ? WHERE email = ?", [
                 JSON.stringify(consumables),
-                newMushrooms,
+                pay.newMushrooms,
                 email
             ]);
         } else {
             const rubles = user.rubles ?? user.money ?? 0;
-            if (rubles < totalCost) {
-                res.status(400).json({ success: false, error: `Нужно ${totalCost} серебра` });
+            const pay = purchaseLogic.rublesPayPlan(rubles, totalCost);
+            if (!pay.ok) {
+                res.status(400).json({ success: false, error: pay.error });
                 return;
             }
-            const newRubles = rubles - totalCost;
+            const newRubles = pay.newRubles;
             await runQuery("UPDATE users SET consumables = ?, rubles = ?, money = ? WHERE email = ?", [
                 JSON.stringify(consumables),
                 newRubles,
@@ -2529,7 +4096,7 @@ app.post("/larek/buy", async (req, res) => {
         const updated = await requireExistingUser(email);
         res.json({
             success: true,
-            message: `Куплено: ${item.label} ×${qty}. Смотри в гардеробе.`,
+            message: `Куплено: ${food.label} ×${qty}. Смотри в гардеробе.`,
             user: sanitizeUser(updated),
             count: consumables[itemId]
         });
@@ -2640,7 +4207,7 @@ app.post("/shop/equip", async (req, res) => {
 
         const inventory = getUserInventory(user);
         if (!inventory.includes(itemId)) {
-            res.status(400).json({ success: false, error: "Сначала купи предмет у барыги" });
+            res.status(400).json({ success: false, error: "Сначала купи предмет у дилера" });
             return;
         }
 
@@ -2659,6 +4226,279 @@ app.post("/shop/equip", async (req, res) => {
         console.error("Shop equip error:", error);
         res.status(500).json({ success: false, error: "Ошибка экипировки" });
     }
+});
+
+function findEquipmentSlotForItem(equipment, itemId) {
+    if (!itemId) return null;
+    for (const key of Object.keys(equipment)) {
+        const item = equipment[key];
+        if (item && item.id === itemId) return key;
+    }
+    const def = SHOP_ITEMS[itemId];
+    if (def && equipment[def.slot]?.id === itemId) return def.slot;
+    return null;
+}
+
+app.post("/shop/unequip", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const itemId = String(body.itemId || "").trim();
+        const slot = String(body.slot || "").trim();
+
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        const equipment = parseJson(user.equipment, {});
+        const targetSlot = slot || findEquipmentSlotForItem(equipment, itemId);
+        const equipped = targetSlot ? equipment[targetSlot] : null;
+
+        if (!targetSlot || !equipped) {
+            res.status(400).json({ success: false, error: "Предмет не надет" });
+            return;
+        }
+
+        const label =
+            equipped.label ||
+            (equipped.id && SHOP_ITEMS[equipped.id]?.label) ||
+            "Предмет";
+
+        delete equipment[targetSlot];
+
+        await runQuery("UPDATE users SET equipment = ? WHERE email = ?", [JSON.stringify(equipment), email]);
+
+        const updated = await requireExistingUser(email);
+        res.json({
+            success: true,
+            message: `Снято: ${label}`,
+            user: sanitizeUser(updated)
+        });
+    } catch (error) {
+        console.error("Shop unequip error:", error);
+        res.status(500).json({ success: false, error: "Ошибка снятия предмета" });
+    }
+});
+
+const COLLIDER_WORKSHOP = { slot: "weapon", itemsKey: "weapons", equipKey: "weapon" };
+const SEWING_WORKSHOP = {
+    slots: ["clothes", "boots", "head"],
+    itemsKey: "clothes",
+    equipKey: "clothes"
+};
+
+function workshopPayload(user, workshopConfig, selectedId) {
+    const inventory = getUserInventory(user);
+    const payload = industrialWorkshop.buildWorkshopPayload(
+        user,
+        SHOP_ITEMS,
+        inventory,
+        workshopConfig,
+        selectedId || null
+    );
+    return { ...payload, user: sanitizeUser(user) };
+}
+
+async function saveWorkshopUpgradesIfNeeded(email, payload, workshopConfig) {
+    return industrialWorkshop.saveWorkshopUpgradesIfNeeded(
+        runQuery,
+        getQuery,
+        email,
+        payload,
+        (user, activeId) => workshopPayload(user, workshopConfig, activeId)
+    );
+}
+
+function registerIndustrialWorkshopRoutes(routePrefix, workshopConfig, messages) {
+    app.get(`${routePrefix}/state`, async (req, res) => {
+        try {
+            const email = normalizeEmail(req.query.email);
+            const selectedId = String(req.query.itemId || "").trim();
+            if (!email) {
+                res.status(400).json({ success: false, error: "Email обязателен" });
+                return;
+            }
+            const user = await syncUserResources(email);
+            if (!user) {
+                res.status(404).json({ success: false, error: "Пользователь не найден" });
+                return;
+            }
+            res.json(
+                await saveWorkshopUpgradesIfNeeded(
+                    email,
+                    workshopPayload(user, workshopConfig, selectedId || null),
+                    workshopConfig
+                )
+            );
+        } catch (error) {
+            console.error(`${routePrefix} state error:`, error);
+            res.status(500).json({ success: false, error: messages.stateError });
+        }
+    });
+
+    app.post(`${routePrefix}/upgrade`, async (req, res) => {
+        try {
+            const body = req.body && typeof req.body === "object" ? req.body : {};
+            const email = normalizeEmail(body.email);
+            const itemId = String(body.itemId || "").trim();
+            const def = SHOP_ITEMS[itemId];
+            const allowedSlots = industrialWorkshop.workshopSlots(workshopConfig);
+
+            if (!email || !def || !allowedSlots.includes(def.slot)) {
+                res.status(400).json({ success: false, error: messages.invalidItem });
+                return;
+            }
+
+            let user = await syncUserResources(email);
+            if (!user) {
+                res.status(404).json({ success: false, error: "Пользователь не найден" });
+                return;
+            }
+
+            const inventory = getUserInventory(user);
+            if (!inventory.includes(itemId)) {
+                res.status(400).json({ success: false, error: messages.notOwned });
+                return;
+            }
+
+            let upgrades = parseJson(user.gear_upgrades, {});
+            upgrades = gearUpgrades.normalizeUpgrades(upgrades, SHOP_ITEMS).upgrades;
+            const started = gearUpgrades.startUpgrade(upgrades, itemId, def);
+            if (!started.ok) {
+                res.status(400).json({ success: false, error: started.error });
+                return;
+            }
+
+            const dollars = Math.max(0, Math.floor(Number(user.dollars) || 0));
+            const mushrooms = Math.max(0, Math.floor(Number(user.mushrooms) || 0));
+            const pay = purchaseLogic.dualCurrencyPayPlan(
+                dollars,
+                mushrooms,
+                started.costDollars,
+                started.costDollars
+            );
+            if (!pay.ok) {
+                res.status(400).json({ success: false, error: pay.error });
+                return;
+            }
+
+            if (pay.payWith === "dollars") {
+                await runQuery("UPDATE users SET dollars = ?, gear_upgrades = ? WHERE email = ?", [
+                    pay.newDollars,
+                    JSON.stringify(started.upgrades),
+                    email
+                ]);
+            } else {
+                await runQuery("UPDATE users SET mushrooms = ?, gear_upgrades = ? WHERE email = ?", [
+                    pay.newMushrooms,
+                    JSON.stringify(started.upgrades),
+                    email
+                ]);
+            }
+
+            await persistMainQuestEvent(email, "gear_upgrade");
+            user = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
+            res.json({
+                ...(await saveWorkshopUpgradesIfNeeded(
+                    email,
+                    workshopPayload(user, workshopConfig, itemId),
+                    workshopConfig
+                )),
+                flash: messages.upgradeFlash
+            });
+        } catch (error) {
+            console.error(`${routePrefix} upgrade error:`, error);
+            res.status(500).json({ success: false, error: messages.upgradeError });
+        }
+    });
+
+    app.post(`${routePrefix}/speedup`, async (req, res) => {
+        try {
+            const body = req.body && typeof req.body === "object" ? req.body : {};
+            const email = normalizeEmail(body.email);
+            const itemId = String(body.itemId || "").trim();
+            const def = SHOP_ITEMS[itemId];
+            const allowedSlots = industrialWorkshop.workshopSlots(workshopConfig);
+
+            if (!email || !def || !allowedSlots.includes(def.slot)) {
+                res.status(400).json({ success: false, error: messages.invalidItem });
+                return;
+            }
+
+            let user = await syncUserResources(email);
+            if (!user) {
+                res.status(404).json({ success: false, error: "Пользователь не найден" });
+                return;
+            }
+
+            let upgrades = parseJson(user.gear_upgrades, {});
+            upgrades = gearUpgrades.normalizeUpgrades(upgrades, SHOP_ITEMS).upgrades;
+            const row = upgrades[itemId];
+            if (!row || !row.until || row.until <= Date.now()) {
+                res.status(400).json({ success: false, error: "Нет активного улучшения" });
+                return;
+            }
+            if (row.level >= gearUpgrades.MAX_GEAR_LEVEL) {
+                res.status(400).json({ success: false, error: gearUpgrades.maxUpgradeMessage(def) });
+                return;
+            }
+
+            const cost = gearUpgrades.speedupMushroomCost(row.until - Date.now());
+            const mushrooms = Math.max(0, Math.floor(Number(user.mushrooms) || 0));
+            const pay = purchaseLogic.mushroomsPayPlan(mushrooms, cost);
+            if (!pay.ok) {
+                res.status(400).json({ success: false, error: pay.error });
+                return;
+            }
+
+            const finished = gearUpgrades.finishUpgradeNow(upgrades, itemId, def);
+            if (!finished.ok) {
+                res.status(400).json({ success: false, error: finished.error });
+                return;
+            }
+
+            await runQuery("UPDATE users SET mushrooms = ?, gear_upgrades = ? WHERE email = ?", [
+                pay.newMushrooms,
+                JSON.stringify(finished.upgrades),
+                email
+            ]);
+
+            user = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
+            res.json({
+                ...(await saveWorkshopUpgradesIfNeeded(
+                    email,
+                    workshopPayload(user, workshopConfig, itemId),
+                    workshopConfig
+                )),
+                flash: messages.speedupFlash
+            });
+        } catch (error) {
+            console.error(`${routePrefix} speedup error:`, error);
+            res.status(500).json({ success: false, error: messages.speedupError });
+        }
+    });
+}
+
+registerIndustrialWorkshopRoutes("/industrial/collider", COLLIDER_WORKSHOP, {
+    stateError: "Ошибка коллайдера",
+    invalidItem: "Некорректное оружие",
+    notOwned: "Сначала купи оружие у дилера",
+    upgradeFlash: "Ты оставил оружие на прокачку!",
+    upgradeError: "Ошибка улучшения",
+    speedupFlash: "Улучшение завершено!",
+    speedupError: "Ошибка ускорения"
+});
+
+registerIndustrialWorkshopRoutes("/industrial/sewing", SEWING_WORKSHOP, {
+    stateError: "Ошибка швейного цеха",
+    invalidItem: "Некорректная одежда",
+    notOwned: "Сначала купи одежду у дилера",
+    upgradeFlash: "Ты оставил одежду на прокачку!",
+    upgradeError: "Ошибка улучшения",
+    speedupFlash: "Улучшение завершено!",
+    speedupError: "Ошибка ускорения"
 });
 
 app.post("/mushrooms", async (req, res) => {
@@ -2753,8 +4593,9 @@ app.post("/center/kicker/play", async (req, res) => {
         }
 
         const rubles = user.rubles ?? user.money ?? 0;
-        if (rubles < opp.cost) {
-            res.status(400).json({ success: false, error: `Нужно ${opp.cost} ₽` });
+        const pay = purchaseLogic.rublesPayPlan(rubles, opp.cost);
+        if (!pay.ok) {
+            res.status(400).json({ success: false, error: pay.error });
             return;
         }
 
@@ -2763,12 +4604,19 @@ app.post("/center/kicker/play", async (req, res) => {
         const botScore = opp.power + randomInt(0, 12);
         const win = playerScore >= botScore;
 
-        let newRubles = rubles - opp.cost;
+        let newRubles = pay.newRubles;
         let newDollars = user.dollars ?? 0;
         let message = `Проигрыш: ${opp.name} сильнее. Потеряно ${opp.cost} ₽`;
         if (win) {
-            newDollars += opp.win;
-            message = `Победа над ${opp.name}! +${opp.win} $ (ставка ${opp.cost} ₽)`;
+            const winDollars = talismanEffects.rollChip(
+                talismans.resolveOwnedRaw(user),
+                Math.random,
+                talismans.MODES.KICKER
+            )
+                ? opp.win * 2
+                : opp.win;
+            newDollars += winDollars;
+            message = `Победа над ${opp.name}! +${winDollars} $ (ставка ${opp.cost} ₽)`;
         }
 
         const now = Date.now();
@@ -2796,9 +4644,10 @@ app.post("/center/kicker/play", async (req, res) => {
 app.get("/center/lottery/log", async (req, res) => {
     try {
         const rows = await allQuery(
-            "SELECT player_name, prize, created_at FROM lottery_log ORDER BY id DESC LIMIT 25"
+            "SELECT email, player_name, prize, created_at FROM lottery_log ORDER BY id DESC LIMIT 25"
         );
         const out = rows.map((r) => ({
+            email: r.email ? String(r.email).toLowerCase() : null,
             name: r.player_name,
             prize: r.prize,
             ts: formatLotteryLogTs(r.created_at)
@@ -2842,18 +4691,27 @@ app.post("/center/lottery/play", async (req, res) => {
         if (currency === "dollars") {
             if (freeTickets > 0) {
                 usedFreeTicket = true;
-            } else if (dollars < LOTTERY_COST) {
-                res.status(400).json({ success: false, error: `Нужно ${LOTTERY_COST} $` });
-                return;
             } else {
-                payDollars = dollars - LOTTERY_COST;
+                const pay = purchaseLogic.dualCurrencyPayPlan(
+                    dollars,
+                    mushrooms,
+                    LOTTERY_COST,
+                    LOTTERY_COST
+                );
+                if (!pay.ok) {
+                    res.status(400).json({ success: false, error: pay.error });
+                    return;
+                }
+                payDollars = pay.newDollars;
+                payMushrooms = pay.newMushrooms;
             }
         } else {
-            if (mushrooms < LOTTERY_COST) {
-                res.status(400).json({ success: false, error: `Нужно ${LOTTERY_COST} грибов` });
+            const pay = purchaseLogic.mushroomsPayPlan(mushrooms, LOTTERY_COST);
+            if (!pay.ok) {
+                res.status(400).json({ success: false, error: pay.error });
                 return;
             }
-            payMushrooms = mushrooms - LOTTERY_COST;
+            payMushrooms = pay.newMushrooms;
         }
 
         const prize = pickLotteryPrize();
@@ -3038,13 +4896,21 @@ app.post("/work/perform", async (req, res) => {
                 [newEnergy, done, email]
             );
             await persistDailyQuestWorkProgress(email, workLogic.WORK_ENERGY_PER_CLICK);
+            await persistMainQuestEvent(email, "work_click");
             const updated = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
             res.json(workPayloadFromUser(updated));
             return;
         }
 
         done = need;
-        const reward = user.work_reward ?? workLogic.workRewardForTier(need, user.level ?? 1);
+        const baseReward = user.work_reward ?? workLogic.workRewardForTier(need, user.level ?? 1);
+        const reward = talismanEffects.rollLuckyDollar(
+            talismans.resolveOwnedRaw(user),
+            Math.random,
+            talismans.MODES.WORK
+        )
+            ? baseReward * 2
+            : baseReward;
         const rubles = (user.rubles ?? user.money ?? 0) + reward;
         const completedJson = JSON.stringify(
             workLogic.markTierCompleted(user.work_completed, need)
@@ -3057,6 +4923,8 @@ app.post("/work/perform", async (req, res) => {
         );
 
         await persistDailyQuestWorkProgress(email, workLogic.WORK_ENERGY_PER_CLICK);
+        await persistMainQuestEvent(email, "work_click");
+        await persistMainQuestEvent(email, "work_paid");
 
         await ensureWorkJobForUser(email);
         const after = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
@@ -3124,7 +4992,7 @@ app.post("/work/leave", async (req, res) => {
     try {
         const body = req.body && typeof req.body === "object" ? req.body : {};
         const email = normalizeEmail(body.email);
-        const user = await requireExistingUser(email, { regen: true });
+        let user = await requireExistingUser(email, { regen: true });
         if (!user) {
             res.status(404).json({ success: false, error: "Пользователь не найден" });
             return;
@@ -3273,28 +5141,72 @@ app.post("/happy-hour/open", async (req, res) => {
     }
 });
 
-app.get("/getUser", async (req, res) => {
+async function trimPubChatMessages() {
+    const rows = await allQuery(
+        `SELECT id FROM pub_chat ORDER BY created_at DESC LIMIT ?`,
+        [pubChat.MAX_MESSAGES]
+    );
+    const keepIds = new Set(rows.map((r) => r.id));
+    if (!keepIds.size) return;
+    const placeholders = [...keepIds].map(() => "?").join(",");
+    await runQuery(`DELETE FROM pub_chat WHERE id NOT IN (${placeholders})`, [...keepIds]);
+}
+
+async function loadPubChatMessages() {
+    const rows = await allQuery(
+        `SELECT id, email, player_name, message, created_at FROM pub_chat ORDER BY created_at ASC LIMIT ?`,
+        [pubChat.MAX_MESSAGES]
+    );
+    return rows.map(pubChat.rowToMessage);
+}
+
+/** Игроки онлайн — только SELECT. */
+app.get("/api/players/online", async (req, res) => {
     try {
-        const email = normalizeEmail(req.query.email);
+        const now = Date.now();
+        const onlineSince = playerOnline.onlineSinceTimestamp(now);
 
-        if (!email) {
-            res.status(400).json({ success: false, error: "Email обязателен" });
-            return;
-        }
+        const onlineRow = await getQuery(
+            `SELECT COUNT(*) AS c FROM users
+             WHERE name IS NOT NULL AND TRIM(name) != ''
+               AND COALESCE(last_active_at, 0) >= ?`,
+            [onlineSince]
+        );
+        const count = Math.max(0, Math.floor(Number(onlineRow?.c) || 0));
 
-        const user = await syncUserResources(email);
-        if (!user) {
-            res.status(404).json({ success: false, error: "Пользователь не найден" });
-            return;
-        }
+        const rows = await allQuery(
+            `SELECT email, name, xp, character, club, last_active_at
+             FROM users
+             WHERE name IS NOT NULL AND TRIM(name) != ''
+               AND COALESCE(last_active_at, 0) >= ?
+             ORDER BY last_active_at DESC, LOWER(TRIM(name)) ASC`,
+            [onlineSince]
+        );
 
-        res.json({ success: true, user: sanitizeUser(user) });
+        const players = rows.map((row) => {
+            const level = levelFromXp(normalizeXp(row.xp));
+            return {
+                email: row.email,
+                name: row.name || "Игрок",
+                level,
+                avatar: avatarPath(row.character),
+                club: row.club || null,
+                clubName: clubsData.getClubName(row.club) || row.club || "—",
+                lastActiveAt: row.last_active_at
+            };
+        });
+
+        res.json({
+            success: true,
+            count,
+            players,
+            onlineWindowMs: playerOnline.PLAYER_ONLINE_MS
+        });
     } catch (error) {
-        console.error("GetUser error:", error);
-        res.status(500).json({ success: false, error: "Ошибка сервера при получении пользователя" });
+        console.error("players online error:", error);
+        res.status(500).json({ success: false, error: "Ошибка загрузки онлайна" });
     }
 });
-
 
 /** Список игроков — только SELECT, без изменений БД. */
 app.get("/api/players", async (req, res) => {
@@ -3361,14 +5273,262 @@ app.get("/api/players", async (req, res) => {
     }
 });
 
+app.get("/api/pub/chat/messages", async (req, res) => {
+    try {
+        const messages = await loadPubChatMessages();
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.error("pub chat messages error:", error);
+        res.status(500).json({ success: false, error: "Ошибка загрузки чата" });
+    }
+});
 
-initDatabase()
-    .then(() => {
-        app.listen(PORT, () => {
-            console.log(`Server started: http://localhost:${PORT}`);
+app.post("/api/pub/chat/send", async (req, res) => {
+    try {
+        const body = req.body && typeof req.body === "object" ? req.body : {};
+        const email = normalizeEmail(body.email);
+        const validated = pubChat.validateMessage(body.message);
+
+        if (!email) {
+            res.status(400).json({ success: false, error: "Email обязателен" });
+            return;
+        }
+        if (!validated.ok) {
+            res.status(400).json({ success: false, error: validated.error });
+            return;
+        }
+
+        const user = await requireExistingUser(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        const last = await getQuery(
+            `SELECT created_at FROM pub_chat WHERE email = ? ORDER BY created_at DESC LIMIT 1`,
+            [email]
+        );
+        if (last && Date.now() - last.created_at < pubChat.SEND_COOLDOWN_MS) {
+            res.status(429).json({
+                success: false,
+                error: "Подожди 5 секунд перед следующим сообщением"
+            });
+            return;
+        }
+
+        const playerName = String(user.name || "Игрок").trim() || "Игрок";
+        const now = Date.now();
+
+        await runQuery(
+            `INSERT INTO pub_chat (email, player_name, message, created_at) VALUES (?, ?, ?, ?)`,
+            [email, playerName, validated.message, now]
+        );
+        await trimPubChatMessages();
+
+        const messages = await loadPubChatMessages();
+        res.json({ success: true, messages });
+    } catch (error) {
+        console.error("pub chat send error:", error);
+        res.status(500).json({ success: false, error: "Ошибка отправки" });
+    }
+});
+
+app.get("/getUser", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const viewerEmail = normalizeEmail(req.query.viewer || "");
+
+        if (!email) {
+            res.status(400).json({ success: false, error: "Email обязателен" });
+            return;
+        }
+
+        let user = await syncUserResources(email);
+        if (!user) {
+            res.status(404).json({ success: false, error: "Пользователь не найден" });
+            return;
+        }
+
+        const isOwnerView = !!viewerEmail && viewerEmail === email;
+        if (viewerEmail) {
+            await touchPlayerActivity(viewerEmail);
+        }
+        if (isOwnerView && stadiumService) {
+            await stadiumService.syncPlayerRageForLiveMatch(email, user);
+            user = await getQuery("SELECT * FROM users WHERE email = ?", [email]);
+        }
+
+        let payload = isOwnerView ? sanitizeUser(user) : sanitizePublicUser(user);
+        payload = await enrichUserProfileExtras(user, payload);
+        res.json({
+            success: true,
+            user: payload,
+            isPublicProfile: !isOwnerView
         });
-    })
-    .catch((error) => {
-        console.error("Database init error:", error);
-        process.exit(1);
+    } catch (error) {
+        console.error("GetUser error:", error);
+        res.status(500).json({ success: false, error: "Ошибка сервера при получении пользователя" });
+    }
+});
+
+async function logDatabaseHealth() {
+    const row = await getQuery("SELECT COUNT(*) AS c FROM users");
+    const count = Math.max(0, Math.floor(Number(row?.c) || 0));
+    let sizeBytes = 0;
+    try {
+        sizeBytes = fs.statSync(DB_PATH).size;
+    } catch {
+        /* ignore */
+    }
+    console.log(`[db] ${DB_PATH}`);
+    console.log(`[db] зарегистрировано игроков: ${count}, размер файла: ${sizeBytes} байт`);
+    try {
+        const journal = await getQuery("PRAGMA journal_mode");
+        const busy = await getQuery("PRAGMA busy_timeout");
+        console.log(
+            `[db] journal_mode=${journal?.journal_mode ?? journal}, busy_timeout=${busy?.timeout ?? busy}`
+        );
+    } catch {
+        /* ignore */
+    }
+    if (count === 0 && sizeBytes < 64 * 1024) {
+        console.warn(
+            "[db] ВНИМАНИЕ: база пустая или почти пустая. Если это прод — проверьте DB_PATH и восстановите бэкап users.db."
+        );
+    }
+}
+
+async function startServer() {
+    const dbApi = await createSqliteDatabase(DB_PATH);
+    runQuery = dbApi.runQuery;
+    getQuery = dbApi.getQuery;
+    allQuery = dbApi.allQuery;
+    runTransaction = dbApi.runTransaction;
+
+    await initDatabase();
+    await logDatabaseHealth();
+    repEarningsService = createRepEarningsService({ runQuery, allQuery, getQuery });
+    heroOfDayService = createHeroOfDayService({ runQuery, allQuery, getQuery });
+    await heroOfDayService.ensureSchema();
+    await districtPlayers().ensureSchema();
+    repEarningsService.setHeroOfDayService(heroOfDayService);
+    await repEarningsService.pruneOldRows();
+    await heroOfDayService.refreshLeader();
+    heroOfDayService.startScheduler();
+
+    stadiumService = createStadiumService({
+        runQuery,
+        getQuery,
+        allQuery,
+        runTransaction,
+        recordPlayerEvent,
+        grantStatPointsForLevelDelta,
+        ensureUserLevelMatchesXp,
+        grantPlayerReputation: (opts) => repEarningsService.grantPlayerReputation(opts),
+        getEffectiveStats
     });
+    pubBattleModule = createPubBattleModule({
+        runQuery,
+        getQuery,
+        allQuery,
+        getEffectiveStats,
+        readUserHpForFight,
+        calcMaxHp,
+        repEarningsService,
+        stadiumEngine,
+        avatarPath,
+        onMainQuestEvent: (email, event) => persistMainQuestEvent(email, event)
+    });
+    nationalTeamsModule = createNationalTeamsModule({
+        runQuery,
+        getQuery,
+        allQuery,
+        getEffectiveStats
+    });
+    packagesModule = createPackagesModule();
+    await pubBattleModule.ensureSchema();
+    pubBattleModule.registerRoutes(app, {
+        normalizeEmail,
+        requireExistingUser,
+        sanitizeUser
+    });
+    nationalTeamsModule.registerRoutes(app, {
+        normalizeEmail,
+        requireExistingUser,
+        sanitizeUser,
+        onMainQuestEvent: (email, event) => persistMainQuestEvent(email, event)
+    });
+    packagesModule.registerRoutes(app, {
+        normalizeEmail,
+        requireExistingUser
+    });
+    authModule.registerRoutes(app, {
+        sanitizeUser,
+        syncUserResources
+    });
+    firmsService = createFirmsService({
+        runQuery,
+        getQuery,
+        allQuery,
+        normalizeEmail,
+        levelFromXp,
+        normalizeXp,
+        avatarPath,
+        purchaseLogic,
+        randomInt,
+        getClubName: (clubId) => clubsData.getClubName(clubId)
+    });
+    await firmsService.ensureSchema();
+    registerFirmsRoutes(app, {
+        firmsService,
+        normalizeEmail,
+        requireExistingUser,
+        sanitizeUser
+    });
+
+    referralsModule = createReferralsModule({ runQuery, getQuery, allQuery });
+    await referralsModule.service.ensureSchema();
+    referralsModule.registerRoutes(app, {
+        normalizeEmail,
+        requireExistingUser
+    });
+
+    pubBattleModule.startScheduler();
+    await stadiumService.sanitizeScheduledMatches();
+    await seedStadiumDemoIfEmpty();
+    if (stadiumEngine.STADIUM_TEST_MODE) {
+        console.warn("[stadium] STADIUM_TEST_MODE=1 — тестовое расписание (только dev)");
+    } else {
+        const nextStadium = await getQuery(
+            `SELECT id, status, starts_at FROM stadium_matches
+             WHERE status IN ('scheduled', 'live')
+             ORDER BY starts_at ASC LIMIT 1`
+        );
+        if (nextStadium) {
+            console.log(
+                `[stadium] расписание из БД: ${nextStadium.id} ${nextStadium.status}, starts_at=${nextStadium.starts_at}`
+            );
+        }
+    }
+    let stadiumTickRunning = false;
+    setInterval(async () => {
+        if (stadiumTickRunning) return;
+        stadiumTickRunning = true;
+        try {
+            await stadiumService.processAllLiveMatches();
+        } catch (e) {
+            console.error("stadium tick:", e);
+        } finally {
+            stadiumTickRunning = false;
+        }
+    }, 4000);
+
+    app.listen(PORT, () => {
+        console.log(`Server started: http://localhost:${PORT} (db: ${DB_PATH})`);
+    });
+}
+
+startServer().catch((error) => {
+    console.error("Database init error:", error);
+    process.exit(1);
+});

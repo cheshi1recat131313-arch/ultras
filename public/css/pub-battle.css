@@ -1,0 +1,558 @@
+/* Битва за Паб */
+
+.pb-page {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    background: #c5d4a8;
+}
+
+.pb-title {
+    margin: 0;
+    padding: 10px 14px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    text-align: center;
+    color: #ca4d29;
+    background: #f5c76a;
+    border-bottom: 2px solid #eb8a17;
+}
+
+.pb-waiting {
+    text-align: center;
+}
+
+.pb-waiting-desc {
+    margin: 0 0 12px;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #222;
+}
+
+.pb-start-banner {
+    margin: 0 0 10px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, #f0a030 0%, #e88818 100%);
+    border: 1px solid #c87010;
+    border-radius: 3px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+}
+
+.pb-waiting-countdown {
+    margin: 0 0 8px;
+    font-size: 13px;
+    color: #444;
+}
+
+.pb-waiting-regline {
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a4a1a;
+}
+
+.pb-waiting-actions {
+    margin-bottom: 8px;
+}
+
+.pb-register-btn {
+    display: block;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+    padding: 12px 16px;
+    border: 1px solid #8a2010;
+    border-radius: 3px;
+    background: linear-gradient(180deg, #e85030 0%, #c03020 100%);
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.pb-register-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.pb-registered-badge {
+    margin: 0;
+    padding: 10px 12px;
+    background: #dce8c8;
+    border: 1px solid #4a7a3a;
+    border-radius: 3px;
+    color: #1a4a1a;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.pb-clubs-title {
+    text-align: left;
+    margin-top: 14px;
+}
+
+.pb-club-reg-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    text-align: left;
+}
+
+.pb-club-reg-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    background: #eef6e0;
+    border: 1px solid #b0c49a;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.pb-club-reg-name {
+    font-weight: 700;
+    color: #222;
+}
+
+.pb-club-reg-count {
+    color: #1a4a1a;
+    font-weight: 700;
+}
+
+.pb-dev-reset-btn {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    padding: 8px 12px;
+    border: 1px dashed #888;
+    border-radius: 3px;
+    background: transparent;
+    color: #666;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.pb-banner {
+    margin: 10px 12px 0;
+    padding: 10px 12px;
+    border-radius: 4px;
+    background: #fff3cd;
+    border: 1px solid #e0b040;
+    color: #5a4200;
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.pb-panel {
+    margin: 10px 12px 0;
+    padding: 10px 12px;
+    background: #dce8c8;
+    border: 1px solid #8fa87a;
+    border-radius: 4px;
+}
+
+.pb-status {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.45;
+    color: #222;
+}
+
+.pb-room {
+    margin: 8px 0 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a4a1a;
+}
+
+.pb-cooldown {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: #666;
+}
+
+.pb-subtitle {
+    margin: 0 0 8px;
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+}
+
+.pb-hint {
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.4;
+}
+
+.pb-action-btn {
+    display: block;
+    width: 100%;
+    padding: 11px 16px;
+    border: 1px solid #4a7a3a;
+    border-radius: 3px;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 97%);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+
+.pb-action-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.pb-room-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pb-room-card {
+    padding: 10px 12px;
+    background: #eef6e0;
+    border: 1px solid #b0c49a;
+    border-radius: 4px;
+}
+
+.pb-room-card--mine {
+    border-color: #4a7a3a;
+    background: #dce8c8;
+}
+
+.pb-room-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.pb-room-card-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a4a1a;
+}
+
+.pb-room-card-count {
+    font-size: 12px;
+    color: #555;
+    white-space: nowrap;
+}
+
+.pb-room-card-clubs {
+    margin: 0 0 8px;
+    font-size: 12px;
+    color: #444;
+    line-height: 1.35;
+}
+
+.pb-room-card-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.pb-room-enter-btn,
+.pb-room-move-btn {
+    flex: 1 1 auto;
+    min-width: 100px;
+    padding: 7px 10px;
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+}
+
+.pb-room-enter-btn {
+    border: 1px solid #4a7a3a;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 97%);
+    color: #fff;
+}
+
+.pb-room-move-btn {
+    border: 1px solid #6a7a5a;
+    background: #eef6e0;
+    color: #333;
+}
+
+.pb-room-enter-btn:disabled,
+.pb-room-move-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.pb-my-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    margin-bottom: 12px;
+    padding: 8px 10px;
+    background: #eef6e0;
+    border: 1px solid #b0c49a;
+    border-radius: 3px;
+}
+
+.pb-my-stat {
+    margin: 0;
+    font-size: 13px;
+    color: #333;
+}
+
+.pb-rooms {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.pb-room-btn {
+    flex: 1 1 calc(50% - 6px);
+    min-width: 120px;
+    padding: 8px 10px;
+    border: 1px solid #8fa87a;
+    border-radius: 3px;
+    background: #eef6e0;
+    font-size: 13px;
+    cursor: pointer;
+    text-align: left;
+}
+
+.pb-room-btn.current {
+    border-color: #4a7a3a;
+    background: #c8e0b0;
+    font-weight: 700;
+}
+
+.pb-room-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.pb-reg-count {
+    margin: 8px 0 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #1a4a1a;
+    text-align: center;
+}
+
+.pb-bm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 0;
+}
+
+.pb-fight-btn {
+    flex: 1 1 auto;
+}
+
+.pb-secondary-btn {
+    background: linear-gradient(-180deg, #7a9a6a 0%, #5a7a4a 97%);
+    flex: 1 1 calc(50% - 4px);
+}
+
+.pb-combat-panel {
+    margin-top: 0;
+}
+
+.pb-combat-panel .stadium-feed {
+    max-height: 220px;
+    overflow-y: auto;
+    margin-bottom: 8px;
+}
+
+.pb-best-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.pb-strike-flash {
+    margin: 10px 12px 0;
+}
+
+.pb-roster {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.pb-roster-item {
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    background: #eef6e0;
+    border: 1px solid #b0c49a;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.pb-roster-item--me {
+    border-color: #4a7a3a;
+    background: #dce8c8;
+}
+
+.pb-roster-name {
+    font-weight: 700;
+}
+
+.pb-roster-meta {
+    color: #555;
+}
+
+.pb-roster-bot {
+    font-size: 11px;
+    color: #888;
+}
+
+.stadium-opp-club {
+    margin: 0 0 4px;
+    font-size: 12px;
+    color: #555;
+}
+
+.pb-opponents {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pb-opponent {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #eef6e0;
+    border: 1px solid #b0c49a;
+    border-radius: 3px;
+}
+
+.pb-opponent-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #222;
+}
+
+.pb-opponent-club {
+    font-size: 12px;
+    color: #555;
+}
+
+.pb-attack-btn {
+    padding: 6px 12px;
+    border: 1px solid #a04020;
+    border-radius: 3px;
+    background: linear-gradient(-180deg, #d06030 0%, #b84820 97%);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.pb-attack-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.pb-coord {
+    display: flex;
+    flex-direction: column;
+    min-height: 180px;
+}
+
+.pb-coord-log {
+    flex: 1 1 auto;
+    min-height: 100px;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 8px;
+    background: #c5d4a8;
+    border: 1px solid #8fa87a;
+    border-radius: 3px;
+    margin-bottom: 8px;
+}
+
+.pb-coord-msg {
+    margin: 0 0 10px;
+    font-size: 13px;
+    line-height: 1.35;
+}
+
+.pb-coord-head {
+    font-weight: 700;
+    color: #1a4a1a;
+}
+
+.pb-coord-text {
+    margin: 2px 0 0;
+    word-break: break-word;
+}
+
+.pb-coord-compose {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.pb-input {
+    flex: 1 1 auto;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    border: 1px solid #8fa87a;
+    border-radius: 3px;
+    font-size: 14px;
+    background: #eef6e0;
+}
+
+.pb-send-btn {
+    padding: 9px 14px;
+    border: 1px solid #4a7a3a;
+    border-radius: 3px;
+    background: linear-gradient(-180deg, #689452 0%, #598b4e 97%);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.pb-send-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.pb-empty {
+    margin: 0;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+}
+
+.pb-back-wrap {
+    background: #c5d4a8;
+}
+
+.pb-alive-list {
+    margin: 6px 0 0;
+    padding-left: 18px;
+    font-size: 13px;
+}
+
+@media (min-width: 520px) {
+    .pb-room-btn {
+        flex-basis: calc(25% - 6px);
+    }
+}

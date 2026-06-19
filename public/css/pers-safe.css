@@ -1,0 +1,156 @@
+/* Сейф — тёмная тема ULTRAS */
+
+.safe-page {
+    padding: 0 10px 14px;
+}
+
+.safe-title {
+    margin: 0 0 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #e07030;
+}
+
+.safe-desc {
+    margin: 0 0 12px;
+    font-size: 13px;
+    line-height: 1.45;
+    color: #e8e8e8;
+    text-align: center;
+}
+
+.safe-panel {
+    margin-bottom: 12px;
+    padding: 12px;
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    border-radius: 4px;
+}
+
+.safe-balance-bar {
+    margin: 0 0 12px;
+    padding: 10px 12px;
+    background: linear-gradient(180deg, #d87818 0%, #b85810 100%);
+    border-radius: 4px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    text-align: center;
+}
+
+.safe-balance-bar img {
+    vertical-align: -3px;
+    margin-left: 4px;
+}
+
+.safe-field-label {
+    display: block;
+    margin: 0 0 6px;
+    font-size: 12px;
+    color: #c8c8c8;
+}
+
+.safe-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 10px;
+    margin-bottom: 10px;
+    border: 1px solid #444;
+    border-radius: 3px;
+    background: #1a1a1a;
+    color: #fff;
+    font-size: 15px;
+}
+
+.safe-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.safe-btn {
+    flex: 1;
+    padding: 10px 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    color: #fff;
+}
+
+.safe-btn--deposit,
+.safe-btn--withdraw {
+    background: linear-gradient(180deg, #4a8a38 0%, #3a7030 100%);
+    border: 1px solid #2d5828;
+}
+
+.safe-btn--deposit:active,
+.safe-btn--withdraw:active {
+    filter: brightness(0.92);
+}
+
+.safe-btn--upgrade {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px 10px;
+    background: linear-gradient(180deg, #c44a3a 0%, #a03028 100%);
+    border: 1px solid #8a2820;
+}
+
+.safe-btn--upgrade:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.safe-upgrade-block {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+.safe-upgrade-ico {
+    width: 72px;
+    height: 72px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    background: linear-gradient(145deg, #3a4868, #2a3858);
+    border: 2px solid #4a5a78;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 36px;
+}
+
+.safe-upgrade-main {
+    flex: 1;
+    min-width: 0;
+}
+
+.safe-section-title {
+    margin: 0 0 8px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #e07030;
+}
+
+.safe-meta {
+    margin: 0 0 5px;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #e0e0e0;
+}
+
+.safe-meta b {
+    color: #fff;
+}
+
+.safe-coin-ico {
+    vertical-align: -2px;
+    margin: 0 2px;
+}
+
+.safe-coin-ico--gold {
+    vertical-align: -3px;
+}

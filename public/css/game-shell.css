@@ -4,13 +4,14 @@
  */
 
 html:has(body.hools.game-shell) {
-    background: #38393e;
+    background: var(--game-outer-bg, #38393e);
 }
 
 body.hools.game-shell {
-    background: #38393e;
+    background: var(--game-outer-bg, #38393e);
     margin: 0;
     padding: 0;
+    min-height: auto;
 }
 
 /* center-scope сужал body до 600px — по бокам просвечивал белый html */
@@ -21,11 +22,12 @@ body.hools.game-shell.center-scope {
 }
 
 body.hools.game-shell > .app {
-    background: #c5d4a8;
+    background: var(--game-column-bg, #c5d4a8);
     box-shadow: none;
     border: none;
     margin-left: auto;
     margin-right: auto;
+    min-height: auto;
 }
 
 /* Центр, барыга, гардероб */
@@ -44,19 +46,15 @@ body.hools.game-shell .center-list {
 }
 
 body.hools.game-shell .baryga-card {
-    margin: 10px 10px 0;
+    margin: 3px 6px 0;
+    padding: 3px 5px;
     background: #c5d4a8;
     border: 1px solid #9bb08f;
-    border-radius: 4px;
+    border-radius: 3px;
     box-shadow: none;
 }
 
-body.hools.game-shell .baryga-card-head {
-    background: #b0c49a;
-    border-bottom: 1px solid #9bb08f;
-}
-
-body.hools.game-shell .baryga-card-body {
+body.hools.game-shell .baryga-card-main {
     color: #222;
 }
 
@@ -67,8 +65,18 @@ body.hools.game-shell .dossier-skills {
 }
 
 /* Район */
-body.hools.game-shell .district-bots {
+body.hools.game-shell .district-list {
     background: #b0c49a;
+}
+
+body.hools.game-shell .district-bots {
+    background: transparent;
+}
+
+body.hools.game-shell .district-search-btn {
+    background: #c5d4a8;
+    border-top-color: #9bb08f;
+    color: #3a6036;
 }
 
 body.hools.game-shell .district-empty {
@@ -146,4 +154,35 @@ body.hools.game-shell .lottery-log {
 body.hools.game-shell .loc-stub {
     background: #c5d4a8;
     color: #222;
+}
+
+/*
+ * Мобильные: колонка на всю ширину экрана, без боковых полей.
+ * ПК (ширина > 600px в портрете, обычный landscape) — без изменений, max-width 480px.
+ */
+@media (max-width: 600px), (max-height: 520px) and (orientation: landscape) and (max-width: 960px) {
+    html:has(body.hools.game-shell),
+    html:has(body.hools.larek-page) {
+        background: #c5d4a8;
+    }
+
+    body.hools.game-shell,
+    body.hools.larek-page.game-shell {
+        background: #c5d4a8;
+        max-width: none;
+        width: 100%;
+        margin: 0;
+    }
+
+    body.hools.game-shell > .app,
+    body.hools.larek-page.game-shell > .app,
+    body.hools.game-shell.firms-scope > .app,
+    body.hools.game-shell.shmot-body > .app,
+    body.fight-body .app.fight-app {
+        max-width: none;
+        width: 100%;
+        margin: 0;
+        box-shadow: none;
+        border: none;
+    }
 }

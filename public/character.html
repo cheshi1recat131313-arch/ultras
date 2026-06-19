@@ -23,15 +23,12 @@ h1 { margin-bottom: 20px; text-align: center; }
 }
 .card img {
     width: 70px; height: 70px; border-radius: 10px; margin-right: 12px; flex-shrink: 0;
-    background: #e8c84a;
+    background: #0b0b0b;
     box-shadow: none;
     object-fit: cover;
+    object-position: center top;
 }
-/* Прозрачные PNG (Шустрый) — фон карточки, без жёлтой подложки */
-.card img.img-ava-clear {
-    background: transparent;
-}
-.info { width: 100%; }
+.info { flex: 1; min-width: 0; }
 .info h2 { font-size: 16px; margin-bottom: 5px; }
 .info p { font-size: 13px; color: #bbb; margin-bottom: 8px; }
 .btn {
@@ -48,7 +45,7 @@ h1 { margin-bottom: 20px; text-align: center; }
 <h1>Выбери персонажа</h1>
 <div class="status" id="status"></div>
     <div class="card">
-    <img src="/images/tank-dossier.png" alt="">
+    <img src="/static/personage/current/tank.png" alt="">
     <div class="info">
         <h2>Здоровяк</h2>
         <p>Жёсткий и выносливый. Давит силой и не падает.</p>
@@ -56,7 +53,7 @@ h1 { margin-bottom: 20px; text-align: center; }
     </div>
     </div>
     <div class="card">
-    <img src="/images/fast-dossier.png" alt="" class="img-ava-clear">
+    <img src="/static/personage/current/fast.png" alt="">
     <div class="info">
         <h2>Шустрый</h2>
         <p>Быстрый и дерзкий. Уходит от ударов и бьёт внезапно.</p>
@@ -64,7 +61,7 @@ h1 { margin-bottom: 20px; text-align: center; }
     </div>
     </div>
     <div class="card">
-    <img src="/static/personage/balanced.png" alt="">
+    <img src="/static/personage/current/balanced.png" alt="">
     <div class="info">
         <h2>Ровный</h2>
         <p>Баланс силы и скорости. Универсальный боец.</p>
@@ -72,31 +69,7 @@ h1 { margin-bottom: 20px; text-align: center; }
     </div>
     </div>
     <div class="card">
-    <img src="/static/personage/valk.png" alt="">
-    <div class="info">
-        <h2>Валькирия</h2>
-        <p>Идёт до конца. Не знает страха.</p>
-        <button class="btn" type="button" data-id="valk">Выбрать</button>
-    </div>
-    </div>
-    <div class="card">
-    <img src="/static/personage/shadow.png" alt="">
-    <div class="info">
-        <h2>Тень</h2>
-        <p>Невидимая и опасная. Атака из ниоткуда.</p>
-        <button class="btn" type="button" data-id="shadow">Выбрать</button>
-    </div>
-    </div>
-    <div class="card">
-    <img src="/static/personage/spark.png" alt="">
-    <div class="info">
-        <h2>Искра</h2>
-        <p>Хаос и скорость. Меняет ход боя.</p>
-        <button class="btn" type="button" data-id="spark">Выбрать</button>
-    </div>
-    </div>
-    <div class="card">
-    <img src="/static/personage/tough.png" alt="">
+    <img src="/static/personage/current/tough.png" alt="">
     <div class="info">
         <h2>Крепыш</h2>
         <p>Стойкость — главное. Тело неповальное.</p>
@@ -104,7 +77,7 @@ h1 { margin-bottom: 20px; text-align: center; }
     </div>
     </div>
     <div class="card">
-    <img src="/static/personage/redhead.png" alt="">
+    <img src="/static/personage/current/redhead.png" alt="">
     <div class="info">
         <h2>Рыжая бестия</h2>
         <p>Рыжая шевелюра и быстрые удары.</p>
@@ -112,7 +85,7 @@ h1 { margin-bottom: 20px; text-align: center; }
     </div>
     </div>
     <div class="card">
-    <img src="/static/personage/fighter.png" alt="">
+    <img src="/static/personage/current/fighter.png" alt="">
     <div class="info">
         <h2>Бой-баба</h2>
         <p>Бывшая тяжелоатлетка. Такую лучше не злить!</p>
@@ -120,7 +93,7 @@ h1 { margin-bottom: 20px; text-align: center; }
     </div>
     </div>
     <div class="card">
-    <img src="/static/personage/chick.png" alt="">
+    <img src="/static/personage/current/chick.png" alt="">
     <div class="info">
         <h2>Четкая чувиха</h2>
         <p>Отошьёт кого угодно, а если надо — слиняет.</p>

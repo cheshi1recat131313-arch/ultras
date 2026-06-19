@@ -54,11 +54,16 @@ function goToOnboarding(user) {
     window.location.href = onboardingUrl(user);
 }
 
-async function fetchUserByEmail(email) {
+async function fetchUserByEmail(email, opts = {}) {
     const normalized = String(email || "").trim().toLowerCase();
     if (!normalized) return null;
+    const viewer = String(opts.viewer ?? getStoredEmail() ?? normalized)
+        .trim()
+        .toLowerCase();
 
-    const response = await fetch(`/getUser?email=${encodeURIComponent(normalized)}`);
+    const response = await fetch(
+        `/getUser?email=${encodeURIComponent(normalized)}&viewer=${encodeURIComponent(viewer)}`
+    );
     if (!response.ok) return null;
 
     const data = await response.json();
@@ -120,7 +125,9 @@ async function fetchUser() {
         : null;
 
     if (!user) {
-        const response = await fetch(`/getUser?email=${encodeURIComponent(email)}`);
+        const response = await fetch(
+            `/getUser?email=${encodeURIComponent(email)}&viewer=${encodeURIComponent(email)}`
+        );
         if (!response.ok) {
             goToLoginPage();
             return null;
@@ -236,3 +243,47 @@ function showMsg(text, isError) {
     el.textContent = text || "";
     el.classList.toggle("err", !!isError);
 }
+
+/** Кликабельные ники → досье (дублирует js/player-links.js для синхронной загрузки). */
+(function (root, factory) {
+    const api = factory();
+    root.dossierUrl = api.dossierUrl;
+    root.playerEmailFromFighterId = api.playerEmailFromFighterId;
+    root.playerNameHtml = api.playerNameHtml;
+    root.playerNameLink = api.playerNameLink;
+})(typeof globalThis !== "undefined" ? globalThis : this, function () {
+    function escapePlayerLinkText(s) {
+        return String(s ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+    function dossierUrl(email) {
+        const e = String(email || "")
+            .trim()
+            .toLowerCase();
+        if (!e) return "";
+        return "/dossier.html?email=" + encodeURIComponent(e);
+    }
+    function playerEmailFromFighterId(fighterId) {
+        const id = String(fighterId || "");
+        if (id.startsWith("player_")) return id.slice(7).toLowerCase();
+        if (id.includes("@")) return id.toLowerCase();
+        return "";
+    }
+    function playerNameHtml(name, email, opts) {
+        const o = opts || {};
+        const label = escapePlayerLinkText(name || "Игрок");
+        const e = String(email || "")
+            .trim()
+            .toLowerCase();
+        if (!e) return label;
+        const classes = ["player-link", o.className, o.extraClass].filter(Boolean).join(" ");
+        return `<a class="${classes}" href="${dossierUrl(e)}">${label}</a>`;
+    }
+    function playerNameLink(name, email, className) {
+        return playerNameHtml(name, email, className ? { className } : undefined);
+    }
+    return { escapePlayerLinkText, dossierUrl, playerEmailFromFighterId, playerNameHtml, playerNameLink };
+});

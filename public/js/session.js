@@ -54,11 +54,16 @@ function goToOnboarding(user) {
     window.location.href = onboardingUrl(user);
 }
 
-async function fetchUserByEmail(email) {
+async function fetchUserByEmail(email, opts = {}) {
     const normalized = String(email || "").trim().toLowerCase();
     if (!normalized) return null;
+    const viewer = String(opts.viewer ?? getStoredEmail() ?? normalized)
+        .trim()
+        .toLowerCase();
 
-    const response = await fetch(`/getUser?email=${encodeURIComponent(normalized)}`);
+    const response = await fetch(
+        `/getUser?email=${encodeURIComponent(normalized)}&viewer=${encodeURIComponent(viewer)}`
+    );
     if (!response.ok) return null;
 
     const data = await response.json();

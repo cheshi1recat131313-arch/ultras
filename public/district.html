@@ -1,75 +1,146 @@
 ﻿<!DOCTYPE html>
 <html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Район</title>
-    <link rel="stylesheet" href="css/hools.css">
-    <link rel="stylesheet" href="css/game-shell.css">
+<head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Район</title> <link rel="stylesheet" href="css/hools.css"> <link rel="stylesheet" href="css/game-shell.css"> <link rel="stylesheet" href="css/ultras-dark-theme.css">
 </head>
-<body class="hools game-shell">
-<div class="app">
-    <header class="header" id="header"></header>
-    <img class="loc-banner" src="/images/locations/district-banner.png" alt="">
-    <div class="page-title">Район</div>
-    <div id="districtNotice" class="district-hp-alert" hidden></div>
-    <div id="msg" class="msg"></div>
-    <div class="district-toolbar">
-        <a class="district-tool" href="/gym.html">Качалка</a>
-        <a class="district-tool" href="/tattoo.html">Тату</a>
-    </div>
-    <div id="districtBots" class="district-bots"></div>
-    <button type="button" class="district-search-btn" id="searchMore">
-        <img src="/static/location/index/brass.png" width="16" height="16" alt=""> Искать ещё
-    </button>
-    <footer class="site-footer" id="site-footer"></footer>
+<body class="hools game-shell ultras-dark district-page">
+<div class="app"> <header class="header" id="header"></header> <div class="loc-banner-wrap loc-banner-wrap--district" role="img" aria-label="Район"></div> <div class="page-title">Район</div> <div id="districtNotice" class="district-hp-alert" hidden></div> <div id="msg" class="msg"></div> <div class="district-toolbar"> <a class="district-tool" href="/gym.html">Качалка</a> <a class="district-tool" href="/tattoo.html">Тату</a> </div> <div id="districtHeroOfDay" class="district-hero" hidden></div> <div class="district-list"> <div id="districtBots" class="district-bots"></div> <button type="button" class="district-search-btn" id="searchMore"> <img src="/static/location/index/brass.png" width="16" height="16" alt=""> Искать ещё </button> </div> <footer class="site-footer" id="site-footer"></footer>
 </div>
 <script src="js/session.js"></script>
 <script src="js/api.js"></script>
+<script src="js/clubs.js"></script>
+<script src="js/club-theme.js"></script>
+<script src="js/district-npc-theme.js"></script>
 <script src="js/header.js"></script>
 <script>
+let clubsCatalog = {};
+
+function escapeHtml(s) {
+    const d = document.createElement("div");
+    d.textContent = s == null ? "" : String(s);
+    return d.innerHTML;
+}
+
 function renderBots(bots) {
     const root = document.getElementById("districtBots");
+    if (!root) return;
     root.innerHTML = "";
     const list = (bots || []).filter((b) => b && b.name && b.leftKick && b.rightKick);
     if (!list.length) {
-        root.innerHTML = "<p class=\"district-empty\">Подбираем противников…</p>";
+        root.innerHTML = '<p class="district-empty">Подбираем противников…</p>';
         return;
     }
-
     list.forEach((b) => {
-        const avaHtml = b.avatar
-            ? '<img class="bot-ava-img" src="' + escapeHtml(b.avatar) + '" alt="">'
-            : escapeHtml(b.emoji || "👤");
+        const isLive = !!b.isPlayer;
+        const npcId = b.templateId || b.id;
+        const useYellowPortrait =
+            typeof usesDistrictNpcYellowPortrait === "function" && usesDistrictNpcYellowPortrait(npcId);
+        const portraitSrc =
+            typeof districtNpcPortraitSrc === "function"
+                ? districtNpcPortraitSrc(b)
+                : useYellowPortrait
+                  ? b.avatar || ""
+                  : isLive
+                    ? b.avatar || ""
+                    : "";
+        const botImg =
+            !useYellowPortrait && typeof districtNpcBotAvatar === "function"
+                ? districtNpcBotAvatar(npcId)
+                : null;
+        const usePortrait =
+            !!portraitSrc &&
+            (isLive ||
+                useYellowPortrait ||
+                (typeof isDistrictFanNpc === "function" && isDistrictFanNpc(npcId)));
+        let avaHtml;
+        if (usePortrait && typeof playerAvatarFrameHtml === "function") {
+            const fill =
+                typeof districtNpcPortraitFill === "function"
+                    ? districtNpcPortraitFill(b, clubsCatalog)
+                    : isLive && b.club && typeof clubAvatarFill === "function"
+                      ? clubAvatarFill(b.club, clubsCatalog)
+                      : useYellowPortrait
+                        ? DISTRICT_NPC_AVATAR_FILL
+                        : null;
+            avaHtml = playerAvatarFrameHtml(portraitSrc, {
+                fill,
+                width: 56,
+                height: 56,
+                alt: b.name || "",
+                className: "player-avatar-frame--bot"
+            });
+        } else if (botImg) {
+            avaHtml = '<img class="bot-ava-img" src="' + escapeHtml(botImg) + '" alt="">';
+        } else {
+            avaHtml =
+                '<span class="bot-ava-fallback">' + escapeHtml(b.emoji || "👤") + "</span>";
+        }
+        const displayName = isLive
+            ? escapeHtml(b.name || "") + " (" + escapeHtml(b.level != null ? b.level : 1) + ")"
+            : escapeHtml(b.name || "");
         const card = document.createElement("div");
         card.className = "bot-card";
-        card.innerHTML = `
-            <div class="bot-ava">${avaHtml}</div>
-            <div class="bot-info">
-                <div class="bot-name">${escapeHtml(b.name)}</div>
-                <p class="bot-phrase">${escapeHtml(b.phrase || "")}</p>
-                <div class="kick-row">
-                    <button type="button" class="kick-btn kick-left" data-kick="${escapeHtml(b.leftKick)}" title="Левый">
-                        <span class="kick-label" aria-hidden="true">🤛</span>
-                    </button>
-                    <button type="button" class="kick-btn kick-right" data-kick="${escapeHtml(b.rightKick)}" title="Правый">
-                        <span class="kick-label" aria-hidden="true">🤜</span>
-                    </button>
-                </div>
-            </div>`;
+        card.innerHTML =
+            '<div class="bot-ava">' +
+            avaHtml +
+            "</div>" +
+            '<div class="bot-info">' +
+            '<div class="bot-name">' +
+            displayName +
+            "</div>" +
+            '<p class="bot-phrase">' +
+            escapeHtml(b.phrase || "") +
+            "</p>" +
+            '<div class="kick-row">' +
+            '<button type="button" class="kick-btn kick-left" data-kick="' +
+            escapeHtml(b.leftKick) +
+            '" title="Левый">' +
+            '<span class="kick-label" aria-hidden="true">🤛</span>' +
+            "</button>" +
+            '<button type="button" class="kick-btn kick-right" data-kick="' +
+            escapeHtml(b.rightKick) +
+            '" title="Правый">' +
+            '<span class="kick-label" aria-hidden="true">🤜</span>' +
+            "</button>" +
+            "</div></div>";
         root.appendChild(card);
     });
-
     root.querySelectorAll(".kick-btn[data-kick]").forEach((btn) => {
         btn.addEventListener("click", () => tryDistrictAttack(btn.getAttribute("data-kick")));
     });
 }
 
-function showDistrictNotice(html) {
+let districtNoticeTimer = null;
+
+function hideDistrictNotice() {
     const el = document.getElementById("districtNotice");
     if (!el) return;
+    el.hidden = true;
+    el.innerHTML = "";
+    if (districtNoticeTimer) {
+        clearTimeout(districtNoticeTimer);
+        districtNoticeTimer = null;
+    }
+}
+
+function showDistrictNotice(html, opts) {
+    opts = opts || {};
+    const el = document.getElementById("districtNotice");
+    if (!el) return;
+    if (districtNoticeTimer) {
+        clearTimeout(districtNoticeTimer);
+        districtNoticeTimer = null;
+    }
+    const closeBtn =
+        opts.dismissible !== false
+            ? '<button type="button" class="district-notice-close" aria-label="Закрыть">×</button>'
+            : "";
     el.hidden = false;
-    el.innerHTML = html;
+    el.innerHTML = closeBtn + html;
+    const close = el.querySelector(".district-notice-close");
+    if (close) close.addEventListener("click", hideDistrictNotice);
+    if (opts.autoHideMs) {
+        districtNoticeTimer = setTimeout(hideDistrictNotice, opts.autoHideMs);
+    }
     el.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }
 
@@ -78,21 +149,30 @@ function showDistrictHpAlert(hp, minHp) {
     const cur = Math.max(0, Math.round(Number(hp) || 0));
     showDistrictNotice(
         '<p class="district-hp-alert-title">⚠️ Недостаточно здоровья для нападения.</p>' +
-        `<p class="district-hp-alert-text">Нужно минимум <b>${need}</b> HP, сейчас <b>${cur}</b> HP.</p>` +
-        "<p class=\"district-hp-alert-text\">Восстановить здоровье можно у Мага Геннадия.</p>" +
-        '<a class="district-hp-alert-btn" href="/mag.html">Маг Геннадий</a>' +
-        '<a class="district-hp-alert-link" href="/mag.html">🧙 Перейти к Магу Геннадию</a>'
+            `<p class="district-hp-alert-text">Нужно минимум <b>${need}</b> HP, сейчас <b>${cur}</b> HP.</p>` +
+            '<p class="district-hp-alert-text">Восстановить здоровье можно у Мага Геннадия.</p>' +
+            '<a class="district-hp-alert-btn" href="/mag.html">Маг Геннадий</a>' +
+            '<a class="district-hp-alert-link" href="/mag.html">🧙 Перейти к Магу Геннадию</a>'
     );
 }
 
 function showDistrictRublesAlert() {
     showDistrictNotice(
         '<p class="district-hp-alert-title">⚠️ Йоу, у тебя даже в кармане ничего нет.</p>' +
-        "<p class=\"district-hp-alert-text\">Негоже по району ходить с пустыми карманами.</p>" +
-        "<p class=\"district-hp-alert-text\">Не позорь свой клуб.</p>" +
-        "<p class=\"district-hp-alert-text\">Заработай немного серебра и возвращайся.</p>" +
-        '<a class="district-hp-alert-btn" href="/work.html">Работа</a>' +
-        '<a class="district-hp-alert-link" href="/work.html">Пойти на работу</a>'
+            '<p class="district-hp-alert-text">Негоже по району ходить с пустыми карманами.</p>' +
+            '<p class="district-hp-alert-text">Не позорь свой клуб.</p>' +
+            '<p class="district-hp-alert-text">Заработай немного серебра и возвращайся.</p>' +
+            '<a class="district-hp-alert-btn" href="/work.html">Работа</a>' +
+            '<a class="district-hp-alert-link" href="/work.html">Пойти на работу</a>'
+    );
+}
+
+function showDistrictEnergyAlert() {
+    showDistrictNotice(
+        '<p class="district-hp-alert-title">⚡ Мало энергии для боя.</p>' +
+            '<p class="district-hp-alert-text">Подожди немного или пополни у Мага Геннадия в <a class="district-hp-alert-inline" href="/larek.html">ларьке</a>.</p>' +
+            '<a class="district-hp-alert-btn" href="/larek.html">Ларёк у Геннадия</a>',
+        { autoHideMs: 10000, dismissible: true }
     );
 }
 
@@ -105,6 +185,11 @@ async function tryDistrictAttack(kick) {
     }
     if (data && data.code === "no_rubles") {
         showDistrictRublesAlert();
+        if (data.user) renderHeaderBlock(data.user);
+        return;
+    }
+    if (data && data.code === "low_energy") {
+        showDistrictEnergyAlert();
         if (data.user) renderHeaderBlock(data.user);
         return;
     }
@@ -128,13 +213,67 @@ function checkDistrictAlertsFromUrl() {
         showDistrictRublesAlert();
         u.searchParams.delete("noRubles");
     }
+    if (p.get("lowEnergy") === "1") {
+        showDistrictEnergyAlert();
+        u.searchParams.delete("lowEnergy");
+    }
+    if (p.get("playerProtected") === "1") {
+        showDistrictNotice(
+            '<p class="district-hp-alert-title">🛡️ Нападение недоступно</p>' +
+                '<p class="district-hp-alert-text">На этого игрока нельзя нападать сразу после выхода из игры.</p>' +
+                '<p class="district-hp-alert-text">Подожди <b>30 минут</b> после его последней активности или нажми «Искать ещё».</p>',
+            { autoHideMs: 12000 }
+        );
+        u.searchParams.delete("playerProtected");
+    }
     window.history.replaceState({}, "", u.pathname + u.search);
 }
 
-function escapeHtml(s) {
-    const d = document.createElement("div");
-    d.textContent = s;
-    return d.innerHTML;
+function renderHeroOfDay(hero) {
+    const el = document.getElementById("districtHeroOfDay");
+    if (!el) return;
+    if (!hero) {
+        el.hidden = true;
+        el.innerHTML = "";
+        return;
+    }
+    if (!hero.active) {
+        el.hidden = false;
+        el.innerHTML =
+            '<p class="district-hero-line">' +
+            '<span class="district-hero-label">Герой дня —</span> ' +
+            escapeHtml(hero.emptyLabel || "Пока нет лидера") +
+            "</p>";
+        return;
+    }
+    const nameLink =
+        '<a class="district-hero-name player-link" href="/dossier.html?email=' +
+        encodeURIComponent(hero.email) +
+        '">' +
+        escapeHtml(hero.name) +
+        "</a>";
+    const skullIco =
+        '<img src="/static/icons/skull.png" class="district-hero-skull-ico" alt="" aria-hidden="true">';
+    const skullStat = (n) =>
+        '<span class="district-hero-skull-stat">' + skullIco + '<span class="district-hero-stat">' + n + "</span></span>";
+    const skullsCount = escapeHtml(String(hero.skulls ?? 0));
+    const isYou =
+        hero.isYou === true ||
+        (hero.email && typeof getEmail === "function" && hero.email === getEmail());
+    let lineHtml =
+        '<span class="district-hero-label">Герой дня —</span> ' +
+        nameLink +
+        ' <span class="district-hero-dot" aria-hidden="true">·</span> ' +
+        skullStat(skullsCount);
+    if (!isYou) {
+        const yourCount = escapeHtml(String(hero.yourSkulls ?? 0));
+        lineHtml +=
+            ' <span class="district-hero-dot" aria-hidden="true">·</span> ' +
+            '<span class="district-hero-you">Ты </span>' +
+            skullStat(yourCount);
+    }
+    el.hidden = false;
+    el.innerHTML = '<p class="district-hero-line">' + lineHtml + "</p>";
 }
 
 async function refreshDistrict() {
@@ -144,27 +283,63 @@ async function refreshDistrict() {
         return null;
     }
     if (data.user) renderHeaderBlock(data.user);
+    if (data.heroOfDay) renderHeroOfDay(data.heroOfDay);
     return (data.spawn && data.spawn.bots) || [];
 }
 
 async function loadSpawn() {
-    const res = await fetch(`/district/spawn?email=${encodeURIComponent(getEmail())}`);
-    const data = await res.json();
-    if (!data.success) {
-        showMsg(data.error || "Ошибка", true);
-        return;
+    try {
+        const res = await fetch(`/district/spawn?email=${encodeURIComponent(getEmail())}`);
+        const data = await res.json();
+        if (!data.success) {
+            showMsg(data.error || "Ошибка", true);
+            return;
+        }
+        if (data.user) renderHeaderBlock(data.user);
+        if (data.heroOfDay) renderHeroOfDay(data.heroOfDay);
+        let bots = (data.spawn && data.spawn.bots) || [];
+        const active = bots.filter((b) => b && b.name && b.leftKick && b.rightKick);
+        if (active.length < 3) {
+            const refreshed = await refreshDistrict();
+            if (refreshed && refreshed.length) bots = refreshed;
+        }
+        renderBots(bots);
+    } catch (err) {
+        console.error("district loadSpawn failed:", err);
+        showMsg("Не удалось загрузить район", true);
     }
-    if (data.user) renderHeaderBlock(data.user);
-    let bots = (data.spawn && data.spawn.bots) || [];
-    const active = bots.filter((b) => b && b.name && b.leftKick && b.rightKick);
-    if (active.length < 3) {
-        const refreshed = await refreshDistrict();
-        if (refreshed) bots = refreshed;
-    }
-    renderBots(bots);
 }
 
-document.getElementById("searchMore").addEventListener("click", async () => {
+function getLocalDayKey(d = new Date()) {
+    return new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Europe/Kyiv",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+    }).format(d);
+}
+
+let heroDayKey = getLocalDayKey();
+
+async function refreshHeroOnDayChange() {
+    const today = getLocalDayKey();
+    if (today === heroDayKey) return;
+    heroDayKey = today;
+    try {
+        const res = await fetch("/district/spawn?email=" + encodeURIComponent(getEmail()));
+        const data = await res.json();
+        if (data.success && data.heroOfDay) renderHeroOfDay(data.heroOfDay);
+    } catch (err) {
+        console.error("district hero day refresh failed:", err);
+    }
+}
+
+document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refreshHeroOnDayChange();
+});
+setInterval(refreshHeroOnDayChange, 60 * 1000);
+
+document.getElementById("searchMore")?.addEventListener("click", async () => {
     const bots = await refreshDistrict();
     if (bots) renderBots(bots);
 });
@@ -172,6 +347,7 @@ document.getElementById("searchMore").addEventListener("click", async () => {
 (async () => {
     const user = await fetchUser();
     if (!user) return;
+    clubsCatalog = await loadClubsCatalog();
     renderHeaderBlock(user);
     checkDistrictAlertsFromUrl();
     await loadSpawn();

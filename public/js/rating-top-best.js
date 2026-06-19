@@ -18,10 +18,9 @@ function repIco() {
 
 function renderTopBestPlayerRow(p, clubsCatalog, opts) {
     const o = opts || {};
-    const fill = p.club ? clubAvatarFill(p.club, clubsCatalog) : null;
     const ava = p.avatar
         ? `<div class="rating-best-ava-wrap">${playerAvatarFrameHtml(p.avatar, {
-              fill,
+              fill: p.club ? clubAvatarFill(p.club, clubsCatalog) : null,
               width: 52,
               height: 52,
               alt: p.name,
@@ -34,7 +33,7 @@ function renderTopBestPlayerRow(p, clubsCatalog, opts) {
         ava +
         `<div class="rating-best-player-body">` +
         `<p class="rating-best-player-name">${playerNameHtml(p.name, p.email)} <span class="rating-best-player-lvl">[${p.level}]</span></p>` +
-        `<p class="rating-best-stat rating-best-stat--place">Место: <b>${formatRatingNum(p.place)}</b></p>` +
+        `<p class="rating-best-stat rating-best-stat--place">Место: <b>${formatRatingNum(p.place ?? p.position)}</b></p>` +
         `<p class="rating-best-stat">Репутация: <b>${formatRatingNum(p.reputation)}</b> ${repIco()}</p>` +
         `</div></article>`
     );

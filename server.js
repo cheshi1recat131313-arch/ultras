@@ -32,6 +32,7 @@ const nationalTeamsData = require("./national-teams/data");
 const { createRepEarningsService } = require("./rep-earnings");
 const { createHeroOfDayService } = require("./hero-of-day");
 const { buildClubElitePayload, rankTitleFromTotalSkulls } = require("./club-elite");
+const { createClubReputationRatingService } = require("./club-reputation-rating");
 const stadiumBots = require("./stadium-bots");
 const playerOnline = require("./player-online");
 const districtNpcTheme = require("./district-npc-theme");
@@ -722,6 +723,7 @@ app.get("/rating/club-elite", async (req, res) => {
                 name: m.name || "Игрок",
                 level: m.level ?? 1,
                 avatar: avatarPath(m.character),
+                club: m.club || user.club || null,
                 weeklySkulls: w.weeklySkulls
             };
         });
@@ -734,8 +736,30 @@ app.get("/rating/club-elite", async (req, res) => {
     }
 });
 
-/** Лучшие из лучших — общий рейтинг игроков по эффективной силе. */
+/** Лучшие из лучших — рейтинг игроков по репутации. */
 app.get("/rating/top-best", async (req, res) => {
+    try {
+        const email = normalizeEmail(req.query.email);
+        const page = Math.max(1, Math.floor(Number(req.query.page) || 1));
+        const perPage = Math.min(50, Math.max(1, Math.floor(Number(req.query.perPage) || 20)));
+
+        if (email) {
+            const viewer = await requireExistingUser(email);
+            if (!viewer) {
+                res.status(404).json({ success: false, error: "Пользователь не найден" });
+                return;
+            }
+        }
+
+        res.json(await buildReputationRankingResponse({ email, page, perPage }));
+    } catch (error) {
+        console.error("rating/top-best error:", error);
+        res.status(500).json({ success: false, error: "Ошибка рейтинга" });
+    }
+});
+
+/** Лучшие на уровне — рейтинг игроков того же уровня по репутации. */
+app.get("/rating/level-best", async (req, res) => {
     try {
         const email = normalizeEmail(req.query.email);
         const page = Math.max(1, Math.floor(Number(req.query.page) || 1));
@@ -747,54 +771,22 @@ app.get("/rating/top-best", async (req, res) => {
             return;
         }
 
-        const rows = await allQuery(
-            `SELECT * FROM users WHERE name IS NOT NULL AND TRIM(name) != ''`
-        );
-
-        const ranked = rows
-            .map((row) => {
-                const { effective } = getEffectiveStats(row);
-                const xp = normalizeXp(row.xp);
-                const level = levelFromXp(xp);
-                const key = normalizeEmail(row.email);
-                return {
-                    email: key,
-                    name: row.name || "Игрок",
-                    level,
-                    avatar: avatarPath(row.character),
-                    power: Math.max(0, Math.floor(Number(effective.power) || 0))
-                };
-            })
-            .sort((a, b) => b.power - a.power || String(a.name).localeCompare(String(b.name), "ru"));
-
-        const total = ranked.length;
-        const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
-        const offset = (page - 1) * perPage;
-        const slice = ranked.slice(offset, offset + perPage);
-
-        let me = null;
-        if (email) {
-            const idx = ranked.findIndex((p) => p.email === email);
-            if (idx >= 0) {
-                me = { position: idx + 1, power: ranked[idx].power, level: ranked[idx].level };
-            }
+        const filterLevel = viewer ? levelFromXp(normalizeXp(viewer.xp)) : null;
+        if (filterLevel == null) {
+            res.status(400).json({ success: false, error: "Укажите email игрока" });
+            return;
         }
 
-        res.json({
-            success: true,
-            players: slice.map((p, i) => ({
-                ...p,
-                position: offset + i + 1,
-                isMe: email && p.email === email
-            })),
-            page,
-            perPage,
-            total,
-            totalPages,
-            me
-        });
+        res.json(
+            await buildReputationRankingResponse({
+                email,
+                page,
+                perPage,
+                filterLevel
+            })
+        );
     } catch (error) {
-        console.error("rating/top-best error:", error);
+        console.error("rating/level-best error:", error);
         res.status(500).json({ success: false, error: "Ошибка рейтинга" });
     }
 });
@@ -809,15 +801,14 @@ app.get("/national-teams/catalog", (req, res) => {
     }
 });
 
-/** Рейтинг клубов (пока заглушка: все клубы, rating = 0). */
-app.get("/rating/clubs", (req, res) => {
+/** Рейтинг клубов — сумма репутации всех игроков клуба. */
+app.get("/rating/clubs", async (req, res) => {
     try {
-        const clubs = clubsData.listSelectableClubs().map((c) => ({
-            id: c.id,
-            name: c.name,
-            emblem: c.emblem,
-            rating: 0
-        }));
+        if (!clubReputationRatingService) {
+            res.status(503).json({ success: false, error: "Сервис рейтинга клубов не готов" });
+            return;
+        }
+        const clubs = await clubReputationRatingService.buildClubRankings();
         res.json({ success: true, clubs });
     } catch (error) {
         console.error("rating/clubs error:", error);
@@ -1199,6 +1190,72 @@ let nationalTeamsModule = null;
 let packagesModule = null;
 let authModule = null;
 let referralsModule = null;
+let clubReputationRatingService = null;
+
+function mapUserToRatingPlayer(row) {
+    const xp = normalizeXp(row.xp);
+    const level = levelFromXp(xp);
+    const reputation = Math.max(0, Math.floor(Number(row.reputation) || 0));
+    return {
+        email: normalizeEmail(row.email),
+        name: row.name || "Игрок",
+        level,
+        avatar: avatarPath(row.character),
+        club: row.club || null,
+        reputation
+    };
+}
+
+async function buildReputationRankingResponse({ email, page, perPage, filterLevel }) {
+    const rows = await allQuery(
+        `SELECT * FROM users WHERE name IS NOT NULL AND TRIM(name) != ''`
+    );
+
+    let ranked = rows.map((row) => mapUserToRatingPlayer(row));
+    if (filterLevel != null) {
+        ranked = ranked.filter((p) => p.level === filterLevel);
+    }
+
+    ranked.sort(
+        (a, b) =>
+            b.reputation - a.reputation || String(a.name).localeCompare(String(b.name), "ru")
+    );
+
+    const total = ranked.length;
+    const totalPages = Math.max(1, Math.ceil(total / perPage) || 1);
+    const offset = (page - 1) * perPage;
+    const slice = ranked.slice(offset, offset + perPage);
+
+    let me = null;
+    if (email) {
+        const idx = ranked.findIndex((p) => p.email === email);
+        if (idx >= 0) {
+            const p = ranked[idx];
+            me = {
+                ...p,
+                place: idx + 1,
+                position: idx + 1,
+                isMe: true
+            };
+        }
+    }
+
+    return {
+        success: true,
+        players: slice.map((p, i) => ({
+            ...p,
+            place: offset + i + 1,
+            position: offset + i + 1,
+            isMe: Boolean(email && p.email === email)
+        })),
+        page,
+        perPage,
+        total,
+        totalPages,
+        level: filterLevel != null ? filterLevel : undefined,
+        me
+    };
+}
 
 async function seedStadiumDemoIfEmpty() {
     const row = await getQuery("SELECT id FROM stadium_matches LIMIT 1");
@@ -3647,13 +3704,11 @@ app.get("/clubs/profile", async (req, res) => {
             res.status(404).json({ success: false, error: "Клуб не найден" });
             return;
         }
-        const ids = clubsData.clubIdsForFanCount(clubId);
-        const placeholders = ids.map(() => "?").join(", ");
-        const row = await getQuery(
-            `SELECT COUNT(*) AS n FROM users WHERE club IN (${placeholders})`,
-            ids
-        );
-        const fanCount = Math.max(0, Math.floor(Number(row?.n) || 0));
+        const rankStats = clubReputationRatingService
+            ? await clubReputationRatingService.getClubRankingStats(clubId)
+            : null;
+        const fanCount = rankStats?.fanCount ?? 0;
+        const totalReputation = rankStats?.totalReputation ?? 0;
         res.json({
             success: true,
             club: {
@@ -3663,7 +3718,10 @@ app.get("/clubs/profile", async (req, res) => {
                 description: clubsData.getClubDescription(clubId),
                 fanCount,
                 fanCountLabel: `${fanCount} ${clubsData.fanWord(fanCount)}`,
-                rating: 0
+                totalReputation,
+                rating: totalReputation,
+                rankPosition: rankStats?.position ?? null,
+                position: rankStats?.position ?? null
             }
         });
     } catch (error) {
@@ -5492,6 +5550,8 @@ async function startServer() {
         normalizeEmail,
         requireExistingUser
     });
+
+    clubReputationRatingService = createClubReputationRatingService({ allQuery, clubsData });
 
     pubBattleModule.startScheduler();
     await stadiumService.sanitizeScheduledMatches();
